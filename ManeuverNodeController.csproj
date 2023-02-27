@@ -1,0 +1,48 @@
+<?xml version="1.0" ?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <LangVersion>default</LangVersion>
+    <ImplicitUsings>true</ImplicitUsings>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+	<PostBuildEvent>copy /Y "C:\CPPDev\KSP2Mods\maneuver_node_controller\ManeuverNodeControllerProject\bin\Debug\netstandard2.0\ManeuverNodeController.dll" "G:\SteamLibrary\steamapps\common\Kerbal Space Program 2\SpaceWarp\mods\maneuver_node_controller\bin\ManeuverNodeController.dll"</PostBuildEvent>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+	<PostBuildEvent>copy /Y "C:\CPPDev\KSP2Mods\maneuver_node_controller\ManeuverNodeControllerProject\bin\Release\netstandard2.0\ManeuverNodeController.dll" "G:\SteamLibrary\steamapps\common\Kerbal Space Program 2\SpaceWarp\mods\maneuver_node_controller\bin\ManeuverNodeController.dll"</PostBuildEvent>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+    <Reference Include="..\external_dlls\SpaceWarp.dll"/>
+    <Reference Include="..\external_dlls\UnityEngine.dll"/>
+	<Reference Include="..\external_dlls\UnityEngine.IMGUIModule.dll"/>
+    <Reference Include="..\external_dlls\UnityEngine.CoreModule.dll"/>
+    <Reference Include="..\external_dlls\Assembly-CSharp.dll"/>
+	<Reference Include="..\external_dlls\Assembly-CSharp-firstpass.dll"/>
+    <Reference Include="..\external_dlls\NewtonSoft.Json.dll"/>
+    <Reference Include="..\external_dlls\NewtonSoft.Json.dll"/>
+	<Reference Include="..\external_dlls\UnityEngine.InputLegacyModule.dll"/>
+	
+  </ItemGroup>
+</Project>
