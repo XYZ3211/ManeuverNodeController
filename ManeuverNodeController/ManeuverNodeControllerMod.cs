@@ -2,7 +2,9 @@ using UnityEngine;
 using KSP.Game;
 using KSP.Sim.impl;
 using KSP.Sim.Maneuver;
+using SpaceWarp.API;
 using SpaceWarp.API.Mods;
+using KSP.UI.Binding;
 
 namespace ManeuverNodeController
 {
@@ -20,10 +22,11 @@ namespace ManeuverNodeController
         private string radialString = "0";
         private string smallStepString = "5";
         private string bigStepString = "100";
-        private string timeStepString = "5";
-        private double smallStep, bigStep, timeStep;
+        private string timeSmallStepString = "5";
+        private string timeLargeStepString = "25";
+        private double smallStep, bigStep, timeSmallStep, timeLargeStep;
 
-        private bool pInc1, pInc2, pDec1, pDec2, nInc1, nInc2, nDec1, nDec2, rInc1, rInc2, rDec1, rDec2, timeInc, timeDec;
+        private bool pInc1, pInc2, pDec1, pDec2, nInc1, nInc2, nDec1, nDec2, rInc1, rInc2, rDec1, rDec2, timeInc1, timeInc2, timeDec1, timeDec2, orbitInc, orbitDec;
         private bool advancedMode;
 
         private ManeuverNodeData currentNode = null;
@@ -41,9 +44,24 @@ namespace ManeuverNodeController
             {
                 Destroy(this);
             }
-
             loaded = true;
+
+            gameObject.hideFlags = HideFlags.HideAndDontSave;
+            DontDestroyOnLoad(gameObject);
+
+            SpaceWarpManager.RegisterAppButton(
+                "Maneuver Node Cont.",
+                "BTN-ManeuverNodeController",
+                SpaceWarpManager.LoadIcon(),
+                ToggleButton);
         }
+
+        void ToggleButton(bool toggle)
+        {
+            interfaceEnabled = toggle;
+            GameObject.Find("BTN-MNC")?.GetComponent<UIValue_WriteBool_Toggle>()?.SetValue(toggle);
+        }
+
         void Awake()
         {
             windowRect = new Rect((Screen.width * 0.7f) - (windowWidth / 2), (Screen.height / 2) - (windowHeight / 2), 0, 0);
@@ -54,6 +72,7 @@ namespace ManeuverNodeController
             if (Input.GetKey(KeyCode.LeftAlt) && Input.GetKeyDown(KeyCode.N))
             {
                 interfaceEnabled = !interfaceEnabled;
+                Logger.Info("UI toggled with hotkey");
             }
         }
 
@@ -61,14 +80,17 @@ namespace ManeuverNodeController
         {
             if (interfaceEnabled)
             {
+                GUI.skin = SpaceWarpManager.Skin;
+
                 windowRect = GUILayout.Window(
                     GUIUtility.GetControlID(FocusType.Passive),
                     windowRect,
                     FillWindow,
-                    "Maneuver Node Controller",
+                    "<color=#696DFF>// MANEUVER NODE CONTROLLER</color>",
                     GUILayout.Height(0),
                     GUILayout.Width(350));
             }
+
         }
 
         private void FillWindow(int windowID)
@@ -101,21 +123,28 @@ namespace ManeuverNodeController
             }
             else
             {
-
                 GUILayout.BeginHorizontal();
-                GUILayout.Label($"Total Maneuver dV (m/s): {currentNode.BurnRequiredDV.ToString("n2")}");
+                GUILayout.Label($"Total Maneuver dV (m/s): ");
+                GUILayout.FlexibleSpace();
+                GUILayout.Label(currentNode.BurnRequiredDV.ToString("n2"));
                 GUILayout.EndHorizontal();
 
                 GUILayout.BeginHorizontal();
-                GUILayout.Label($"Prograde dV (m/s): {currentNode.BurnVector.z.ToString("n2")}");
+                GUILayout.Label($"Prograde dV (m/s): ");
+                GUILayout.FlexibleSpace();
+                GUILayout.Label(currentNode.BurnVector.z.ToString("n2"));
                 GUILayout.EndHorizontal();
 
                 GUILayout.BeginHorizontal();
-                GUILayout.Label($"Normal dV (m/s): {currentNode.BurnVector.y.ToString("n2")}");
+                GUILayout.Label($"Normal dV (m/s): ");
+                GUILayout.FlexibleSpace();
+                GUILayout.Label(currentNode.BurnVector.y.ToString("n2"));
                 GUILayout.EndHorizontal();
 
                 GUILayout.BeginHorizontal();
-                GUILayout.Label($"Radial dV (m/s): {currentNode.BurnVector.x.ToString("n2")}");
+                GUILayout.Label($"Radial dV (m/s): ");
+                GUILayout.FlexibleSpace();
+                GUILayout.Label(currentNode.BurnVector.x.ToString("n2"));
                 GUILayout.EndHorizontal();
 
                 GUILayout.Box("", horizontalDivider);
@@ -160,8 +189,8 @@ namespace ManeuverNodeController
             {
                 ManeuverNodeData nodeData = GameManager.Instance.Game.SpaceSimulation.Maneuvers.GetNodesForVessel(GameManager.Instance.Game.ViewController.GetActiveVehicle(true).Guid)[0];
                 //nodeData.BurnVector = burnParams;
-                GameManager.Instance.Game.UniverseModel.FindVesselComponent(nodeData.RelatedSimID)?.SimulationObject.FindComponent<ManeuverPlanComponent>().UpdateChangeOnNode(nodeData, burnParams);
-                GameManager.Instance.Game.UniverseModel.FindVesselComponent(nodeData.RelatedSimID)?.SimulationObject.FindComponent<ManeuverPlanComponent>().RefreshManeuverNodeState(0);
+                game.UniverseModel.FindVesselComponent(nodeData.RelatedSimID)?.SimulationObject.FindComponent<ManeuverPlanComponent>().UpdateChangeOnNode(nodeData, burnParams);
+                game.UniverseModel.FindVesselComponent(nodeData.RelatedSimID)?.SimulationObject.FindComponent<ManeuverPlanComponent>().RefreshManeuverNodeState(0);
                 Logger.Info(nodeData.ToString());
             }
         }
@@ -213,17 +242,41 @@ namespace ManeuverNodeController
             GUILayout.Box("", horizontalDivider);
 
             GUILayout.BeginHorizontal();
-            GUILayout.Label("Time Step (seconds): ", GUILayout.Width(windowWidth / 2));
-            timeStepString = GUILayout.TextField(timeStepString);
-            double.TryParse(timeStepString, out timeStep);
+            GUILayout.Label("Small Time Step (seconds): ", GUILayout.Width(windowWidth / 2));
+            timeSmallStepString = GUILayout.TextField(timeSmallStepString);
+            double.TryParse(timeSmallStepString, out timeSmallStep);
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
-            timeDec = GUILayout.Button("<", GUILayout.Width(windowWidth / 7));
+            GUILayout.Label("Large Time Step (seconds): ", GUILayout.Width(windowWidth / 2));
+            timeLargeStepString = GUILayout.TextField(timeLargeStepString);
+            double.TryParse(timeLargeStepString, out timeLargeStep);
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            timeDec2 = GUILayout.Button("<<", GUILayout.Width(windowWidth / 9));
+            timeDec1 = GUILayout.Button("<", GUILayout.Width(windowWidth / 9));
             GUILayout.FlexibleSpace();
             GUILayout.Label("Time", labelStyle);
             GUILayout.FlexibleSpace();
-            timeInc = GUILayout.Button(">", GUILayout.Width(windowWidth / 7));
+            timeInc1 = GUILayout.Button(">", GUILayout.Width(windowWidth / 9));
+            timeInc2 = GUILayout.Button(">>", GUILayout.Width(windowWidth / 9));
+            GUILayout.EndHorizontal();
+
+            GUILayout.Box("", horizontalDivider);
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Maneuver Node in: ");
+            GUILayout.FlexibleSpace();
+            GUILayout.Label($"{((currentNode.Time - game.UniverseModel.UniversalTime) / game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.period).ToString("n0")} orbit(s) ");
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            orbitDec = GUILayout.Button("-", GUILayout.Width(windowWidth / 7));
+            GUILayout.FlexibleSpace();
+            GUILayout.Label("Orbit", labelStyle);
+            GUILayout.FlexibleSpace();
+            orbitInc = GUILayout.Button("+", GUILayout.Width(windowWidth / 7));
             GUILayout.EndHorizontal();
 
             handleButtons();
@@ -231,7 +284,7 @@ namespace ManeuverNodeController
 
         private void handleButtons()
         {
-            if (pInc1 || pInc2 || pDec1 || pDec2 || nInc1 || nInc2 || nDec1 || nDec2 || rInc1 || rInc2 || rDec1 || rDec2 || timeDec || timeInc)
+            if (pInc1 || pInc2 || pDec1 || pDec2 || nInc1 || nInc2 || nDec1 || nDec2 || rInc1 || rInc2 || rDec1 || rDec2 || timeDec1 || timeDec2 || timeInc1 || timeInc2 || orbitDec || orbitInc)
             {
                 if (currentNode != null)
                 {
@@ -284,13 +337,32 @@ namespace ManeuverNodeController
                     {
                         burnParams.x -= bigStep;
                     }
-                    else if (timeDec)
+                    else if (timeDec1)
                     {
-                        currentNode.Time -= timeStep;
+                        currentNode.Time -= timeSmallStep;
                     }
-                    else if (timeInc)
+                    else if (timeDec2)
                     {
-                        currentNode.Time += timeStep;
+                        currentNode.Time -= timeLargeStep;
+                    }
+                    else if (timeInc1)
+                    {
+                        currentNode.Time += timeSmallStep;
+                    }
+                    else if (timeInc2)
+                    {
+                        currentNode.Time += timeLargeStep;
+                    }
+                    else if (orbitDec)
+                    {
+                        if (game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.period < (currentNode.Time- game.UniverseModel.UniversalTime))
+                        {
+                            currentNode.Time -= game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.period;
+                        }
+                    }
+                    else if (orbitInc)
+                    {
+                        currentNode.Time += game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.period;
                     }
 
                     game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID)?.SimulationObject.FindComponent<ManeuverPlanComponent>().UpdateChangeOnNode(currentNode, burnParams);
