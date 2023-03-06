@@ -1,21 +1,29 @@
+using BepInEx;
 using UnityEngine;
 using KSP.Game;
 using KSP.Sim.impl;
 using KSP.Sim.Maneuver;
+using SpaceWarp;
 using SpaceWarp.API;
 using SpaceWarp.API.Mods;
+using SpaceWarp.API.Assets;
+using SpaceWarp.API.UI;
+using SpaceWarp.API.UI.Appbar;
 using KSP.UI.Binding;
 
 namespace ManeuverNodeController
 {
-    [MainMod]
-    public class ManeuverNodeControllerMod : Mod
+    [BepInDependency(SpaceWarpPlugin.ModGuid, SpaceWarpPlugin.ModVer)]
+    [BepInPlugin("com.github.xyz3211.maneuvernodecontroller", "Maneuver Node Controller", "0.04")]
+    public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     {
+        private static ManeuverNodeControllerMod Instance { get; set; }
+
         static bool loaded = false;
         private bool interfaceEnabled = false;
         private Rect windowRect;
-        private int windowWidth = 500;
-        private int windowHeight = 700;
+        private int windowWidth = Screen.width / 5; //384px on 1920x1080
+        private int windowHeight = Screen.height / 3; //360px on 1920x1080
 
         private string progradeString = "0";
         private string normalString = "0";
@@ -39,7 +47,7 @@ namespace ManeuverNodeController
 
         public override void OnInitialized()
         {
-            Logger.Info("Loaded");
+            Logger.LogInfo("Loaded");
             if (loaded)
             {
                 Destroy(this);
@@ -49,10 +57,10 @@ namespace ManeuverNodeController
             gameObject.hideFlags = HideFlags.HideAndDontSave;
             DontDestroyOnLoad(gameObject);
 
-            SpaceWarpManager.RegisterAppButton(
+            Appbar.RegisterAppButton(
                 "Maneuver Node Cont.",
                 "BTN-ManeuverNodeController",
-                SpaceWarpManager.LoadIcon(),
+                AssetManager.GetAsset<Texture2D>($"{SpaceWarpMetadata.ModID}/images/icon.png"),
                 ToggleButton);
         }
 
@@ -71,8 +79,8 @@ namespace ManeuverNodeController
         {
             if (Input.GetKey(KeyCode.LeftAlt) && Input.GetKeyDown(KeyCode.N))
             {
-                interfaceEnabled = !interfaceEnabled;
-                Logger.Info("UI toggled with hotkey");
+                ToggleButton(!interfaceEnabled);
+                Logger.LogInfo("UI toggled with hotkey");
             }
         }
 
@@ -80,15 +88,15 @@ namespace ManeuverNodeController
         {
             if (interfaceEnabled)
             {
-                GUI.skin = SpaceWarpManager.Skin;
+                GUI.skin = Skins.ConsoleSkin;
 
                 windowRect = GUILayout.Window(
                     GUIUtility.GetControlID(FocusType.Passive),
                     windowRect,
                     FillWindow,
                     "<color=#696DFF>// MANEUVER NODE CONTROLLER</color>",
-                    GUILayout.Height(0),
-                    GUILayout.Width(350));
+                    GUILayout.Height(windowHeight),
+                    GUILayout.Width(windowWidth));
             }
 
         }
@@ -191,7 +199,7 @@ namespace ManeuverNodeController
                 //nodeData.BurnVector = burnParams;
                 game.UniverseModel.FindVesselComponent(nodeData.RelatedSimID)?.SimulationObject.FindComponent<ManeuverPlanComponent>().UpdateChangeOnNode(nodeData, burnParams);
                 game.UniverseModel.FindVesselComponent(nodeData.RelatedSimID)?.SimulationObject.FindComponent<ManeuverPlanComponent>().RefreshManeuverNodeState(0);
-                Logger.Info(nodeData.ToString());
+                Logger.LogInfo(nodeData.ToString());
             }
         }
 
@@ -242,13 +250,13 @@ namespace ManeuverNodeController
             GUILayout.Box("", horizontalDivider);
 
             GUILayout.BeginHorizontal();
-            GUILayout.Label("Small Time Step (seconds): ", GUILayout.Width(windowWidth / 2));
+            GUILayout.Label("Small Time Step (seconds): ", GUILayout.Width(2*windowWidth / 3));
             timeSmallStepString = GUILayout.TextField(timeSmallStepString);
             double.TryParse(timeSmallStepString, out timeSmallStep);
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
-            GUILayout.Label("Large Time Step (seconds): ", GUILayout.Width(windowWidth / 2));
+            GUILayout.Label("Large Time Step (seconds): ", GUILayout.Width(2*windowWidth / 3));
             timeLargeStepString = GUILayout.TextField(timeLargeStepString);
             double.TryParse(timeLargeStepString, out timeLargeStep);
             GUILayout.EndHorizontal();
@@ -268,7 +276,7 @@ namespace ManeuverNodeController
             GUILayout.BeginHorizontal();
             GUILayout.Label("Maneuver Node in: ");
             GUILayout.FlexibleSpace();
-            GUILayout.Label($"{((currentNode.Time - game.UniverseModel.UniversalTime) / game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.period).ToString("n0")} orbit(s) ");
+            GUILayout.Label($"{Math.Truncate((currentNode.Time - game.UniverseModel.UniversalTime) / game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.period).ToString("n0")} orbit(s) ");
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
