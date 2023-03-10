@@ -1,0 +1,13 @@
+{
+    "mod_id": "maneuver_node_controller",
+    "author": "XYZ3211 / highfly1000",
+    "name": "Maneuver Node Controller",
+    "description": "Provides an interface to finely tune maneuver nodes.",
+    "source": "https://github.com/highfly1000/ManeuverNodeController",
+    "version": "0.5.0f",
+    "dependencies": [],
+    "ksp2_version": {
+        "min": "0",
+        "max": "1"
+    }
+}

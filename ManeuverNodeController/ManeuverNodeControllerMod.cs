@@ -14,7 +14,7 @@ using KSP.UI.Binding;
 namespace ManeuverNodeController
 {
     [BepInDependency(SpaceWarpPlugin.ModGuid, SpaceWarpPlugin.ModVer)]
-    [BepInPlugin("com.github.xyz3211.maneuvernodecontroller", "Maneuver Node Controller", "0.04")]
+    [BepInPlugin("com.github.xyz3211.maneuvernodecontroller", "Maneuver Node Controller", "0.5.0")]
     public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     {
         private static ManeuverNodeControllerMod Instance { get; set; }
@@ -28,14 +28,28 @@ namespace ManeuverNodeController
         private string progradeString = "0";
         private string normalString = "0";
         private string radialString = "0";
+        private string absoluteValueString = "0";
         private string smallStepString = "5";
-        private string bigStepString = "100";
+        private string bigStepString = "25";
         private string timeSmallStepString = "5";
         private string timeLargeStepString = "25";
-        private double smallStep, bigStep, timeSmallStep, timeLargeStep;
+        private double absoluteValue, smallStep, bigStep, timeSmallStep, timeLargeStep;
 
-        private bool pInc1, pInc2, pDec1, pDec2, nInc1, nInc2, nDec1, nDec2, rInc1, rInc2, rDec1, rDec2, timeInc1, timeInc2, timeDec1, timeDec2, orbitInc, orbitDec;
+        private bool pAbs, pInc1, pInc2, pDec1, pDec2, nAbs, nInc1, nInc2, nDec1, nDec2, rAbs, rInc1, rInc2, rDec1, rDec2, timeInc1, timeInc2, timeDec1, timeDec2, orbitInc, orbitDec;
         private bool advancedMode;
+
+        // SnapTo selection.
+        private enum SnapOptions
+        {
+            Apoapsis,
+            Periapsis
+        }
+
+        private SnapOptions selectedSnapOption = SnapOptions.Apoapsis;
+        //private readonly List<string> snapOptions = new List<string> { "Apoapsis", "Periapsis" };
+        private bool selectingSnapOption = false;
+        private static Vector2 scrollPositionSnapOptions;
+        private bool applySnapOption;
 
         private ManeuverNodeData currentNode = null;
         List<ManeuverNodeData> activeNodes;
@@ -64,10 +78,10 @@ namespace ManeuverNodeController
                 ToggleButton);
         }
 
-        void ToggleButton(bool toggle)
+        private void ToggleButton(bool toggle)
         {
             interfaceEnabled = toggle;
-            GameObject.Find("BTN-MNC")?.GetComponent<UIValue_WriteBool_Toggle>()?.SetValue(toggle);
+            GameObject.Find("BTN-ManeuverNodeController")?.GetComponent<UIValue_WriteBool_Toggle>()?.SetValue(toggle);
         }
 
         void Awake()
@@ -205,6 +219,14 @@ namespace ManeuverNodeController
 
         private void drawSimpleMode()
         {
+
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Absolute dV (m/s): ", GUILayout.Width(windowWidth / 2));
+            absoluteValueString = GUILayout.TextField(absoluteValueString);
+            double.TryParse(absoluteValueString, out absoluteValue);
+            GUILayout.EndHorizontal();
+
             GUILayout.BeginHorizontal();
             GUILayout.Label("Small Step dV (m/s): ", GUILayout.Width(windowWidth / 2));
             smallStepString = GUILayout.TextField(smallStepString);
@@ -225,6 +247,7 @@ namespace ManeuverNodeController
             GUILayout.FlexibleSpace();
             pInc1 = GUILayout.Button(">", GUILayout.Width(windowWidth / 9));
             pInc2 = GUILayout.Button(">>", GUILayout.Width(windowWidth / 9));
+            pAbs = GUILayout.Button("Abs", GUILayout.Width(windowWidth / 9));
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
@@ -235,6 +258,7 @@ namespace ManeuverNodeController
             GUILayout.FlexibleSpace();
             nInc1 = GUILayout.Button(">", GUILayout.Width(windowWidth / 9));
             nInc2 = GUILayout.Button(">>", GUILayout.Width(windowWidth / 9));
+            nAbs = GUILayout.Button("Abs", GUILayout.Width(windowWidth / 9));
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
@@ -245,7 +269,12 @@ namespace ManeuverNodeController
             GUILayout.FlexibleSpace();
             rInc1 = GUILayout.Button(">", GUILayout.Width(windowWidth / 9));
             rInc2 = GUILayout.Button(">>", GUILayout.Width(windowWidth / 9));
+            rAbs = GUILayout.Button("Abs", GUILayout.Width(windowWidth / 9));
             GUILayout.EndHorizontal();
+
+            GUILayout.Box("", horizontalDivider);
+
+            SnapSelectionGUI();
 
             GUILayout.Box("", horizontalDivider);
 
@@ -290,93 +319,145 @@ namespace ManeuverNodeController
             handleButtons();
         }
 
-        private void handleButtons()
+        // Draws the snap selection GUI.
+        private void SnapSelectionGUI()
         {
-            if (pInc1 || pInc2 || pDec1 || pDec2 || nInc1 || nInc2 || nDec1 || nDec2 || rInc1 || rInc2 || rDec1 || rDec2 || timeDec1 || timeDec2 || timeInc1 || timeInc2 || orbitDec || orbitInc)
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("SnapTo: ", GUILayout.Width(windowWidth / 5));
+            if (!selectingSnapOption)
             {
-                if (currentNode != null)
-                {
-                    burnParams = Vector3d.zero;
-                    if (pInc1)
-                    {
-                        burnParams.z += smallStep;
-                    }
-                    else if (pInc2)
-                    {
-                        burnParams.z += bigStep;
-                    }
-                    else if (nInc1)
-                    {
-                        burnParams.y += smallStep;
-                    }
-                    else if (nInc2)
-                    {
-                        burnParams.y += bigStep;
-                    }
-                    else if (rInc1)
-                    {
-                        burnParams.x += smallStep;
-                    }
-                    else if (rInc2)
-                    {
-                        burnParams.x += bigStep;
-                    }
-                    else if (pDec1)
-                    {
-                        burnParams.z -= smallStep;
-                    }
-                    else if (pDec2)
-                    {
-                        burnParams.z -= bigStep;
-                    }
-                    else if (nDec1)
-                    {
-                        burnParams.y -= smallStep;
-                    }
-                    else if (nDec2)
-                    {
-                        burnParams.y -= bigStep;
-                    }
-                    else if (rDec1)
-                    {
-                        burnParams.x -= smallStep;
-                    }
-                    else if (rDec2)
-                    {
-                        burnParams.x -= bigStep;
-                    }
-                    else if (timeDec1)
-                    {
-                        currentNode.Time -= timeSmallStep;
-                    }
-                    else if (timeDec2)
-                    {
-                        currentNode.Time -= timeLargeStep;
-                    }
-                    else if (timeInc1)
-                    {
-                        currentNode.Time += timeSmallStep;
-                    }
-                    else if (timeInc2)
-                    {
-                        currentNode.Time += timeLargeStep;
-                    }
-                    else if (orbitDec)
-                    {
-                        if (game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.period < (currentNode.Time- game.UniverseModel.UniversalTime))
-                        {
-                            currentNode.Time -= game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.period;
-                        }
-                    }
-                    else if (orbitInc)
-                    {
-                        currentNode.Time += game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.period;
-                    }
+            if (GUILayout.Button(Enum.GetName(typeof(SnapOptions), selectedSnapOption)))
+                selectingSnapOption = true;
+            }
+            else
+            {
+            GUILayout.BeginVertical(GUI.skin.GetStyle("Box"));
+            scrollPositionSnapOptions = GUILayout.BeginScrollView(scrollPositionSnapOptions, false, true, GUILayout.Height(70));
 
-                    game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID)?.SimulationObject.FindComponent<ManeuverPlanComponent>().UpdateChangeOnNode(currentNode, burnParams);
-                    game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID)?.SimulationObject.FindComponent<ManeuverPlanComponent>().RefreshManeuverNodeState(0);
+            foreach (string snapOption in Enum.GetNames(typeof(SnapOptions)).ToList())
+            {
+                if (GUILayout.Button(snapOption))
+                {
+                    Enum.TryParse(snapOption, out selectedSnapOption);
+                    selectingSnapOption = false;
                 }
             }
+
+            GUILayout.EndScrollView();
+            GUILayout.EndVertical();
+            }
+
+            applySnapOption = GUILayout.Button("Snap", GUILayout.Width(windowWidth / 5));
+            GUILayout.EndHorizontal();
         }
-    }
+
+        private void handleButtons()
+        {
+            if (currentNode == null)
+                return;
+
+            if (pAbs || pInc1 || pInc2 || pDec1 || pDec2 || nAbs || nInc1 || nInc2 || nDec1 || nDec2 || rAbs || rInc1 || rInc2 || rDec1 || rDec2 || timeDec1 || timeDec2 || timeInc1 || timeInc2 || orbitDec || orbitInc || applySnapOption)
+            {
+                burnParams = Vector3d.zero;
+
+                if(pAbs)
+                {
+                    currentNode.BurnVector.z = absoluteValue;
+                }
+                else if (pInc1)
+                {
+                    burnParams.z += smallStep;
+                }
+                else if (pInc2)
+                {
+                    burnParams.z += bigStep;
+                }
+                else if (nAbs)
+                {
+                    currentNode.BurnVector.y = absoluteValue;
+                }
+                else if (nInc1)
+                {
+                    burnParams.y += smallStep;
+                }
+                else if (nInc2)
+                {
+                    burnParams.y += bigStep;
+                }
+                else if (rAbs)
+                {
+                    currentNode.BurnVector.x = absoluteValue;
+                }
+                else if (rInc1)
+                {
+                    burnParams.x += smallStep;
+                }
+                else if (rInc2)
+                {
+                    burnParams.x += bigStep;
+                }
+                else if (pDec1)
+                {
+                    burnParams.z -= smallStep;
+                }
+                else if (pDec2)
+                {
+                    burnParams.z -= bigStep;
+                }
+                else if (nDec1)
+                {
+                    burnParams.y -= smallStep;
+                }
+                else if (nDec2)
+                {
+                    burnParams.y -= bigStep;
+                }
+                else if (rDec1)
+                {
+                    burnParams.x -= smallStep;
+                }
+                else if (rDec2)
+                {
+                    burnParams.x -= bigStep;
+                }
+                else if (timeDec1)
+                {
+                    currentNode.Time -= timeSmallStep;
+                }
+                else if (timeDec2)
+                {
+                    currentNode.Time -= timeLargeStep;
+                }
+                else if (timeInc1)
+                {
+                    currentNode.Time += timeSmallStep;
+                }
+                else if (timeInc2)
+                {
+                    currentNode.Time += timeLargeStep;
+                }
+                else if (orbitDec)
+                {
+                    if (game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.period < (currentNode.Time- game.UniverseModel.UniversalTime))
+                    {
+                        currentNode.Time -= game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.period;
+                    }
+                }
+                else if (orbitInc)
+                {
+                    currentNode.Time += game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.period;
+                }
+                else if(applySnapOption)    //apply selected snap option
+                {
+                    if (selectedSnapOption == SnapOptions.Apoapsis)
+                        currentNode.Time = game.UniverseModel.UniversalTime + game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.TimeToAp;
+                    else if (selectedSnapOption == SnapOptions.Periapsis)
+                        currentNode.Time = game.UniverseModel.UniversalTime + game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.TimeToPe;
+                }
+
+                game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID)?.SimulationObject.FindComponent<ManeuverPlanComponent>().UpdateChangeOnNode(currentNode, burnParams);
+                game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID)?.SimulationObject.FindComponent<ManeuverPlanComponent>().RefreshManeuverNodeState(0);
+            }
+        }
+    }   
 }
