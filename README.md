@@ -13,3 +13,5 @@ https://creativecommons.org/licenses/by-sa/4.0/
 
 # Attribution
 GUI code and `.csproj` file based off Lazy Orbit by https://github.com/Halbann.
+Original code base by https://https://github.com/XYZ3211.
+
