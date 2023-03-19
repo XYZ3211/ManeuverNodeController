@@ -14,7 +14,7 @@ using KSP.UI.Binding;
 namespace ManeuverNodeController
 {
     [BepInDependency(SpaceWarpPlugin.ModGuid, SpaceWarpPlugin.ModVer)]
-    [BepInPlugin("com.github.xyz3211.maneuvernodecontroller", "Maneuver Node Controller", "0.5.0")]
+    [BepInPlugin("com.github.xyz3211.maneuvernodecontroller", "Maneuver Node Controller", "0.6.0")]
     public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     {
         private static ManeuverNodeControllerMod Instance { get; set; }
@@ -476,7 +476,6 @@ namespace ManeuverNodeController
                     else if (selectedSnapOption == SnapOptions.Periapsis)
                         currentNode.Time = game.UniverseModel.UniversalTime + game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.TimeToPe;
                 }
-
                 else if (activeNodeDec)
                 {
                     currentNodePos = currentNodePos > 0 ? currentNodePos - 1 : 0;
