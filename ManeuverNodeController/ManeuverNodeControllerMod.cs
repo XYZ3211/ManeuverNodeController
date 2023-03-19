@@ -14,7 +14,7 @@ using KSP.UI.Binding;
 namespace ManeuverNodeController
 {
     [BepInDependency(SpaceWarpPlugin.ModGuid, SpaceWarpPlugin.ModVer)]
-    [BepInPlugin("com.github.xyz3211.maneuvernodecontroller", "Maneuver Node Controller", "0.04")]
+    [BepInPlugin("com.github.xyz3211.maneuvernodecontroller", "Maneuver Node Controller", "0.5.0")]
     public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     {
         private static ManeuverNodeControllerMod Instance { get; set; }
@@ -36,6 +36,9 @@ namespace ManeuverNodeController
 
         private bool pInc1, pInc2, pDec1, pDec2, nInc1, nInc2, nDec1, nDec2, rInc1, rInc2, rDec1, rDec2, timeInc1, timeInc2, timeDec1, timeDec2, orbitInc, orbitDec;
         private bool advancedMode;
+
+        private int currentNodePos = 0;
+        private bool activeNodeDec, activeNodeInc;
 
         private ManeuverNodeData currentNode = null;
         List<ManeuverNodeData> activeNodes;
@@ -67,7 +70,7 @@ namespace ManeuverNodeController
         void ToggleButton(bool toggle)
         {
             interfaceEnabled = toggle;
-            GameObject.Find("BTN-MNC")?.GetComponent<UIValue_WriteBool_Toggle>()?.SetValue(toggle);
+            GameObject.Find("BTN-ManeuverNodeController")?.GetComponent<UIValue_WriteBool_Toggle>()?.SetValue(toggle);
         }
 
         void Awake()
@@ -119,7 +122,17 @@ namespace ManeuverNodeController
 
             game = GameManager.Instance.Game;
             activeNodes = game.SpaceSimulation.Maneuvers.GetNodesForVessel(GameManager.Instance.Game.ViewController.GetActiveVehicle(true).Guid);
-            currentNode = (activeNodes.Count() > 0) ? activeNodes[0] : null;
+
+            //saftey check, prevent currentNodePos from going above total number of nodes
+            int maneuverNodeCount = activeNodes.Count();
+            if ((currentNodePos + 1) > maneuverNodeCount)
+            {
+                currentNodePos = maneuverNodeCount - 1;
+            } else if (currentNodePos < 0)
+            {
+                currentNodePos = 0;
+            }
+            currentNode = (maneuverNodeCount > 0) ? activeNodes[currentNodePos] : null;
 
             GUILayout.BeginVertical();
 
@@ -131,6 +144,15 @@ namespace ManeuverNodeController
             }
             else
             {
+
+                GUILayout.BeginHorizontal();
+                activeNodeDec = GUILayout.Button("<", GUILayout.Width(windowWidth / 9));
+                GUILayout.FlexibleSpace();
+                GUILayout.Label($"Maneuver Node: {currentNodePos + 1}");
+                GUILayout.FlexibleSpace();
+                activeNodeInc = GUILayout.Button(">", GUILayout.Width(windowWidth / 9));
+                GUILayout.EndHorizontal();
+
                 GUILayout.BeginHorizontal();
                 GUILayout.Label($"Total Maneuver dV (m/s): ");
                 GUILayout.FlexibleSpace();
@@ -195,7 +217,7 @@ namespace ManeuverNodeController
 
             if (GUILayout.Button("Apply Changes to Node"))
             {
-                ManeuverNodeData nodeData = GameManager.Instance.Game.SpaceSimulation.Maneuvers.GetNodesForVessel(GameManager.Instance.Game.ViewController.GetActiveVehicle(true).Guid)[0];
+                ManeuverNodeData nodeData = GameManager.Instance.Game.SpaceSimulation.Maneuvers.GetNodesForVessel(GameManager.Instance.Game.ViewController.GetActiveVehicle(true).Guid)[currentNodePos];
                 //nodeData.BurnVector = burnParams;
                 game.UniverseModel.FindVesselComponent(nodeData.RelatedSimID)?.SimulationObject.FindComponent<ManeuverPlanComponent>().UpdateChangeOnNode(nodeData, burnParams);
                 game.UniverseModel.FindVesselComponent(nodeData.RelatedSimID)?.SimulationObject.FindComponent<ManeuverPlanComponent>().RefreshManeuverNodeState(0);
@@ -292,7 +314,7 @@ namespace ManeuverNodeController
 
         private void handleButtons()
         {
-            if (pInc1 || pInc2 || pDec1 || pDec2 || nInc1 || nInc2 || nDec1 || nDec2 || rInc1 || rInc2 || rDec1 || rDec2 || timeDec1 || timeDec2 || timeInc1 || timeInc2 || orbitDec || orbitInc)
+            if (pInc1 || pInc2 || pDec1 || pDec2 || nInc1 || nInc2 || nDec1 || nDec2 || rInc1 || rInc2 || rDec1 || rDec2 || timeDec1 || timeDec2 || timeInc1 || timeInc2 || orbitDec || orbitInc || activeNodeDec || activeNodeInc)
             {
                 if (currentNode != null)
                 {
@@ -372,9 +394,19 @@ namespace ManeuverNodeController
                     {
                         currentNode.Time += game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.period;
                     }
+                    else if (activeNodeDec)
+                    {
+                        currentNodePos = currentNodePos > 0 ? currentNodePos - 1 : 0;
+                        return; //Don't want to update or refresh after changing what node we are using
+                    }
+                    else if (activeNodeInc)
+                    {
+                        currentNodePos += 1;
+                        return; //Don't want to update or refresh after changing what node we are using
+                    }
 
                     game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID)?.SimulationObject.FindComponent<ManeuverPlanComponent>().UpdateChangeOnNode(currentNode, burnParams);
-                    game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID)?.SimulationObject.FindComponent<ManeuverPlanComponent>().RefreshManeuverNodeState(0);
+                    game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID)?.SimulationObject.FindComponent<ManeuverPlanComponent>().RefreshManeuverNodeState(currentNodePos);
                 }
             }
         }
