@@ -10,14 +10,16 @@ using SpaceWarp.API.Assets;
 using SpaceWarp.API.UI;
 using SpaceWarp.API.UI.Appbar;
 using KSP.UI.Binding;
-using MoonSharp.Interpreter.Tree;
 using KSP.Messages.PropertyWatchers;
-using Unity.Collections.LowLevel.Unsafe;
+// using MoonSharp.Interpreter.Tree;
+// using KSP.Messages.PropertyWatchers;
+// using Unity.Collections.LowLevel.Unsafe;
+// using EdyCommonTools;
 
 namespace ManeuverNodeController
 {
     [BepInDependency(SpaceWarpPlugin.ModGuid, SpaceWarpPlugin.ModVer)]
-    [BepInPlugin("com.github.xyz3211.maneuvernodecontroller", "Maneuver Node Controller", "0.6.0")]
+    [BepInPlugin("com.github.schlosrat.maneuvernodecontroller", "Maneuver Node Controller", "0.7.0")]
     public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     {
         private static ManeuverNodeControllerMod Instance { get; set; }
@@ -27,6 +29,7 @@ namespace ManeuverNodeController
         private Rect windowRect;
         private int windowWidth = Screen.width / 5; //384px on 1920x1080
         private int windowHeight = Screen.height / 3; //360px on 1920x1080
+        private Rect closeBtnRect;
 
         private string progradeString = "0";
         private string normalString = "0";
@@ -37,24 +40,28 @@ namespace ManeuverNodeController
         private string timeSmallStepString = "5";
         private string timeLargeStepString = "25";
         private double absoluteValue, smallStep, bigStep, timeSmallStep, timeLargeStep;
-        private VesselComponent activeVessel;
 
-        private bool pAbs, pInc1, pInc2, pDec1, pDec2, nAbs, nInc1, nInc2, nDec1, nDec2, rAbs, rInc1, rInc2, rDec1, rDec2, timeInc1, timeInc2, timeDec1, timeDec2, orbitInc, orbitDec, addNode;
+        private bool pAbs, pInc1, pInc2, pDec1, pDec2, nAbs, nInc1, nInc2, nDec1, nDec2, rAbs, rInc1, rInc2, rDec1, rDec2, timeInc1, timeInc2, timeDec1, timeDec2, orbitInc, orbitDec;
+        private bool snapToAp, snapToPe, snapToAN, snapToDN, addNode;
         private bool advancedMode;
 
         // SnapTo selection.
-        private enum SnapOptions
-        {
-            Apoapsis,
-            Periapsis
-        }
+        //private enum SnapOptions
+        //{
+        //    Apoapsis,
+        //    Periapsis,
+        //    AN,
+        //    DN
+        //}
 
-        private SnapOptions selectedSnapOption = SnapOptions.Apoapsis;
-        //private readonly List<string> snapOptions = new List<string> { "Apoapsis", "Periapsis" };
-        private bool selectingSnapOption = false;
-        private static Vector2 scrollPositionSnapOptions;
-        private bool applySnapOption;
+        // private SnapOptions selectedSnapOption = SnapOptions.Apoapsis;
+        // private readonly List<string> snapOptions = new List<string> { "Apoapsis", "Periapsis", "AN", "DN" };
+        // private bool selectingSnapOption = false;
+        // private static Vector2 scrollPositionSnapOptions;
+        // private bool applySnapOption;
 
+        private VesselComponent activeVessel;
+        private SimulationObjectModel currentTarget;
         private ManeuverNodeData currentNode = null;
         List<ManeuverNodeData> activeNodes;
         private Vector3d burnParams;
@@ -62,6 +69,19 @@ namespace ManeuverNodeController
         private GUIStyle errorStyle, warnStyle, progradeStyle, normalStyle, radialStyle, labelStyle;
         private GameInstance game;
         private GUIStyle horizontalDivider = new GUIStyle();
+        private GUISkin _spaceWarpUISkin;
+        private GUIStyle ctrlBtnStyle;
+        private GUIStyle mainWindowStyle;
+        private GUIStyle textInputStyle;
+        private GUIStyle sectionToggleStyle;
+        private GUIStyle closeBtnStyle;
+        private GUIStyle nameLabelStyle;
+        private GUIStyle valueLabelStyle;
+        private GUIStyle unitLabelStyle;
+        private string unitColorHex;
+        private int spacingAfterHeader = -12;
+        private int spacingAfterEntry = -12;
+        private int spacingAfterSection = 5;
 
         public override void OnInitialized()
         {
@@ -74,6 +94,67 @@ namespace ManeuverNodeController
 
             gameObject.hideFlags = HideFlags.HideAndDontSave;
             DontDestroyOnLoad(gameObject);
+
+            _spaceWarpUISkin = Skins.ConsoleSkin;
+
+            mainWindowStyle = new GUIStyle(_spaceWarpUISkin.window)
+            {
+                padding = new RectOffset(8, 8, 20, 8),
+                contentOffset = new Vector2(0, -22),
+                fixedWidth = windowWidth
+            };
+
+            textInputStyle = new GUIStyle(_spaceWarpUISkin.textField)
+            {
+                alignment = TextAnchor.LowerCenter,
+                padding = new RectOffset(10, 10, 0, 0),
+                contentOffset = new Vector2(0, 2),
+                fixedHeight = 18,
+                clipping = TextClipping.Overflow,
+                margin = new RectOffset(0, 0, 10, 0)
+            };
+
+            ctrlBtnStyle = new GUIStyle(_spaceWarpUISkin.button)
+            {
+                alignment = TextAnchor.MiddleCenter,
+                padding = new RectOffset(0, 0, 0, 3),
+                contentOffset = new Vector2(0, 2),
+                fixedHeight = 16,
+                fixedWidth = 16,
+                fontSize = 16,
+                clipping = TextClipping.Overflow,
+                margin = new RectOffset(0, 0, 10, 0)
+            };
+
+            sectionToggleStyle = new GUIStyle(_spaceWarpUISkin.toggle)
+            {
+                padding = new RectOffset(14, 0, 3, 3)
+            };
+
+            nameLabelStyle = new GUIStyle(_spaceWarpUISkin.label);
+            nameLabelStyle.normal.textColor = new Color(.7f, .75f, .75f, 1);
+
+            valueLabelStyle = new GUIStyle(_spaceWarpUISkin.label)
+            {
+                alignment = TextAnchor.MiddleRight
+            };
+            valueLabelStyle.normal.textColor = new Color(.6f, .7f, 1, 1);
+
+            unitLabelStyle = new GUIStyle(valueLabelStyle)
+            {
+                fixedWidth = 24,
+                alignment = TextAnchor.MiddleLeft
+            };
+            unitLabelStyle.normal.textColor = new Color(.7f, .75f, .75f, 1);
+
+            unitColorHex = ColorUtility.ToHtmlStringRGBA(unitLabelStyle.normal.textColor);
+
+            closeBtnStyle = new GUIStyle(_spaceWarpUISkin.button)
+            {
+                fontSize = 8
+            };
+
+            closeBtnRect = new Rect(windowWidth - 23, 6, 16, 16);
 
             Appbar.RegisterAppButton(
                 "Maneuver Node Cont.",
@@ -104,6 +185,8 @@ namespace ManeuverNodeController
 
         void OnGUI()
         {
+            activeVessel = GameManager.Instance?.Game?.ViewController?.GetActiveVehicle(true)?.GetSimVessel(true);
+            currentTarget = activeVessel.TargetObject;
             if (interfaceEnabled)
             {
                 GUI.skin = Skins.ConsoleSkin;
@@ -121,6 +204,11 @@ namespace ManeuverNodeController
 
         private void FillWindow(int windowID)
         {
+            if (CloseButton())
+            {
+                CloseWindow();
+            }
+
             labelStyle = warnStyle = new GUIStyle(GUI.skin.GetStyle("Label"));
             errorStyle = new GUIStyle(GUI.skin.GetStyle("Label"));
             errorStyle.normal.textColor = Color.red;
@@ -330,75 +418,94 @@ namespace ManeuverNodeController
             handleButtons();
         }
 
+        private bool CloseButton()
+        {
+            return GUI.Button(closeBtnRect, "x", closeBtnStyle);
+        }
+
+        private void CloseWindow()
+        {
+            GameObject.Find("BTN-MicroEngineerBtn")?.GetComponent<UIValue_WriteBool_Toggle>()?.SetValue(false);
+            interfaceEnabled = false;
+            ToggleButton(interfaceEnabled);
+        }
+
         // Draws the snap selection GUI.
         private void SnapSelectionGUI()
         {
             GUILayout.BeginHorizontal();
             GUILayout.Label("SnapTo: ", GUILayout.Width(windowWidth / 5));
-            if (!selectingSnapOption)
+            snapToAp = GUILayout.Button("Ap", GUILayout.Width(windowWidth / 9));
+            snapToPe = GUILayout.Button("Pe", GUILayout.Width(windowWidth / 9));
+            if (currentTarget != null)
             {
-            if (GUILayout.Button(Enum.GetName(typeof(SnapOptions), selectedSnapOption)))
-                selectingSnapOption = true;
+                snapToAN = GUILayout.Button("AN", GUILayout.Width(windowWidth / 9));
+                snapToDN = GUILayout.Button("DN", GUILayout.Width(windowWidth / 9));
             }
-            else
-            {
-            GUILayout.BeginVertical(GUI.skin.GetStyle("Box"));
-            scrollPositionSnapOptions = GUILayout.BeginScrollView(scrollPositionSnapOptions, false, true, GUILayout.Height(70));
+            GUILayout.FlexibleSpace();
+            //if (!selectingSnapOption)
+            //{
+            //if (GUILayout.Button(Enum.GetName(typeof(SnapOptions), selectedSnapOption)))
+            //    selectingSnapOption = true;
+            //}
+            //else
+            //{
+            //GUILayout.BeginVertical(GUI.skin.GetStyle("Box"));
+            //scrollPositionSnapOptions = GUILayout.BeginScrollView(scrollPositionSnapOptions, false, true, GUILayout.Height(70));
 
-            foreach (string snapOption in Enum.GetNames(typeof(SnapOptions)).ToList())
-            {
-                if (GUILayout.Button(snapOption))
-                {
-                    Enum.TryParse(snapOption, out selectedSnapOption);
-                    selectingSnapOption = false;
-                }
-            }
+            //foreach (string snapOption in Enum.GetNames(typeof(SnapOptions)).ToList())
+            //{
+            //    if (GUILayout.Button(snapOption))
+            //    {
+            //        Enum.TryParse(snapOption, out selectedSnapOption);
+            //        selectingSnapOption = false;
+            //    }
+            //}
 
-            GUILayout.EndScrollView();
-            GUILayout.EndVertical();
-            }
+            //GUILayout.EndScrollView();
+            //GUILayout.EndVertical();
+            //}
 
-            applySnapOption = GUILayout.Button("Snap", GUILayout.Width(windowWidth / 5));
+            //applySnapOption = GUILayout.Button("Snap", GUILayout.Width(windowWidth / 5));
             GUILayout.EndHorizontal();
         }
 
         private void handleButtons()
         {
-            if (addNode)
-            {
-                // Add an empty maneuver node
-                Logger.LogInfo("Adding New Node");
-                activeVessel = GameManager.Instance?.Game?.ViewController?.GetActiveVehicle(true)?.GetSimVessel(true);
-                Logger.LogInfo($"Vessel: {activeVessel.Name}");
-                Logger.LogInfo($"Vessel ID: {activeVessel.SimulationObject.GlobalId}");
-                Logger.LogInfo($"UT: {game.UniverseModel.UniversalTime}");
-                // Need a KSP.Sim.impl.IGGuid for the first argument to ManeuverNodeData
-                ManeuverNodeData nodeData = new ManeuverNodeData(activeVessel.SimulationObject.GlobalId, false, game.UniverseModel.UniversalTime);
-                Logger.LogInfo($"Node Data: {nodeData.ToString()}");
-                nodeData.BurnVector.x = 0;
-                nodeData.BurnVector.y = 0;
-                nodeData.BurnVector.z = 0;
-                Logger.LogInfo($"Node Data with Zero Burn: {nodeData.ToString()}");
-                currentNode = nodeData;
-                nodeData.Time = game.UniverseModel.UniversalTime + game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.TimeToAp;
-                Logger.LogInfo($"Node Data with Time set to Ap: {nodeData.ToString()}");
-                // Logger.LogInfo(nodeData.ToString());
-                GameManager.Instance.Game.SpaceSimulation.Maneuvers.AddNodeToVessel(nodeData);
-                // game.UniverseModel.FindVesselComponent(nodeData.RelatedSimID)?.SimulationObject.FindComponent<ManeuverPlanComponent>().UpdateChangeOnNode(nodeData, burnParams);
-                game.UniverseModel.FindVesselComponent(nodeData.RelatedSimID)?.SimulationObject.FindComponent<ManeuverPlanComponent>().RefreshManeuverNodeState(0);
-                addNode = false;
-            }
-
             if (currentNode == null)
             {
-                return;
+                if (addNode)
+                {
+                    // Add an empty maneuver node
+                    Logger.LogInfo("Adding New Node");
+                    // activeVessel = GameManager.Instance?.Game?.ViewController?.GetActiveVehicle(true)?.GetSimVessel(true);
+                    // Logger.LogInfo($"Vessel: {activeVessel.Name}");
+                    // Logger.LogInfo($"Vessel ID: {activeVessel.SimulationObject.GlobalId}");
+                    // Logger.LogInfo($"UT: {game.UniverseModel.UniversalTime}");
+                    // Need a KSP.Sim.impl.IGGuid for the first argument to ManeuverNodeData
+                    ManeuverNodeData nodeData = new ManeuverNodeData(activeVessel.SimulationObject.GlobalId, false, game.UniverseModel.UniversalTime);
+                    // Logger.LogInfo($"Node Data: {nodeData.ToString()}");
+                    nodeData.BurnVector.x = 0;
+                    nodeData.BurnVector.y = 0;
+                    nodeData.BurnVector.z = 0;
+                    // Logger.LogInfo($"Node Data with Zero Burn: {nodeData.ToString()}");
+                    currentNode = nodeData;
+                    nodeData.Time = game.UniverseModel.UniversalTime + game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.TimeToAp;
+                    // Logger.LogInfo($"Node Data with Time set to Ap: {nodeData.ToString()}");
+                    // Logger.LogInfo(nodeData.ToString());
+                    GameManager.Instance.Game.SpaceSimulation.Maneuvers.AddNodeToVessel(nodeData);
+                    // game.UniverseModel.FindVesselComponent(nodeData.RelatedSimID)?.SimulationObject.FindComponent<ManeuverPlanComponent>().UpdateChangeOnNode(nodeData, burnParams);
+                    game.UniverseModel.FindVesselComponent(nodeData.RelatedSimID)?.SimulationObject.FindComponent<ManeuverPlanComponent>().RefreshManeuverNodeState(0);
+                    addNode = false;
+                }
+                else return;
             }
 
-            if (pAbs || pInc1 || pInc2 || pDec1 || pDec2 || nAbs || nInc1 || nInc2 || nDec1 || nDec2 || rAbs || rInc1 || rInc2 || rDec1 || rDec2 || timeDec1 || timeDec2 || timeInc1 || timeInc2 || orbitDec || orbitInc || applySnapOption || addNode)
+            if (pAbs || pInc1 || pInc2 || pDec1 || pDec2 || nAbs || nInc1 || nInc2 || nDec1 || nDec2 || rAbs || rInc1 || rInc2 || rDec1 || rDec2 || timeDec1 || timeDec2 || timeInc1 || timeInc2 || orbitDec || orbitInc || snapToAp || snapToPe || snapToAN || snapToDN)
             {
                 burnParams = Vector3d.zero;
 
-                if(pAbs)
+                if (pAbs)
                 {
                     currentNode.BurnVector.z = absoluteValue;
                 }
@@ -476,7 +583,7 @@ namespace ManeuverNodeController
                 }
                 else if (orbitDec)
                 {
-                    if (game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.period < (currentNode.Time- game.UniverseModel.UniversalTime))
+                    if (game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.period < (currentNode.Time - game.UniverseModel.UniversalTime))
                     {
                         currentNode.Time -= game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.period;
                     }
@@ -485,13 +592,99 @@ namespace ManeuverNodeController
                 {
                     currentNode.Time += game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.period;
                 }
-                else if(applySnapOption)    //apply selected snap option
+                else if (snapToAp)    //apply selected snap option
                 {
-                    if (selectedSnapOption == SnapOptions.Apoapsis)
-                        currentNode.Time = game.UniverseModel.UniversalTime + game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.TimeToAp;
-                    else if (selectedSnapOption == SnapOptions.Periapsis)
-                        currentNode.Time = game.UniverseModel.UniversalTime + game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.TimeToPe;
+                    currentNode.Time = game.UniverseModel.UniversalTime + game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.TimeToAp;
                 }
+                else if (snapToPe)
+                {
+                    currentNode.Time = game.UniverseModel.UniversalTime + game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.TimeToPe;
+                }
+                else if (snapToAN || snapToDN)
+                {
+                    var t = game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.TrueAnomaly;
+                    var M = game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.MeanAnomaly;
+                    var e = game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.eccentricity;
+                    var M1 = Math.PI / 2.0 - e;
+                    var M2 = 3.0 * Math.PI / 2.0 - e;
+                    double Mx;
+                    double R2D = 180.0 / Math.PI;
+                    if (t* R2D > 270 || t* R2D <= 90) Mx = M1;
+                    else Mx = M2;
+                    var n = 2.0 * Math.PI / game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.period;
+                    double dt;
+                    Vector3d relativeANVector = game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.GetRelativeANVector();
+                    
+                    if (snapToAN)
+                    {
+                        dt = (M1 - M) / n;
+                    }
+                    else
+                    {
+                        dt = (M2 - M) / n;
+                    }
+                    currentNode.Time = game.UniverseModel.UniversalTime + dt;
+                    Logger.LogInfo($"True Anomaly: {t}");
+                    Logger.LogInfo($"Mean Anomaly: {M}");
+                    Logger.LogInfo($"Eccentricity: {e}");
+                    Logger.LogInfo($"Mean Anomaly 1: {M1}");
+                    Logger.LogInfo($"Mean Anomaly 2: {M2}");
+                    Logger.LogInfo($"Mx: {Mx}");
+                    Logger.LogInfo($"d: {n}");
+                    Logger.LogInfo($"dt: {dt}");
+                    Logger.LogInfo($"relativeANVector: {relativeANVector}");
+                }
+                //else if (snapToAN)
+                //{
+                //    // Need some math here, probably using the longitudeOfAscendingNode
+                //    // May need TrueAnomalyAtUT (angle from Pe to current point in orbit.
+                //    // May need GetUTforTrueAnomaly (the time for a particular True Anomoly)
+                //    // 
+                //    // Calculate True Anomaly of the Ascending Node from the argumentOfPeriapsis (w) (for the target?)
+                //    // f_o = 2*PI - w
+                //    // NOTE: f_t = TrueAnomaly
+                //    // get the EccentricAnomaly (E) for both true anomolies. The Eccentric anomaly is a quasi-angular parameter used in Kepler's equations
+                //    // to convert true anomaly angle into the Mean anomaly. In this direction, the calculation uses closed-form equations
+                //    // For (0 <= f < pi): E = arccos((e+cos(f))/(e*cos(f) + 1))
+                //    // for (pi <= f < 2pi): E = 2pi - arccos((e+cos(f))/(e*cos(f) + 1))
+                //    // get the MeanAnomaly for both: (M): M = E - e*sin(E)
+                //    // Calculate the Mean Motion n = Sqrt(mu / a^3)
+                //    // Using the difference between the Mean Anomalies, calculate the time since ascending node, t
+                //    // M_s >= M_w: t = (M_s - M_w)/n
+                //    // M_s < M_w: t = (2pi + M_s - M_w)/n
+                //    //
+
+                //    // Mean Anomaly
+                //    // var E1 = game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.EccentricAnomaly;
+                //    // var w = game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.argumentOfPeriapsis;
+                //    // var f = 2 * Math.PI - w;
+                //    var t = game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.TrueAnomaly;
+                //    var M = game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.MeanAnomaly;
+                //    var e = game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.eccentricity;
+                //    var M1 = Math.PI/2.0 - e;
+                //    var M2 = 3.0 * Math.PI / 2.0 - e;
+                //    double Mx;
+                //    if (t > 270 || t <= 90) Mx = M1;
+                //    else Mx = M2;
+                //    var n = 2.0*Math.PI/game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.period;
+                //    var dt = (Mx - M) / n;
+                //    currentNode.Time = game.UniverseModel.UniversalTime + dt;
+                //    Vector3d relativeANVector = game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.GetRelativeANVector();
+                    // currentNode.Time = game.UniverseModel.UniversalTime + game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.timeToTransition1;
+                    // Logger.LogInfo($"timeToTransition1: {game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.timeToTransition1}");
+                    // Logger.LogInfo($"an: {game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.an}");
+
+                    // Logger.LogInfo($"NextTT: {game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.}");
+
+
+                //}
+                //else if (snapToDN)
+                //{
+                //    // Need some math here, probably using the longitudeOfAscendingNode (which is 180 from the longitude of the Descending Node)
+                //    // currentNode.Time = game.UniverseModel.UniversalTime + game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.TimeToPe;
+                //    currentNode.Time = game.UniverseModel.UniversalTime + game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.timeToTransition2;
+
+                //}
 
                 game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID)?.SimulationObject.FindComponent<ManeuverPlanComponent>().UpdateChangeOnNode(currentNode, burnParams);
                 game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID)?.SimulationObject.FindComponent<ManeuverPlanComponent>().RefreshManeuverNodeState(0);
