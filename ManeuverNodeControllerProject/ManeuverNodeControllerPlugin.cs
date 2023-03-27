@@ -10,6 +10,7 @@ using SpaceWarp.API.Assets;
 using SpaceWarp.API.UI;
 using SpaceWarp.API.UI.Appbar;
 using KSP.UI.Binding;
+// using static UnityEngine.RemoteConfigSettingsHelper;
 using KSP.Messages.PropertyWatchers;
 // using MoonSharp.Interpreter.Tree;
 // using KSP.Messages.PropertyWatchers;
@@ -42,7 +43,7 @@ namespace ManeuverNodeController
         private double absoluteValue, smallStep, bigStep, timeSmallStep, timeLargeStep;
 
         private bool pAbs, pInc1, pInc2, pDec1, pDec2, nAbs, nInc1, nInc2, nDec1, nDec2, rAbs, rInc1, rInc2, rDec1, rDec2, timeInc1, timeInc2, timeDec1, timeDec2, orbitInc, orbitDec;
-        private bool snapToAp, snapToPe, snapToAN, snapToDN, addNode;
+        private bool snapToAp, snapToPe, snapToANe, snapToDNe, snapToANt, snapToDNt, addNode;
         private bool advancedMode;
 
         // SnapTo selection.
@@ -437,10 +438,12 @@ namespace ManeuverNodeController
             GUILayout.Label("SnapTo: ", GUILayout.Width(windowWidth / 5));
             snapToAp = GUILayout.Button("Ap", GUILayout.Width(windowWidth / 9));
             snapToPe = GUILayout.Button("Pe", GUILayout.Width(windowWidth / 9));
+            snapToANe = GUILayout.Button("ANe", GUILayout.Width(windowWidth / 9));
+            snapToDNe = GUILayout.Button("DNe", GUILayout.Width(windowWidth / 9));
             if (currentTarget != null)
             {
-                snapToAN = GUILayout.Button("AN", GUILayout.Width(windowWidth / 9));
-                snapToDN = GUILayout.Button("DN", GUILayout.Width(windowWidth / 9));
+                snapToANt = GUILayout.Button("ANt", GUILayout.Width(windowWidth / 9));
+                snapToDNt = GUILayout.Button("DNt", GUILayout.Width(windowWidth / 9));
             }
             GUILayout.FlexibleSpace();
             //if (!selectingSnapOption)
@@ -476,6 +479,7 @@ namespace ManeuverNodeController
             {
                 if (addNode)
                 {
+                    burnParams = Vector3d.zero;
                     // Add an empty maneuver node
                     Logger.LogInfo("Adding New Node");
                     // activeVessel = GameManager.Instance?.Game?.ViewController?.GetActiveVehicle(true)?.GetSimVessel(true);
@@ -493,15 +497,18 @@ namespace ManeuverNodeController
                     nodeData.Time = game.UniverseModel.UniversalTime + game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.TimeToAp;
                     // Logger.LogInfo($"Node Data with Time set to Ap: {nodeData.ToString()}");
                     // Logger.LogInfo(nodeData.ToString());
-                    GameManager.Instance.Game.SpaceSimulation.Maneuvers.AddNodeToVessel(nodeData);
+                    // GameManager.Instance.Game.SpaceSimulation.Maneuvers.AddNodeToVessel(nodeData);
+                    activeVessel.SimulationObject.ManeuverPlan.AddNode(nodeData);
+                    // activeVessel.SimulationObject.ManeuverPlan.UpdateChangeOnNode(nodeData, burnParams);
+                    activeVessel.SimulationObject.ManeuverPlan.RefreshManeuverNodeState(0);
                     // game.UniverseModel.FindVesselComponent(nodeData.RelatedSimID)?.SimulationObject.FindComponent<ManeuverPlanComponent>().UpdateChangeOnNode(nodeData, burnParams);
-                    game.UniverseModel.FindVesselComponent(nodeData.RelatedSimID)?.SimulationObject.FindComponent<ManeuverPlanComponent>().RefreshManeuverNodeState(0);
+                    // game.UniverseModel.FindVesselComponent(nodeData.RelatedSimID)?.SimulationObject.FindComponent<ManeuverPlanComponent>().RefreshManeuverNodeState(0);
                     addNode = false;
                 }
                 else return;
             }
 
-            if (pAbs || pInc1 || pInc2 || pDec1 || pDec2 || nAbs || nInc1 || nInc2 || nDec1 || nDec2 || rAbs || rInc1 || rInc2 || rDec1 || rDec2 || timeDec1 || timeDec2 || timeInc1 || timeInc2 || orbitDec || orbitInc || snapToAp || snapToPe || snapToAN || snapToDN)
+            if (pAbs || pInc1 || pInc2 || pDec1 || pDec2 || nAbs || nInc1 || nInc2 || nDec1 || nDec2 || rAbs || rInc1 || rInc2 || rDec1 || rDec2 || timeDec1 || timeDec2 || timeInc1 || timeInc2 || orbitDec || orbitInc || snapToAp || snapToPe || snapToANe || snapToDNe || snapToANt || snapToDNt)
             {
                 burnParams = Vector3d.zero;
 
@@ -592,102 +599,70 @@ namespace ManeuverNodeController
                 {
                     currentNode.Time += game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.period;
                 }
-                else if (snapToAp)    //apply selected snap option
+                else if (snapToAp) // Snap the maneuver time to the next Ap
                 {
                     currentNode.Time = game.UniverseModel.UniversalTime + game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.TimeToAp;
                 }
-                else if (snapToPe)
+                else if (snapToPe) // Snap the maneuver time to the next Pe
                 {
                     currentNode.Time = game.UniverseModel.UniversalTime + game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.TimeToPe;
                 }
-                else if (snapToAN || snapToDN)
+                else if (snapToANe) // Snap the maneuver time to the AN relative to the equatorial plane
                 {
-                    var t = game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.TrueAnomaly;
-                    var M = game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.MeanAnomaly;
-                    var e = game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.eccentricity;
-                    var M1 = Math.PI / 2.0 - e;
-                    var M2 = 3.0 * Math.PI / 2.0 - e;
-                    double Mx;
-                    double R2D = 180.0 / Math.PI;
-                    if (t* R2D > 270 || t* R2D <= 90) Mx = M1;
-                    else Mx = M2;
-                    var n = 2.0 * Math.PI / game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.period;
-                    double dt;
-                    Vector3d relativeANVector = game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.GetRelativeANVector();
-                    
-                    if (snapToAN)
-                    {
-                        dt = (M1 - M) / n;
-                    }
-                    else
-                    {
-                        dt = (M2 - M) / n;
-                    }
-                    currentNode.Time = game.UniverseModel.UniversalTime + dt;
-                    Logger.LogInfo($"True Anomaly: {t}");
-                    Logger.LogInfo($"Mean Anomaly: {M}");
-                    Logger.LogInfo($"Eccentricity: {e}");
-                    Logger.LogInfo($"Mean Anomaly 1: {M1}");
-                    Logger.LogInfo($"Mean Anomaly 2: {M2}");
-                    Logger.LogInfo($"Mx: {Mx}");
-                    Logger.LogInfo($"d: {n}");
-                    Logger.LogInfo($"dt: {dt}");
-                    Logger.LogInfo($"relativeANVector: {relativeANVector}");
+                    Logger.LogInfo("Snapping Maneuver Time to TimeOfAscendingNodeEquatorial");
+                    var UT = game.UniverseModel.UniversalTime;
+                    var TAN = activeVessel.Orbit.TimeOfAscendingNodeEquatorial(UT);
+                    var ANTA = activeVessel.Orbit.AscendingNodeEquatorialTrueAnomaly();
+                    // var TAN = game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.TimeOfAscendingNodeEquatorial(UT);
+                    currentNode.Time = TAN; // game.UniverseModel.UniversalTime + TAN;
+                    Logger.LogInfo($"UT: {UT}");
+                    Logger.LogInfo($"AscendingNodeEquatorialTrueAnomaly: {ANTA}");
+                    Logger.LogInfo($"TimeOfAscendingNodeEquatorial: {TAN}");
+                    // Logger.LogInfo($"UT + TimeOfAscendingNodeEquatorial: {TAN + UT}");
                 }
-                //else if (snapToAN)
-                //{
-                //    // Need some math here, probably using the longitudeOfAscendingNode
-                //    // May need TrueAnomalyAtUT (angle from Pe to current point in orbit.
-                //    // May need GetUTforTrueAnomaly (the time for a particular True Anomoly)
-                //    // 
-                //    // Calculate True Anomaly of the Ascending Node from the argumentOfPeriapsis (w) (for the target?)
-                //    // f_o = 2*PI - w
-                //    // NOTE: f_t = TrueAnomaly
-                //    // get the EccentricAnomaly (E) for both true anomolies. The Eccentric anomaly is a quasi-angular parameter used in Kepler's equations
-                //    // to convert true anomaly angle into the Mean anomaly. In this direction, the calculation uses closed-form equations
-                //    // For (0 <= f < pi): E = arccos((e+cos(f))/(e*cos(f) + 1))
-                //    // for (pi <= f < 2pi): E = 2pi - arccos((e+cos(f))/(e*cos(f) + 1))
-                //    // get the MeanAnomaly for both: (M): M = E - e*sin(E)
-                //    // Calculate the Mean Motion n = Sqrt(mu / a^3)
-                //    // Using the difference between the Mean Anomalies, calculate the time since ascending node, t
-                //    // M_s >= M_w: t = (M_s - M_w)/n
-                //    // M_s < M_w: t = (2pi + M_s - M_w)/n
-                //    //
-
-                //    // Mean Anomaly
-                //    // var E1 = game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.EccentricAnomaly;
-                //    // var w = game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.argumentOfPeriapsis;
-                //    // var f = 2 * Math.PI - w;
-                //    var t = game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.TrueAnomaly;
-                //    var M = game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.MeanAnomaly;
-                //    var e = game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.eccentricity;
-                //    var M1 = Math.PI/2.0 - e;
-                //    var M2 = 3.0 * Math.PI / 2.0 - e;
-                //    double Mx;
-                //    if (t > 270 || t <= 90) Mx = M1;
-                //    else Mx = M2;
-                //    var n = 2.0*Math.PI/game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.period;
-                //    var dt = (Mx - M) / n;
-                //    currentNode.Time = game.UniverseModel.UniversalTime + dt;
-                //    Vector3d relativeANVector = game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.GetRelativeANVector();
-                    // currentNode.Time = game.UniverseModel.UniversalTime + game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.timeToTransition1;
-                    // Logger.LogInfo($"timeToTransition1: {game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.timeToTransition1}");
-                    // Logger.LogInfo($"an: {game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.an}");
-
-                    // Logger.LogInfo($"NextTT: {game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.}");
-
-
-                //}
-                //else if (snapToDN)
-                //{
-                //    // Need some math here, probably using the longitudeOfAscendingNode (which is 180 from the longitude of the Descending Node)
-                //    // currentNode.Time = game.UniverseModel.UniversalTime + game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.TimeToPe;
-                //    currentNode.Time = game.UniverseModel.UniversalTime + game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.timeToTransition2;
-
-                //}
-
-                game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID)?.SimulationObject.FindComponent<ManeuverPlanComponent>().UpdateChangeOnNode(currentNode, burnParams);
-                game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID)?.SimulationObject.FindComponent<ManeuverPlanComponent>().RefreshManeuverNodeState(0);
+                else if (snapToDNe) // Snap the maneuver time to the DN relative to the equatorial plane
+                {
+                    Logger.LogInfo("Snapping Maneuver Time to TimeOfDescendingNodeEquatorial");
+                    var UT = game.UniverseModel.UniversalTime;
+                    var TDN = activeVessel.Orbit.TimeOfDescendingNodeEquatorial(UT);
+                    var DNTA = activeVessel.Orbit.DescendingNodeEquatorialTrueAnomaly();
+                    // var TDN = game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.TimeOfDescendingNodeEquatorial(UT);
+                    currentNode.Time = TDN; // game.UniverseModel.UniversalTime + TDN;
+                    Logger.LogInfo($"UT: {UT}");
+                    Logger.LogInfo($"DescendingNodeEquatorialTrueAnomaly: {DNTA}");
+                    Logger.LogInfo($"TimeOfDescendingNodeEquatorial: {TDN}");
+                    // Logger.LogInfo($"UT + TimeOfDescendingNodeEquatorial: {TDN + UT}");
+                }
+                else if (snapToANt) // Snap the maneuver time to the AN relative to selected target's orbit
+                {
+                    Logger.LogInfo("Snapping Maneuver Time to TimeOfAscendingNode");
+                    var UT = game.UniverseModel.UniversalTime;
+                    var TANt = activeVessel.Orbit.TimeOfAscendingNode(currentTarget.Orbit, UT);
+                    var ANTA = activeVessel.Orbit.AscendingNodeTrueAnomaly(currentTarget.Orbit);
+                    // var TANt = game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.TimeOfAscendingNode(currentTarget.Orbit, UT);
+                    currentNode.Time = TANt; // game.UniverseModel.UniversalTime + TANt;
+                    Logger.LogInfo($"UT: {UT}");
+                    Logger.LogInfo($"AscendingNodeTrueAnomaly: {ANTA}");
+                    Logger.LogInfo($"TimeOfAscendingNode: {TANt}");
+                    // Logger.LogInfo($"UT + TimeOfAscendingNode: {TANt + UT}");
+                }
+                else if (snapToDNt) // Snap the maneuver time to the DN relative to selected target's orbit
+                {
+                    Logger.LogInfo("Snapping Maneuver Time to TimeOfDescendingNode");
+                    var UT = game.UniverseModel.UniversalTime;
+                    var TDNt = activeVessel.Orbit.TimeOfDescendingNode(currentTarget.Orbit, UT);
+                    var DNTA = activeVessel.Orbit.DescendingNodeTrueAnomaly(currentTarget.Orbit);
+                    // var TDNt = game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.TimeOfDescendingNode(currentTarget.Orbit, UT);
+                    currentNode.Time = TDNt; // game.UniverseModel.UniversalTime + TDNt;
+                    Logger.LogInfo($"UT: {UT}");
+                    Logger.LogInfo($"DescendingNodeTrueAnomaly: {DNTA}");
+                    Logger.LogInfo($"TimeOfDescendingNode: {TDNt}");
+                    // Logger.LogInfo($"UT + TimeOfDescendingNode: {TDNt + UT}");
+                }
+                activeVessel.SimulationObject.ManeuverPlan.UpdateChangeOnNode(currentNode, burnParams);
+                activeVessel.SimulationObject.ManeuverPlan.RefreshManeuverNodeState(0);
+                // game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID)?.SimulationObject.FindComponent<ManeuverPlanComponent>().UpdateChangeOnNode(currentNode, burnParams);
+                // game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID)?.SimulationObject.FindComponent<ManeuverPlanComponent>().RefreshManeuverNodeState(0);
             }
         }
     }   
