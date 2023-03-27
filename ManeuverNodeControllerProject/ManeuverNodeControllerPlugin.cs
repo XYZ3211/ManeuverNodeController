@@ -12,6 +12,8 @@ using SpaceWarp.API.UI.Appbar;
 using KSP.UI.Binding;
 // using static UnityEngine.RemoteConfigSettingsHelper;
 using KSP.Messages.PropertyWatchers;
+using KSP.Sim;
+using KSP.Map;
 // using MoonSharp.Interpreter.Tree;
 // using KSP.Messages.PropertyWatchers;
 // using Unity.Collections.LowLevel.Unsafe;
@@ -473,37 +475,97 @@ namespace ManeuverNodeController
             GUILayout.EndHorizontal();
         }
 
+        /// <summary>
+        /// Creates a maneuver node at a given true anomaly
+        /// </summary>
+        /// <param name="burnVector"></param>
+        /// <param name="TrueAnomaly"></param>
+        private void CreateManeuverNode(Vector3d burnVector, double UT)
+        {
+            PatchedConicsOrbit referencedOrbit = activeVessel.Orbit as PatchedConicsOrbit;
+            if (referencedOrbit == null)
+            {
+                Logger.LogError("CreateManeuverNode: referencedOrbit is null!");
+                return;
+            }
+
+            // double TrueAnomalyRad = TrueAnomaly * Math.PI / 180;
+            // double UT = referencedOrbit.GetUTforTrueAnomaly(TrueAnomaly, 0);
+
+            ManeuverNodeData maneuverNodeData = new ManeuverNodeData(activeVessel.SimulationObject.GlobalId, true, UT);
+
+            IPatchedOrbit orbit = referencedOrbit;
+
+            orbit.PatchStartTransition = PatchTransitionType.Maneuver;
+            orbit.PatchEndTransition = PatchTransitionType.Final;
+
+            maneuverNodeData.SetManeuverState((PatchedConicsOrbit)orbit);
+
+            maneuverNodeData.BurnVector = burnVector;
+
+            currentNode = maneuverNodeData;
+
+            AddManeuverNode(maneuverNodeData);
+        }
+
+        private void AddManeuverNode(ManeuverNodeData maneuverNodeData)
+        {
+            Game.SpaceSimulation.Maneuvers.AddNodeToVessel(maneuverNodeData);
+
+
+            MapCore mapCore = null;
+            Game.Map.TryGetMapCore(out mapCore);
+
+            mapCore.map3D.ManeuverManager.GetNodeDataForVessels();
+            mapCore.map3D.ManeuverManager.UpdatePositionForGizmo(maneuverNodeData.NodeID);
+            mapCore.map3D.ManeuverManager.UpdateAll();
+            // mapCore.map3D.ManeuverManager.RemoveAll();
+        }
+
         private void handleButtons()
         {
             if (currentNode == null)
             {
                 if (addNode)
                 {
-                    burnParams = Vector3d.zero;
                     // Add an empty maneuver node
                     Logger.LogInfo("Adding New Node");
-                    // activeVessel = GameManager.Instance?.Game?.ViewController?.GetActiveVehicle(true)?.GetSimVessel(true);
-                    // Logger.LogInfo($"Vessel: {activeVessel.Name}");
-                    // Logger.LogInfo($"Vessel ID: {activeVessel.SimulationObject.GlobalId}");
-                    // Logger.LogInfo($"UT: {game.UniverseModel.UniversalTime}");
-                    // Need a KSP.Sim.impl.IGGuid for the first argument to ManeuverNodeData
+
+                    // Define empty node data
+                    burnParams = Vector3d.zero;
+                    double UT = game.UniverseModel.UniversalTime;
+                    if (activeVessel.Orbit.eccentricity < 1)
+                    {
+                        UT += activeVessel.Orbit.TimeToAp;
+                    }
+
+                    // Create the nodeData structure
                     ManeuverNodeData nodeData = new ManeuverNodeData(activeVessel.SimulationObject.GlobalId, false, game.UniverseModel.UniversalTime);
-                    // Logger.LogInfo($"Node Data: {nodeData.ToString()}");
+
+                    // Populate the nodeData structure
                     nodeData.BurnVector.x = 0;
                     nodeData.BurnVector.y = 0;
                     nodeData.BurnVector.z = 0;
-                    // Logger.LogInfo($"Node Data with Zero Burn: {nodeData.ToString()}");
-                    currentNode = nodeData;
-                    nodeData.Time = game.UniverseModel.UniversalTime + game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.TimeToAp;
-                    // Logger.LogInfo($"Node Data with Time set to Ap: {nodeData.ToString()}");
-                    // Logger.LogInfo(nodeData.ToString());
-                    // GameManager.Instance.Game.SpaceSimulation.Maneuvers.AddNodeToVessel(nodeData);
-                    activeVessel.SimulationObject.ManeuverPlan.AddNode(nodeData);
-                    // activeVessel.SimulationObject.ManeuverPlan.UpdateChangeOnNode(nodeData, burnParams);
+                    nodeData.Time = UT;
+
+                    // Add the new node to the vessel
+                    GameManager.Instance.Game.SpaceSimulation.Maneuvers.AddNodeToVessel(nodeData);
+
+                    // Update the map so the gizmo will be there
+                    MapCore mapCore = null;
+                    Game.Map.TryGetMapCore(out mapCore);
+
+                    mapCore.map3D.ManeuverManager.GetNodeDataForVessels();
+                    mapCore.map3D.ManeuverManager.UpdatePositionForGizmo(nodeData.NodeID);
+                    mapCore.map3D.ManeuverManager.UpdateAll();
+
+                    // Refresh stuff
+                    activeVessel.SimulationObject.ManeuverPlan.UpdateChangeOnNode(nodeData, burnParams);
                     activeVessel.SimulationObject.ManeuverPlan.RefreshManeuverNodeState(0);
-                    // game.UniverseModel.FindVesselComponent(nodeData.RelatedSimID)?.SimulationObject.FindComponent<ManeuverPlanComponent>().UpdateChangeOnNode(nodeData, burnParams);
-                    // game.UniverseModel.FindVesselComponent(nodeData.RelatedSimID)?.SimulationObject.FindComponent<ManeuverPlanComponent>().RefreshManeuverNodeState(0);
-                    addNode = false;
+
+                    // Set teh currentNode to be the node we just added
+                    currentNode = nodeData;
+                    // addNode = false;
                 }
                 else return;
             }

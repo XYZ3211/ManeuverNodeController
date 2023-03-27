@@ -8,7 +8,7 @@
         <AssemblyName>com.github.schlosrat.maneuver_node_controller</AssemblyName>
         <Product>Maneuver Node Controller</Product>
         <Description>Provides an interface to finely tune maneuver nodes</Description>
-        <Version>0.7.0</Version>
+        <Version>0.7.1</Version>
         <RestoreAdditionalProjectSources>
             https://api.nuget.org/v3/index.json;
             https://nuget.bepinex.dev/v3/index.json
