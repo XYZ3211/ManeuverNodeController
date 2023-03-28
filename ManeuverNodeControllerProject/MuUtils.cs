@@ -1,11 +1,14 @@
-﻿using KSP.Sim.impl;
+﻿using KSP.Game;
+using KSP.Sim.impl;
 // using System;
 // using System.Collections.Generic;
 // using System.IO;
 // using System.Reflection;
 using UnityEngine;
+using ManeuverNodeController;
+using KSP.Sim;
 
-namespace ManeuverNodeController
+namespace MuMech
 {
     public static class MuUtils
     {
@@ -152,35 +155,42 @@ namespace ManeuverNodeController
             return result;
         }
 
-        //public static PatchedConicsOrbit OrbitFromStateVectors(Vector3d pos, Vector3d vel, CelestialBodyComponent body, double UT) // was: CelestialBody
-        //{
-        //    PatchedConicsOrbit ret = new Orbit();
-        //    ret.UpdateFromStateVectors(OrbitExtensions.SwapYZ(pos - body.localPosition), OrbitExtensions.SwapYZ(vel), body, UT); // was: body.position
-        //    if (double.IsNaN(ret.argumentOfPeriapsis))
-        //    {
-        //        // was: ret.LAN -> longitudeOfAscendingNode
-        //        // was: Planetarium.up -> ???
-        //        // was: Planetarium.right -> ???
-        //        Vector3d vectorToAN = Quaternion.AngleAxis(-(float)ret.longitudeOfAscendingNode, Planetarium.up) * Planetarium.right;
-        //        Vector3d vectorToPe = OrbitExtensions.SwapYZ(ret.eccVec);
-        //        double cosArgumentOfPeriapsis = Vector3d.Dot(vectorToAN, vectorToPe) / (vectorToAN.magnitude * vectorToPe.magnitude);
-        //        //Squad's UpdateFromStateVectors is missing these checks, which are needed due to finite precision arithmetic:
-        //        if(cosArgumentOfPeriapsis > 1) {
-        //            ret.argumentOfPeriapsis = 0;
-        //        } else if(cosArgumentOfPeriapsis < -1) {
-        //            ret.argumentOfPeriapsis = 180;
-        //        } else {
-        //            ret.argumentOfPeriapsis = Math.Acos(cosArgumentOfPeriapsis);
-        //        }
-        //    }
-        //    return ret;
-        //}
+        public static PatchedConicsOrbit OrbitFromStateVectors(Vector3d pos, Vector3d vel, CelestialBodyComponent body, double UT) // was: CelestialBody
+        {
+            PatchedConicsOrbit ret = new PatchedConicsOrbit(GameManager.Instance.Game.UniverseModel);
+            KSP.Sim.Position position = new KSP.Sim.Position(body.coordinateSystem, OrbitExtensions.SwapYZ(pos - body.Position.localPosition));
+            KSP.Sim.Velocity velocity = new KSP.Sim.Velocity(body.relativeToMotion, OrbitExtensions.SwapYZ(vel));
+            ret.UpdateFromStateVectors(position, velocity, body, UT); // was: body.position
+            if (double.IsNaN(ret.argumentOfPeriapsis))
+            {
+                // was: ret.LAN -> longitudeOfAscendingNode
+                // was: Planetarium.up ->  body.Orbit.ReferenceFrame.up.vector
+                // was: Planetarium.right -> body.Orbit.ReferenceFrame.right.vector
+                Vector3d vectorToAN = Quaternion.AngleAxis(-(float)ret.longitudeOfAscendingNode, body.Orbit.ReferenceFrame.up.vector) * body.Orbit.ReferenceFrame.right.vector;
+                Vector3d vectorToPe = OrbitExtensions.SwapYZ(ret.eccVec);
+                double cosArgumentOfPeriapsis = Vector3d.Dot(vectorToAN, vectorToPe) / (vectorToAN.magnitude * vectorToPe.magnitude);
+                //Squad's UpdateFromStateVectors is missing these checks, which are needed due to finite precision arithmetic:
+                if (cosArgumentOfPeriapsis > 1)
+                {
+                    ret.argumentOfPeriapsis = 0;
+                }
+                else if (cosArgumentOfPeriapsis < -1)
+                {
+                    ret.argumentOfPeriapsis = 180;
+                }
+                else
+                {
+                    ret.argumentOfPeriapsis = Math.Acos(cosArgumentOfPeriapsis);
+                }
+            }
+            return ret;
+        }
 
         //public static bool PhysicsRunning()
         //{
         //    return (TimeWarp.WarpMode == TimeWarp.Modes.LOW) || (TimeWarp.CurrentRateIndex == 0);
         //}
-        
+
         //public static string SystemClipboard
         //{
         //    get => GUIUtility.systemCopyBuffer;

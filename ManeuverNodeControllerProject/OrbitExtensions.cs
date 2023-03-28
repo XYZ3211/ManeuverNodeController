@@ -1,21 +1,22 @@
-﻿using BepInEx;
-using System;
+﻿//using BepInEx;
+//using System;
 using UnityEngine;
 using KSP.Game;
 using KSP.Sim;
 using KSP.Sim.impl;
-using KSP.Sim.State;
-using KSP.Sim.Maneuver;
-using SpaceWarp;
-using SpaceWarp.API;
-using SpaceWarp.API.Mods;
-using SpaceWarp.API.Assets;
-using SpaceWarp.API.UI;
-using SpaceWarp.API.UI.Appbar;
-using KSP.UI.Binding;
+//using KSP.Sim.State;
+//using KSP.Sim.Maneuver;
+//using SpaceWarp;
+//using SpaceWarp.API;
+//using SpaceWarp.API.Mods;
+//using SpaceWarp.API.Assets;
+//using SpaceWarp.API.UI;
+//using SpaceWarp.API.UI.Appbar;
+//using KSP.UI.Binding;
+//using ManeuverNodeController;
 // using KSP.Api;
 
-namespace ManeuverNodeController
+namespace MuMech
 {
     public static class OrbitExtensions
     {
@@ -111,22 +112,22 @@ namespace ManeuverNodeController
 
         //normalized vector parallel to the planet's surface, and pointing in the same general direction as the orbital velocity
         //(parallel to an ideally spherical planet's surface, anyway)
-        //public static Vector3d Horizontal(this PatchedConicsOrbit o, double UT)
-        //{
-        //    return Vector3d.Exclude(o.Up(UT), o.Prograde(UT)).normalized;
-        //}
+        public static Vector3d Horizontal(this PatchedConicsOrbit o, double UT)
+        {
+            return Vector3d.Exclude(o.Up(UT), o.Prograde(UT)).normalized;
+        }
 
         //horizontal component of the velocity vector
-        //public static Vector3d HorizontalVelocity(this PatchedConicsOrbit o, double UT)
-        //{
-        //    return Vector3d.Exclude(o.Up(UT), o.SwappedOrbitalVelocityAtUT(UT));
-        //}
+        public static Vector3d HorizontalVelocity(this PatchedConicsOrbit o, double UT)
+        {
+            return Vector3d.Exclude(o.Up(UT), o.SwappedOrbitalVelocityAtUT(UT));
+        }
 
         //vertical component of the velocity vector
-        //public static Vector3d VerticalVelocity(this PatchedConicsOrbit o, double UT)
-        //{
-        //    return Vector3d.Dot(o.Up(UT), o.SwappedOrbitalVelocityAtUT(UT)) * o.Up(UT);
-        //}
+        public static Vector3d VerticalVelocity(this PatchedConicsOrbit o, double UT)
+        {
+            return Vector3d.Dot(o.Up(UT), o.SwappedOrbitalVelocityAtUT(UT)) * o.Up(UT);
+        }
 
         //normalized vector parallel to the planet's surface and pointing in the northward direction
         public static Vector3d North(this PatchedConicsOrbit o, double UT)
@@ -137,54 +138,57 @@ namespace ManeuverNodeController
         }
 
         //normalized vector parallel to the planet's surface and pointing in the eastward direction
-        //public static Vector3d East(this PatchedConicsOrbit o, double UT)
-        //{
-        //    return Vector3d.Cross(o.Up(UT), o.North(UT));
-        //}
+        public static Vector3d East(this PatchedConicsOrbit o, double UT)
+        {
+            return Vector3d.Cross(o.Up(UT), o.North(UT));
+        }
 
         //distance from the center of the planet
-        //public static double Radius(this PatchedConicsOrbit o, double UT)
-        //{
-        //    return o.SwappedRelativePositionAtUT(UT).magnitude;
-        //}
+        public static double Radius(this PatchedConicsOrbit o, double UT)
+        {
+            return o.SwappedRelativePositionAtUT(UT).magnitude;
+        }
 
         //returns a new PatchedConicsOrbit object that represents the result of applying a given dV to o at UT
-        //public static PatchedConicsOrbit PerturbedOrbit(this PatchedConicsOrbit o, double UT, Vector3d dV)
-        //{
-        //    return MuUtils.OrbitFromStateVectors(o.SwappedAbsolutePositionAtUT(UT), o.SwappedOrbitalVelocityAtUT(UT) + dV, o.referenceBody, UT);
-        //}
+        public static PatchedConicsOrbit PerturbedOrbit(this PatchedConicsOrbit o, double UT, Vector3d dV)
+        {
+            return MuUtils.OrbitFromStateVectors(o.SwappedAbsolutePositionAtUT(UT), o.SwappedOrbitalVelocityAtUT(UT) + dV, o.referenceBody, UT);
+        }
 
         // returns a new orbit that is identical to the current one (although the epoch will change)
         // (i tried many different APIs in the orbit class, but the GetOrbitalStateVectors/UpdateFromStateVectors route was the only one that worked)
-        //public static PatchedConicsOrbit Clone(this PatchedConicsOrbit o, double UT = Double.NegativeInfinity)
-        //{
-        //    Vector3d pos, vel;
+        public static PatchedConicsOrbit Clone(this PatchedConicsOrbit o, double UT = Double.NegativeInfinity)
+        {
+            Vector3d pos, vel;
 
-        //    // hack up a dynamic default value to the current time
-        //    if ( UT == Double.NegativeInfinity )
-        //        UT = Planetarium.GetUniversalTime();
+            // hack up a dynamic default value to the current time
+            if (UT == Double.NegativeInfinity)
+                UT = GameManager.Instance.Game.UniverseModel.UniversalTime;
 
-        //    PatchedConicsOrbit newOrbit = new PatchedConicsOrbit();
-        //    o.GetOrbitalStateVectorsAtUT(UT, out pos, out vel);
-        //    newOrbit.UpdateFromStateVectors(pos, vel, o.referenceBody, UT);
+            PatchedConicsOrbit newOrbit = new PatchedConicsOrbit(GameManager.Instance.Game.UniverseModel);
+            o.GetOrbitalStateVectorsAtUT(UT, out pos, out vel);
+            KSP.Sim.Position position = new KSP.Sim.Position(o.referenceBody.coordinateSystem, OrbitExtensions.SwapYZ(pos - o.referenceBody.Position.localPosition));
+            KSP.Sim.Velocity velocity = new KSP.Sim.Velocity(o.referenceBody.relativeToMotion, OrbitExtensions.SwapYZ(vel));
+            newOrbit.UpdateFromStateVectors(position, velocity, o.referenceBody, UT);
 
-        //    return newOrbit;
-        //}
+            return newOrbit;
+        }
 
         // calculate the next patch, which makes patchEndTransition be valid
-        //
         //public static PatchedConicsOrbit CalculateNextOrbit(this PatchedConicsOrbit o, double UT = Double.NegativeInfinity)
         //{
-        //    PatchedConics.SolverParameters solverParameters = new PatchedConics.SolverParameters();
+        //    PatchedConicSolver.SolverParameters solverParameters = new PatchedConicSolver.SolverParameters();
 
         //    // hack up a dynamic default value to the current time
-        //    if ( UT == Double.NegativeInfinity )
-        //        UT = Planetarium.GetUniversalTime();
+        //    if (UT == Double.NegativeInfinity)
+        //        UT = GameManager.Instance.Game.UniverseModel.UniversalTime;
 
         //    o.StartUT = UT;
         //    o.EndUT = o.eccentricity >= 1.0 ? o.period : UT + o.period;
-        //    PatchedConicsOrbit nextOrbit = new PatchedConicsOrbit();
-        //    PatchedConics.CalculatePatch(o, nextOrbit, UT, solverParameters, null);
+        //    PatchedConicsOrbit nextOrbit = new PatchedConicsOrbit(GameManager.Instance.Game.UniverseModel);
+        //    // Maybe this need to be CalculatePatchConicList, or CalculatePatchList?
+        //    // CalculatePatchConicList takes int ManeuverNumber as input and CalculatePatchList takes no inputs.
+        //    PatchedConics.CalculatePatch(o, nextOrbit, UT, solverParameters, null); // Maybe this need to be CalculatePatchConicList, or CalculatePatchList ???
 
         //    return nextOrbit;
         //}
@@ -192,7 +196,7 @@ namespace ManeuverNodeController
         // This does not allocate a new orbit object and the caller should call new PatchedConicsOrbit if/when required
         //public static void MutatedOrbit(this PatchedConicsOrbit o, double periodOffset = Double.NegativeInfinity)
         //{
-        //    double UT = Planetarium.GetUniversalTime();
+        //    double UT = GameManager.Instance.Game.UniverseModel.UniversalTime;
 
         //    if (periodOffset.IsFinite())
         //    {
@@ -660,35 +664,36 @@ namespace ManeuverNodeController
             // was: o.ApR -> Apoapsis, should this be ApoapsisArl?
             // was: o.LAN -> longitudeOfAscendingNode
             // was: o.trueAnomaly -> TrueAnomaly
-            return "Periapsis:" + o.Periapsis + " Apoapsis:" + o.Apoapsis + " SMA:" + o.semiMajorAxis + " ECC:" + o.eccentricity + " INC:" + o.inclination + " LAN:" + o.longitudeOfAscendingNode + " ArgP:" + o.argumentOfPeriapsis + " TA:" + o.TrueAnomaly;
+            return "PeriapsisArl:" + o.PeriapsisArl + " ApoapsisArl:" + o.ApoapsisArl + " SMA:" + o.semiMajorAxis + " ECC:" + o.eccentricity + " INC:" + o.inclination + " LAN:" + o.longitudeOfAscendingNode + " ArgP:" + o.argumentOfPeriapsis + " TA:" + o.TrueAnomaly;
         }
 
-    //    public static double SuicideBurnCountdown(PatchedConicsOrbit orbit, VesselState vesselState, Vessel vessel)
-    //    {
-    //        if (vesselState.mainBody == null) return 0;
-    //        if (orbit.PeA > 0) return Double.PositiveInfinity;
+        //public static double SuicideBurnCountdown(PatchedConicsOrbit orbit, VesselState vesselState, VesselComponent vessel)
+        //{
+        //    if (vessel.mainBody == null) return 0;
+        //    if (orbit.PeriapsisArl > 0) return Double.PositiveInfinity;
 
-    //        double angleFromHorizontal = 90 - Vector3d.Angle(-vessel.srf_velocity, vesselState.up);
-    //        angleFromHorizontal = MuUtils.Clamp(angleFromHorizontal, 0, 90);
-    //        double sine = Math.Sin(angleFromHorizontal * UtilMath.Deg2Rad);
-    //        double g = vesselState.localg;
-    //        double T = vesselState.limitedMaxThrustAccel;
+        //    double UT = GameManager.Instance.Game.UniverseModel.UniversalTime;
+        //    double angleFromHorizontal = 90 - Vector3d.Angle(-vessel.SurfaceVelocity.vector, vessel.Orbit.Up(UT));
+        //    angleFromHorizontal = MuUtils.Clamp(angleFromHorizontal, 0, 90);
+        //    double sine = Math.Sin(angleFromHorizontal * UtilMath.Deg2Rad);
+        //    double g = vessel.graviticAcceleration.magnitude;
+        //    double T = vesselState.limitedMaxThrustAccel;
 
-    //        double effectiveDecel = 0.5 * (-2 * g * sine + Math.Sqrt((2 * g * sine) * (2 * g * sine) + 4 * (T * T - g * g)));
-    //        double decelTime = vesselState.speedSurface / effectiveDecel;
+        //    double effectiveDecel = 0.5 * (-2 * g * sine + Math.Sqrt((2 * g * sine) * (2 * g * sine) + 4 * (T * T - g * g)));
+        //    double decelTime = vessel.SrfSpeedMagnitude / effectiveDecel;
 
-    //        Vector3d estimatedLandingSite = vesselState.CoM + 0.5 * decelTime * vessel.srf_velocity;
-    //        double terrainRadius = vesselState.mainBody.Radius + vesselState.mainBody.TerrainAltitude(estimatedLandingSite);
-    //        double impactTime = 0;
-    //        try
-    //        {
-    //            impactTime = orbit.NextTimeOfRadius(vesselState.time, terrainRadius);
-    //        }
-    //        catch (ArgumentException)
-    //        {
-    //            return 0;
-    //        }
-    //        return impactTime - decelTime / 2 - vesselState.time;
-    //    }
+        //    Vector3d estimatedLandingSite = vessel.CenterOfMass.localPosition + 0.5 * decelTime * vessel.SurfaceVelocity.vector;
+        //    double terrainRadius = vessel.mainBody.Radius + vessel.mainBody.TerrainAltitude(estimatedLandingSite);
+        //    double impactTime = 0;
+        //    try
+        //    {
+        //        impactTime = orbit.NextTimeOfRadius(vesselState.time, terrainRadius);
+        //    }
+        //    catch (ArgumentException)
+        //    {
+        //        return 0;
+        //    }
+        //    return impactTime - decelTime / 2 - vesselState.time;
+        //}
     }
 }
