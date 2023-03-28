@@ -1,4 +1,7 @@
 [Bb]in/
 [Oo]bj/
+[De]bug/
+[Rr]elease/
+external_dlls/
 .vs/
 *.zip

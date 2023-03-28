@@ -18,6 +18,7 @@ using KSP.Map;
 // using KSP.Messages.PropertyWatchers;
 // using Unity.Collections.LowLevel.Unsafe;
 // using EdyCommonTools;
+using MuMech;
 
 namespace ManeuverNodeController
 {
