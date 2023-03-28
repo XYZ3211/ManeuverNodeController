@@ -1238,3 +1238,4 @@ namespace MuMech
         }
     }
 }
+>>>>>>> ae6a0626f59e542bd157e2232b91604ffeb22fa9
