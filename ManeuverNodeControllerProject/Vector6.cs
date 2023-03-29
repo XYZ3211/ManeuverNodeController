@@ -1,8 +1,14 @@
 ﻿using System;
+using KSP.Sim.impl;
+using KSP.Sim;
+using KSP.Sim.State;
+using KSP.Game;
+using ManeuverNodeController;
+using KSP.IO;
 
 namespace MuMech
 {
-    public class Vector6 : IConfigNode
+    public class Vector6 // : IConfigNode
     {
         public Vector3d positive = Vector3d.zero, negative = Vector3d.zero;
 
@@ -112,22 +118,22 @@ namespace MuMech
             return Math.Max(positive.MaxMagnitude(),negative.MaxMagnitude());
         }
 
-        public void Load(ConfigNode node)
-        {
-            if (node.HasValue("positive"))
-            {
-                positive = KSPUtil.ParseVector3d(node.GetValue("positive"));
-            }
-            if (node.HasValue("negative"))
-            {
-                negative = KSPUtil.ParseVector3d(node.GetValue("negative"));
-            }
-        }
+        //public void Load(PluginConfigNode node) // was ConfigNode
+        //{
+        //    if (node.GetValue("positive") != null) // was node.HasValue("positive")
+        //    {
+        //        positive = KSPUtil.ParseVector3d(node.GetValue("positive"));
+        //    }
+        //    if (node.GetValue("negative") != null) // was node.HasValue("negative")
+        //    {
+        //        negative = KSPUtil.ParseVector3d(node.GetValue("negative"));
+        //    }
+        //}
 
-        public void Save(ConfigNode node)
-        {
-            node.SetValue("positive", KSPUtil.WriteVector(positive));
-            node.SetValue("negative", KSPUtil.WriteVector(negative));
-        }
+        //public void Save(PluginConfigNode node) // was ConfigNode
+        //{
+        //    node.SetValue("positive", KSPUtil.WriteVector(positive));
+        //    node.SetValue("negative", KSPUtil.WriteVector(negative));
+        //}
     }
 }
