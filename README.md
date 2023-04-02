@@ -4,8 +4,8 @@
 ![Maneuver Node Controller Screenshot](mncImage.png)
 
  # Installation Instructions
- 1. Install BepInEx mod loader with Space Warp 4.0 and run the game, then close it. Space Warp 4.0 can be found here: https://github.com/SpaceWarpDev/SpaceWarp/releases/tag/spacewarp-0.4.0
- 2. Place `BepInEx` folder in your KSP root directory under your game install at `SteamLibrary\steamapps\common\Kerbal Space Program 2\`. The final path will look like: `Kerbal Space Program 2\BepInEx\plugins\maneuver_node_controller`.
+ 1. Install BepInEx mod loader with Space Warp 1.0.1 or later and run the game, then close it. The combo BepInEx with SpaceWarp can be found here: https://spacedock.info/mod/3277/Space%20Warp%20+%20BepInEx
+ 2. Copy the `BepInEx` folder from this mod's ZIP file to your KSP root directory. For those who've installed via Steam this may be found at `SteamLibrary\steamapps\common\Kerbal Space Program 2\`. The final path will look like: `Kerbal Space Program 2\BepInEx\plugins\maneuver_node_controller`.
 
 
 # License
