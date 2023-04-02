@@ -262,6 +262,8 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         game = GameManager.Instance.Game;
         activeNodes = game.SpaceSimulation.Maneuvers.GetNodesForVessel(GameManager.Instance.Game.ViewController.GetActiveVehicle(true).Guid);
         currentNode = (activeNodes.Count() > 0) ? activeNodes[0] : null;
+        double UT;
+        double dvRemaining;
 
         GUILayout.BeginVertical();
         if (currentNode == null)
@@ -279,22 +281,28 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         else
         {
             GUILayout.BeginHorizontal();
-            GUILayout.Label($"Total Maneuver dV (m/s): ");
+            GUILayout.Label($"Total Maneuver ∆v (m/s): ");
             GUILayout.FlexibleSpace();
             GUILayout.Label(currentNode.BurnRequiredDV.ToString("n2"));
             GUILayout.EndHorizontal();
             GUILayout.BeginHorizontal();
-            GUILayout.Label($"Prograde dV (m/s): ");
+            GUILayout.Label($"∆v Remaining (m/s): ");
+            GUILayout.FlexibleSpace();
+            dvRemaining = (activeVessel.Orbiter.ManeuverPlanSolver.GetVelocityAfterFirstManeuver(out UT).vector - activeVessel.Orbit.GetOrbitalVelocityAtUTZup(UT)).magnitude;
+            GUILayout.Label(dvRemaining.ToString("n3"));
+            GUILayout.EndHorizontal();
+            GUILayout.BeginHorizontal();
+            GUILayout.Label($"Prograde ∆v (m/s): ");
             GUILayout.FlexibleSpace();
             GUILayout.Label(currentNode.BurnVector.z.ToString("n2"));
             GUILayout.EndHorizontal();
             GUILayout.BeginHorizontal();
-            GUILayout.Label($"Normal dV (m/s): ");
+            GUILayout.Label($"Normal ∆v (m/s): ");
             GUILayout.FlexibleSpace();
             GUILayout.Label(currentNode.BurnVector.y.ToString("n2"));
             GUILayout.EndHorizontal();
             GUILayout.BeginHorizontal();
-            GUILayout.Label($"Radial dV (m/s): ");
+            GUILayout.Label($"Radial ∆v (m/s): ");
             GUILayout.FlexibleSpace();
             GUILayout.Label(currentNode.BurnVector.x.ToString("n2"));
             GUILayout.EndHorizontal();
@@ -308,6 +316,13 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             {
                 drawSimpleMode();
             }
+
+            GUILayout.BeginHorizontal();
+            string inputStateString = gameInputState ? "Enabled" : "Disabled";
+            GUILayout.Label($"Game Input: {inputStateString}");
+            GUILayout.EndHorizontal();
+
+            handleButtons();
         }
         GUILayout.EndVertical();
         GUI.DragWindow(new Rect(0, 0, 10000, 500));
@@ -315,19 +330,19 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     private void drawAdvancedMode()
     {
         GUILayout.BeginHorizontal();
-        GUILayout.Label("Prograde dV (m/s): ", GUILayout.Width(windowWidth / 2));
+        GUILayout.Label("Prograde ∆v (m/s): ", GUILayout.Width(windowWidth / 2));
         GUI.SetNextControlName("Prograde dV");
         progradeString = GUILayout.TextField(progradeString, progradeStyle);
         double.TryParse(progradeString, out burnParams.z);
         GUILayout.EndHorizontal();
         GUILayout.BeginHorizontal();
-        GUILayout.Label("Normal dV (m/s): ", GUILayout.Width(windowWidth / 2));
+        GUILayout.Label("Normal ∆v (m/s): ", GUILayout.Width(windowWidth / 2));
         GUI.SetNextControlName("Normal dV");
         normalString = GUILayout.TextField(normalString, normalStyle);
         double.TryParse(normalString, out burnParams.y);
         GUILayout.EndHorizontal();
         GUILayout.BeginHorizontal();
-        GUILayout.Label("Radial dV (m/s): ", GUILayout.Width(windowWidth / 2));
+        GUILayout.Label("Radial ∆v (m/s): ", GUILayout.Width(windowWidth / 2));
         GUI.SetNextControlName("Radial dV");
         radialString = GUILayout.TextField(radialString, radialStyle);
         double.TryParse(radialString, out burnParams.x);
@@ -340,30 +355,23 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             game.UniverseModel.FindVesselComponent(nodeData.RelatedSimID)?.SimulationObject.FindComponent<ManeuverPlanComponent>().RefreshManeuverNodeState(0);
             Logger.LogInfo(nodeData.ToString());
         }
-
-        GUILayout.BeginHorizontal();
-        string inputStateString = gameInputState ? "Enabled" : "Disabled";
-        GUILayout.Label($"Game Input: {inputStateString}");
-        GUILayout.EndHorizontal();
-
-        handleButtons();
     }
     private void drawSimpleMode()
     {
         GUILayout.BeginHorizontal();
-        GUILayout.Label("Absolute dV (m/s): ", GUILayout.Width(windowWidth / 2));
+        GUILayout.Label("Absolute ∆v (m/s): ", GUILayout.Width(windowWidth / 2));
         GUI.SetNextControlName("Absolute dV");
         absoluteValueString = GUILayout.TextField(absoluteValueString);
         double.TryParse(absoluteValueString, out absoluteValue);
         GUILayout.EndHorizontal();
         GUILayout.BeginHorizontal();
-        GUILayout.Label("Small Step dV (m/s): ", GUILayout.Width(windowWidth / 2));
+        GUILayout.Label("Small Step ∆v (m/s): ", GUILayout.Width(windowWidth / 2));
         GUI.SetNextControlName("Small Step dV");
         smallStepString = GUILayout.TextField(smallStepString);
         double.TryParse(smallStepString, out smallStep);
         GUILayout.EndHorizontal();
         GUILayout.BeginHorizontal();
-        GUILayout.Label("Large Step dV (m/s): ", GUILayout.Width(windowWidth / 2));
+        GUILayout.Label("Large Step ∆v (m/s): ", GUILayout.Width(windowWidth / 2));
         GUI.SetNextControlName("Large Step dV");
         bigStepString = GUILayout.TextField(bigStepString);
         double.TryParse(bigStepString, out bigStep);
@@ -435,13 +443,6 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         GUILayout.FlexibleSpace();
         orbitInc = GUILayout.Button("+", GUILayout.Width(windowWidth / 7));
         GUILayout.EndHorizontal();
-
-        GUILayout.BeginHorizontal();
-        string inputStateString = gameInputState ? "Enabled" : "Disabled";
-        GUILayout.Label($"Game Input: {inputStateString}");
-        GUILayout.EndHorizontal();
-        
-        handleButtons();
     }
     private bool CloseButton()
     {
