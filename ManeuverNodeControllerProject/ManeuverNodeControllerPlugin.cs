@@ -4,20 +4,13 @@ using KSP.Game;
 using KSP.Sim.impl;
 using KSP.Sim.Maneuver;
 using SpaceWarp;
-// using SpaceWarp.API;
 using SpaceWarp.API.Mods;
 using SpaceWarp.API.Assets;
 using SpaceWarp.API.UI;
 using SpaceWarp.API.UI.Appbar;
 using KSP.UI.Binding;
-// using static UnityEngine.RemoteConfigSettingsHelper;
-// using KSP.Messages.PropertyWatchers;
 using KSP.Sim;
 using KSP.Map;
-// using MoonSharp.Interpreter.Tree;
-// using KSP.Messages.PropertyWatchers;
-// using Unity.Collections.LowLevel.Unsafe;
-// using EdyCommonTools;
 using MuMech;
 using System.Collections;
 
@@ -51,20 +44,6 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     // Control game input state while user has clicked into a TextField.
     private bool gameInputState = true;
     public List<String> inputFields = new List<String>();
-
-    // SnapTo selection.
-    //private enum SnapOptions
-    //{
-    //    Apoapsis,
-    //    Periapsis,
-    //    AN,
-    //    DN
-    //}
-    // private SnapOptions selectedSnapOption = SnapOptions.Apoapsis;
-    // private readonly List<string> snapOptions = new List<string> { "Apoapsis", "Periapsis", "AN", "DN" };
-    // private bool selectingSnapOption = false;
-    // private static Vector2 scrollPositionSnapOptions;
-    // private bool applySnapOption;
 
     private VesselComponent activeVessel;
     private SimulationObjectModel currentTarget;
@@ -468,27 +447,6 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             snapToDNt = GUILayout.Button("DNt", GUILayout.Width(windowWidth / 9));
         }
         GUILayout.FlexibleSpace();
-        //if (!selectingSnapOption)
-        //{
-        //if (GUILayout.Button(Enum.GetName(typeof(SnapOptions), selectedSnapOption)))
-        //    selectingSnapOption = true;
-        //}
-        //else
-        //{
-        //GUILayout.BeginVertical(GUI.skin.GetStyle("Box"));
-        //scrollPositionSnapOptions = GUILayout.BeginScrollView(scrollPositionSnapOptions, false, true, GUILayout.Height(70));
-        //foreach (string snapOption in Enum.GetNames(typeof(SnapOptions)).ToList())
-        //{
-        //    if (GUILayout.Button(snapOption))
-        //    {
-        //        Enum.TryParse(snapOption, out selectedSnapOption);
-        //        selectingSnapOption = false;
-        //    }
-        //}
-        //GUILayout.EndScrollView();
-        //GUILayout.EndVertical();
-        //}
-        //applySnapOption = GUILayout.Button("Snap", GUILayout.Width(windowWidth / 5));
         GUILayout.EndHorizontal();
     }
     /// <summary>
@@ -520,10 +478,11 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         Game.SpaceSimulation.Maneuvers.AddNodeToVessel(maneuverNodeData);
         MapCore mapCore = null;
         Game.Map.TryGetMapCore(out mapCore);
-        mapCore.map3D.ManeuverManager.GetNodeDataForVessels();
-        mapCore.map3D.ManeuverManager.UpdatePositionForGizmo(maneuverNodeData.NodeID);
-        mapCore.map3D.ManeuverManager.UpdateAll();
-        // mapCore.map3D.ManeuverManager.RemoveAll();
+        var m3d = mapCore.map3D;
+        var mm = m3d.ManeuverManager;
+        mm.GetNodeDataForVessels();
+        mm.UpdatePositionForGizmo(maneuverNodeData.NodeID);
+        mm.UpdateAll();
     }
 
     private IEnumerator MakeNode(ManeuverNodeData nodeData)
@@ -569,6 +528,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             {
                 // Add an empty maneuver node
                 Logger.LogInfo("Adding New Node");
+
                 // Define empty node data
                 burnParams = Vector3d.zero;
                 double UT = game.UniverseModel.UniversalTime;
@@ -576,40 +536,18 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
                 {
                     UT += activeVessel.Orbit.TimeToAp;
                 }
+
                 // Create the nodeData structure
                 ManeuverNodeData nodeData = new ManeuverNodeData(activeVessel.SimulationObject.GlobalId, false, game.UniverseModel.UniversalTime);
+
                 // Populate the nodeData structure
                 nodeData.BurnVector.x = 0;
                 nodeData.BurnVector.y = 0;
                 nodeData.BurnVector.z = 0;
                 nodeData.Time = UT;
 
+                // Call MakeNode as a Coroutine so that it can wait a tic between creating the node and updating the gizmo
                 StartCoroutine(MakeNode(nodeData));
-                //// Add the new node to the vessel
-                //GameManager.Instance.Game.SpaceSimulation.Maneuvers.AddNodeToVessel(nodeData);
-                //// Update the map so the gizmo will be there
-                //MapCore mapCore = null;
-                //Game.Map.TryGetMapCore(out mapCore);
-                //var m3d = mapCore.map3D;
-                //var mm = m3d.ManeuverManager;
-                //try { mm?.GetNodeDataForVessels(); }
-                //catch { Logger.LogError("[Maneuver Node Controller] caught exception on call to mapCore?.map3D?.ManeuverManager?.GetNodeDataForVessels()"); }
-                //if (nodeData != null)
-                //{
-                //    currentNode = nodeData;
-                //    mm.UpdatePositionForGizmo(nodeData.NodeID);
-                //    mm.UpdateAll();
-                //}
-                //// Refresh stuff
-                //var universeModel = game.UniverseModel;
-                //var vesselComponent = universeModel.FindVesselComponent(currentNode.RelatedSimID);
-                //var simObject = vesselComponent.SimulationObject;
-                //var maneuverPlanComponent = simObject.FindComponent<ManeuverPlanComponent>();
-                //if (currentNode != null)
-                //{
-                //    maneuverPlanComponent.UpdateChangeOnNode(currentNode, burnParams);
-                //    maneuverPlanComponent.RefreshManeuverNodeState(0); // Getting NREs here...
-                //}
             }
             else return;
         }
@@ -764,18 +702,15 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
                 // Logger.LogInfo($"UT + TimeOfDescendingNode: {TDNt + UT}");
             }
 
+            // If there is a current node, update it
             if (currentNode != null)
             {
-                // activeVessel.SimulationObject.ManeuverPlan.UpdateChangeOnNode(currentNode, burnParams);
-                // activeVessel?.SimulationObject?.ManeuverPlan?.RefreshManeuverNodeState(0);
-                // game.UniverseModel?.FindVesselComponent(currentNode.RelatedSimID)?.SimulationObject?.FindComponent<ManeuverPlanComponent>()?.UpdateChangeOnNode(currentNode, burnParams);
-                // game.UniverseModel?.FindVesselComponent(currentNode.RelatedSimID)?.SimulationObject?.FindComponent<ManeuverPlanComponent>()?.RefreshManeuverNodeState(0);
                 var universeModel = game.UniverseModel;
                 var vesselComponent = universeModel.FindVesselComponent(currentNode.RelatedSimID);
                 var simObject = vesselComponent.SimulationObject;
                 var maneuverPlanComponent = simObject.FindComponent<ManeuverPlanComponent>();
                 maneuverPlanComponent.UpdateChangeOnNode(currentNode, burnParams);
-                maneuverPlanComponent.RefreshManeuverNodeState(0); // Getting NREs here...
+                maneuverPlanComponent.RefreshManeuverNodeState(0); // Occasionally getting NREs here...
             }
         }
     }
