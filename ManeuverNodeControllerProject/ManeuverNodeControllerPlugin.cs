@@ -475,7 +475,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     }
     private void AddManeuverNode(ManeuverNodeData nodeData)
     {
-        Game.SpaceSimulation.Maneuvers.AddNodeToVessel(maneuverNodeData);
+        Game.SpaceSimulation.Maneuvers.AddNodeToVessel(nodeData);
         MapCore mapCore = null;
         Game.Map.TryGetMapCore(out mapCore);
         var m3d = mapCore.map3D;
