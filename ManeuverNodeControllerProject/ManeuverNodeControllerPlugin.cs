@@ -19,6 +19,7 @@ using KSP.Map;
 // using Unity.Collections.LowLevel.Unsafe;
 // using EdyCommonTools;
 using MuMech;
+using System.Collections;
 
 namespace ManeuverNodeController;
 
@@ -203,9 +204,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     void OnGUI()
     {
         activeVessel = GameManager.Instance?.Game?.ViewController?.GetActiveVehicle(true)?.GetSimVessel(true);
-        if (activeVessel.TargetObject != null)
-            currentTarget = activeVessel.TargetObject;
-        else currentTarget = null;
+        currentTarget = activeVessel?.TargetObject;
         if (interfaceEnabled)
         {
             GUI.skin = Skins.ConsoleSkin;
@@ -526,6 +525,42 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         mapCore.map3D.ManeuverManager.UpdateAll();
         // mapCore.map3D.ManeuverManager.RemoveAll();
     }
+
+    private IEnumerator MakeNode(ManeuverNodeData nodeData)
+    {
+        // Add the new node to the vessel
+        GameManager.Instance.Game.SpaceSimulation.Maneuvers.AddNodeToVessel(nodeData);
+        
+        // Wait a tick for things to get created
+        yield return new WaitForFixedUpdate();
+
+        // Update the map so the gizmo will be there
+        MapCore mapCore = null;
+        Game.Map.TryGetMapCore(out mapCore);
+        var m3d = mapCore.map3D;
+        var mm = m3d.ManeuverManager;
+        try { mm?.GetNodeDataForVessels(); }
+        catch { Debug.LogError("[Maneuver Node Controller] caught exception on call to mapCore.map3D.ManeuverManager.GetNodeDataForVessels()"); }
+        if (nodeData != null)
+        {
+            currentNode = nodeData;
+            try { mm.UpdatePositionForGizmo(nodeData.NodeID); }
+            catch { Debug.LogError("[Maneuver Node Controller] caught exception on call to mapCore.map3D.ManeuverManager.UpdatePositionForGizmo()"); }
+            try { mm.UpdateAll(); }
+            catch { Debug.LogError("[Maneuver Node Controller] caught exception on call to mapCore.map3D.ManeuverManager.UpdateAll()"); }
+        }
+
+        // Refresh the node (may not need this unless we're actually updating it)
+        var universeModel = game.UniverseModel;
+        var vesselComponent = universeModel.FindVesselComponent(currentNode.RelatedSimID);
+        var simObject = vesselComponent.SimulationObject;
+        var maneuverPlanComponent = simObject.FindComponent<ManeuverPlanComponent>();
+        if (currentNode != null)
+        {
+            maneuverPlanComponent.UpdateChangeOnNode(currentNode, burnParams);
+            maneuverPlanComponent.RefreshManeuverNodeState(0); // Getting NREs here...
+        }
+    }
     private void handleButtons()
     {
         if (currentNode == null)
@@ -548,20 +583,33 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
                 nodeData.BurnVector.y = 0;
                 nodeData.BurnVector.z = 0;
                 nodeData.Time = UT;
-                // Add the new node to the vessel
-                GameManager.Instance.Game.SpaceSimulation.Maneuvers.AddNodeToVessel(nodeData);
-                // Update the map so the gizmo will be there
-                MapCore mapCore = null;
-                Game.Map.TryGetMapCore(out mapCore);
-                mapCore.map3D.ManeuverManager.GetNodeDataForVessels();
-                mapCore.map3D.ManeuverManager.UpdatePositionForGizmo(nodeData.NodeID);
-                mapCore.map3D.ManeuverManager.UpdateAll();
-                // Refresh stuff
-                activeVessel.SimulationObject.ManeuverPlan.UpdateChangeOnNode(nodeData, burnParams);
-                activeVessel.SimulationObject.ManeuverPlan.RefreshManeuverNodeState(0);
-                // Set teh currentNode to be the node we just added
-                currentNode = nodeData;
-                // addNode = false;
+
+                StartCoroutine(MakeNode(nodeData));
+                //// Add the new node to the vessel
+                //GameManager.Instance.Game.SpaceSimulation.Maneuvers.AddNodeToVessel(nodeData);
+                //// Update the map so the gizmo will be there
+                //MapCore mapCore = null;
+                //Game.Map.TryGetMapCore(out mapCore);
+                //var m3d = mapCore.map3D;
+                //var mm = m3d.ManeuverManager;
+                //try { mm?.GetNodeDataForVessels(); }
+                //catch { Logger.LogError("[Maneuver Node Controller] caught exception on call to mapCore?.map3D?.ManeuverManager?.GetNodeDataForVessels()"); }
+                //if (nodeData != null)
+                //{
+                //    currentNode = nodeData;
+                //    mm.UpdatePositionForGizmo(nodeData.NodeID);
+                //    mm.UpdateAll();
+                //}
+                //// Refresh stuff
+                //var universeModel = game.UniverseModel;
+                //var vesselComponent = universeModel.FindVesselComponent(currentNode.RelatedSimID);
+                //var simObject = vesselComponent.SimulationObject;
+                //var maneuverPlanComponent = simObject.FindComponent<ManeuverPlanComponent>();
+                //if (currentNode != null)
+                //{
+                //    maneuverPlanComponent.UpdateChangeOnNode(currentNode, burnParams);
+                //    maneuverPlanComponent.RefreshManeuverNodeState(0); // Getting NREs here...
+                //}
             }
             else return;
         }
@@ -715,10 +763,20 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
                 Logger.LogInfo($"TimeOfDescendingNode: {TDNt}");
                 // Logger.LogInfo($"UT + TimeOfDescendingNode: {TDNt + UT}");
             }
-            activeVessel.SimulationObject.ManeuverPlan.UpdateChangeOnNode(currentNode, burnParams);
-            activeVessel.SimulationObject.ManeuverPlan.RefreshManeuverNodeState(0);
-            // game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID)?.SimulationObject.FindComponent<ManeuverPlanComponent>().UpdateChangeOnNode(currentNode, burnParams);
-            // game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID)?.SimulationObject.FindComponent<ManeuverPlanComponent>().RefreshManeuverNodeState(0);
+
+            if (currentNode != null)
+            {
+                // activeVessel.SimulationObject.ManeuverPlan.UpdateChangeOnNode(currentNode, burnParams);
+                // activeVessel?.SimulationObject?.ManeuverPlan?.RefreshManeuverNodeState(0);
+                // game.UniverseModel?.FindVesselComponent(currentNode.RelatedSimID)?.SimulationObject?.FindComponent<ManeuverPlanComponent>()?.UpdateChangeOnNode(currentNode, burnParams);
+                // game.UniverseModel?.FindVesselComponent(currentNode.RelatedSimID)?.SimulationObject?.FindComponent<ManeuverPlanComponent>()?.RefreshManeuverNodeState(0);
+                var universeModel = game.UniverseModel;
+                var vesselComponent = universeModel.FindVesselComponent(currentNode.RelatedSimID);
+                var simObject = vesselComponent.SimulationObject;
+                var maneuverPlanComponent = simObject.FindComponent<ManeuverPlanComponent>();
+                maneuverPlanComponent.UpdateChangeOnNode(currentNode, burnParams);
+                maneuverPlanComponent.RefreshManeuverNodeState(0); // Getting NREs here...
+            }
         }
     }
 }   
