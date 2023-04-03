@@ -464,25 +464,31 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         }
         // double TrueAnomalyRad = TrueAnomaly * Math.PI / 180;
         // double UT = referencedOrbit.GetUTforTrueAnomaly(TrueAnomaly, 0);
-        ManeuverNodeData maneuverNodeData = new ManeuverNodeData(activeVessel.SimulationObject.GlobalId, true, UT);
+        ManeuverNodeData nodeData = new ManeuverNodeData(activeVessel.SimulationObject.GlobalId, true, UT);
         IPatchedOrbit orbit = referencedOrbit;
         orbit.PatchStartTransition = PatchTransitionType.Maneuver;
         orbit.PatchEndTransition = PatchTransitionType.Final;
-        maneuverNodeData.SetManeuverState((PatchedConicsOrbit)orbit);
-        maneuverNodeData.BurnVector = burnVector;
-        currentNode = maneuverNodeData;
-        AddManeuverNode(maneuverNodeData);
+        nodeData.SetManeuverState((PatchedConicsOrbit)orbit);
+        nodeData.BurnVector = burnVector;
+        currentNode = nodeData;
+        AddManeuverNode(nodeData);
     }
-    private void AddManeuverNode(ManeuverNodeData maneuverNodeData)
+    private void AddManeuverNode(ManeuverNodeData nodeData)
     {
         Game.SpaceSimulation.Maneuvers.AddNodeToVessel(maneuverNodeData);
         MapCore mapCore = null;
         Game.Map.TryGetMapCore(out mapCore);
         var m3d = mapCore.map3D;
         var mm = m3d.ManeuverManager;
-        mm.GetNodeDataForVessels();
-        mm.UpdatePositionForGizmo(maneuverNodeData.NodeID);
-        mm.UpdateAll();
+        try { mm?.GetNodeDataForVessels(); }
+        catch { Debug.LogError("[Maneuver Node Controller] caught exception on call to mapCore.map3D.ManeuverManager.GetNodeDataForVessels()"); }
+        if (nodeData != null)
+        {
+            try { mm.UpdatePositionForGizmo(nodeData.NodeID); }
+            catch { Debug.LogError("[Maneuver Node Controller] caught exception on call to mapCore.map3D.ManeuverManager.UpdatePositionForGizmo()"); }
+            try { mm.UpdateAll(); }
+            catch { Debug.LogError("[Maneuver Node Controller] caught exception on call to mapCore.map3D.ManeuverManager.UpdateAll()"); }
+        }
     }
 
     private IEnumerator MakeNode(ManeuverNodeData nodeData)
