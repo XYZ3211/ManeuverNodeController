@@ -13,6 +13,7 @@ using KSP.Sim;
 using KSP.Map;
 using MuMech;
 using System.Collections;
+using BepInEx.Logging;
 
 namespace ManeuverNodeController;
 
@@ -73,10 +74,14 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     //Map3DView m3d;
     //Map3DManeuvers maneuverManager;
 
+    //public ManualLogSource logger;
+    public new static ManualLogSource Logger { get; set; }
+
     public override void OnInitialized()
     {
         base.OnInitialized();
         game = GameManager.Instance.Game;
+        Logger = base.Logger;
 
         // Setup the list of input field names associated with TextField GUI inputs
         inputFields.Add("Prograde dV");
