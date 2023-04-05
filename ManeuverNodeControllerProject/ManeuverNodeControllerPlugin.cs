@@ -68,6 +68,11 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     private int spacingAfterEntry = -12;
     private int spacingAfterSection = 5;
 
+    // Set things up so we'll have access to mapCpre.Map3D.ManeuverManager
+    MapCore mapCore = null;
+    Map3DView m3d;
+    Map3DManeuvers maneuverManager;
+
     public override void OnInitialized()
     {
         base.OnInitialized();
@@ -158,6 +163,13 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             "BTN-ManeuverNodeController",
             AssetManager.GetAsset<Texture2D>($"{SpaceWarpMetadata.ModID}/images/icon.png"),
             ToggleButton);
+
+        //try { Game.Map.TryGetMapCore(out mapCore); }
+        //catch { Logger.LogError("OnInitialized: Caught exception on call to Game.Map.TryGetMapCore(out mapCore)"); }
+        //try { m3d = mapCore.map3D; }
+        //catch { Logger.LogError("OnInitialized: Caught exception attempting to set m3d = mapCore.map3D)"); }
+        //try { maneuverManager = m3d.ManeuverManager; }
+        //catch { Logger.LogError("OnInitialized: Caught exception attempting to set maneuverManager = m3d.ManeuverManager)"); }
     }
 
     private void ToggleButton(bool toggle)
@@ -176,12 +188,26 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         if (Input.GetKey(KeyCode.LeftAlt) && Input.GetKeyDown(KeyCode.N))
         {
             ToggleButton(!interfaceEnabled);
-            Logger.LogInfo("UI toggled with hotkey");
+            Logger.LogInfo("Update: UI toggled with hotkey");
         }
     }
 
     void OnGUI()
     {
+        // Make sure we've got access to maneuverManager
+        if (mapCore == null)
+        {
+            Game.Map.TryGetMapCore(out mapCore);
+        }
+        if (m3d == null)
+        {
+            m3d = mapCore.map3D;
+        }
+        if (maneuverManager == null)
+        {
+            maneuverManager = m3d.ManeuverManager;
+        }
+
         activeVessel = GameManager.Instance?.Game?.ViewController?.GetActiveVehicle(true)?.GetSimVessel(true);
         currentTarget = activeVessel?.TargetObject;
         if (interfaceEnabled)
@@ -237,7 +263,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         radialStyle.normal.textColor = Color.cyan;
         horizontalDivider.fixedHeight = 2;
         horizontalDivider.margin = new RectOffset(0, 0, 4, 4);
-        game = GameManager.Instance.Game;
+        // game = GameManager.Instance.Game;
         activeNodes = game.SpaceSimulation.Maneuvers.GetNodesForVessel(GameManager.Instance.Game.ViewController.GetActiveVehicle(true).Guid);
         currentNode = (activeNodes.Count() > 0) ? activeNodes[0] : null;
         double UT;
@@ -305,6 +331,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         GUILayout.EndVertical();
         GUI.DragWindow(new Rect(0, 0, 10000, 500));
     }
+
     private void drawAdvancedMode()
     {
         GUILayout.BeginHorizontal();
@@ -331,9 +358,10 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             //nodeData.BurnVector = burnParams;
             game.UniverseModel.FindVesselComponent(nodeData.RelatedSimID)?.SimulationObject.FindComponent<ManeuverPlanComponent>().UpdateChangeOnNode(nodeData, burnParams);
             game.UniverseModel.FindVesselComponent(nodeData.RelatedSimID)?.SimulationObject.FindComponent<ManeuverPlanComponent>().RefreshManeuverNodeState(0);
-            Logger.LogInfo(nodeData.ToString());
+            Logger.LogInfo($"drawAdvancedMode: {nodeData.ToString()}");
         }
     }
+
     private void drawSimpleMode()
     {
         GUILayout.BeginHorizontal();
@@ -422,16 +450,19 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         orbitInc = GUILayout.Button("+", GUILayout.Width(windowWidth / 7));
         GUILayout.EndHorizontal();
     }
+
     private bool CloseButton()
     {
         return GUI.Button(closeBtnRect, "x", closeBtnStyle);
     }
+
     private void CloseWindow()
     {
         GameObject.Find("BTN-ManeuverNodeController")?.GetComponent<UIValue_WriteBool_Toggle>()?.SetValue(false);
         interfaceEnabled = false;
         ToggleButton(interfaceEnabled);
     }
+
     // Draws the snap selection GUI.
     private void SnapSelectionGUI()
     {
@@ -449,47 +480,6 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         GUILayout.FlexibleSpace();
         GUILayout.EndHorizontal();
     }
-    /// <summary>
-    /// Creates a maneuver node at a given true anomaly
-    /// </summary>
-    /// <param name="burnVector"></param>
-    /// <param name="TrueAnomaly"></param>
-    private void CreateManeuverNode(Vector3d burnVector, double UT)
-    {
-        PatchedConicsOrbit referencedOrbit = activeVessel.Orbit as PatchedConicsOrbit;
-        if (referencedOrbit == null)
-        {
-            Logger.LogError("CreateManeuverNode: referencedOrbit is null!");
-            return;
-        }
-        // double TrueAnomalyRad = TrueAnomaly * Math.PI / 180;
-        // double UT = referencedOrbit.GetUTforTrueAnomaly(TrueAnomaly, 0);
-        ManeuverNodeData nodeData = new ManeuverNodeData(activeVessel.SimulationObject.GlobalId, true, UT);
-        IPatchedOrbit orbit = referencedOrbit;
-        orbit.PatchStartTransition = PatchTransitionType.Maneuver;
-        orbit.PatchEndTransition = PatchTransitionType.Final;
-        nodeData.SetManeuverState((PatchedConicsOrbit)orbit);
-        nodeData.BurnVector = burnVector;
-        currentNode = nodeData;
-        AddManeuverNode(nodeData);
-    }
-    private void AddManeuverNode(ManeuverNodeData nodeData)
-    {
-        Game.SpaceSimulation.Maneuvers.AddNodeToVessel(nodeData);
-        MapCore mapCore = null;
-        Game.Map.TryGetMapCore(out mapCore);
-        var m3d = mapCore.map3D;
-        var mm = m3d.ManeuverManager;
-        try { mm?.GetNodeDataForVessels(); }
-        catch { Debug.LogError("[Maneuver Node Controller] caught exception on call to mapCore.map3D.ManeuverManager.GetNodeDataForVessels()"); }
-        if (nodeData != null)
-        {
-            try { mm.UpdatePositionForGizmo(nodeData.NodeID); }
-            catch { Debug.LogError("[Maneuver Node Controller] caught exception on call to mapCore.map3D.ManeuverManager.UpdatePositionForGizmo()"); }
-            try { mm.UpdateAll(); }
-            catch { Debug.LogError("[Maneuver Node Controller] caught exception on call to mapCore.map3D.ManeuverManager.UpdateAll()"); }
-        }
-    }
 
     private IEnumerator MakeNode(ManeuverNodeData nodeData)
     {
@@ -500,18 +490,19 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         yield return new WaitForFixedUpdate();
 
         // Update the map so the gizmo will be there
-        MapCore mapCore = null;
-        Game.Map.TryGetMapCore(out mapCore);
+        // MapCore mapCore = null;
+        // Game.Map.TryGetMapCore(out mapCore);
         var m3d = mapCore.map3D;
         var mm = m3d.ManeuverManager;
-        try { mm?.GetNodeDataForVessels(); }
+        maneuverManager.RemoveAll();
+        try { maneuverManager?.GetNodeDataForVessels(); }
         catch { Debug.LogError("[Maneuver Node Controller] caught exception on call to mapCore.map3D.ManeuverManager.GetNodeDataForVessels()"); }
         if (nodeData != null)
         {
             currentNode = nodeData;
-            try { mm.UpdatePositionForGizmo(nodeData.NodeID); }
+            try { maneuverManager.UpdatePositionForGizmo(nodeData.NodeID); }
             catch { Debug.LogError("[Maneuver Node Controller] caught exception on call to mapCore.map3D.ManeuverManager.UpdatePositionForGizmo()"); }
-            try { mm.UpdateAll(); }
+            try { maneuverManager.UpdateAll(); }
             catch { Debug.LogError("[Maneuver Node Controller] caught exception on call to mapCore.map3D.ManeuverManager.UpdateAll()"); }
         }
 
@@ -524,8 +515,137 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         {
             maneuverPlanComponent.UpdateChangeOnNode(currentNode, burnParams);
             maneuverPlanComponent.RefreshManeuverNodeState(0); // Getting NREs here...
+            //ManeuverNodeData nodeData = GameManager.Instance.Game.SpaceSimulation.Maneuvers.GetNodesForVessel(GameManager.Instance.Game.ViewController.GetActiveVehicle(true).Guid)[0];
+            ////nodeData.BurnVector = burnParams;
+            //game.UniverseModel.FindVesselComponent(nodeData.RelatedSimID)?.SimulationObject.FindComponent<ManeuverPlanComponent>().UpdateChangeOnNode(nodeData, burnParams);
+            //game.UniverseModel.FindVesselComponent(nodeData.RelatedSimID)?.SimulationObject.FindComponent<ManeuverPlanComponent>().RefreshManeuverNodeState(0);
         }
     }
+
+    private IPatchedOrbit GetLastOrbit()
+    {
+        Logger.LogInfo("GetLastOrbit");
+        List<ManeuverNodeData> patchList =
+            Game.SpaceSimulation.Maneuvers.GetNodesForVessel(activeVessel.SimulationObject.GlobalId);
+
+        Logger.LogMessage($"GetLastOrbit: patchList.Count = {patchList.Count}");
+
+        if (patchList.Count == 0)
+        {
+            Logger.LogMessage($"GetLastOrbit: activeVessel.Orbit = {activeVessel.Orbit}");
+            return activeVessel.Orbit;
+        }
+        Logger.LogMessage($"GetLastOrbit: ManeuverTrajectoryPatch = {patchList[patchList.Count - 1].ManeuverTrajectoryPatch}");
+        IPatchedOrbit orbit = patchList[patchList.Count - 1].ManeuverTrajectoryPatch;
+
+        return orbit;
+    }
+
+    private void CreateManeuverNodeAtTA(Vector3d burnVector, double TrueAnomalyRad)
+    {
+        Logger.LogInfo("CreateManeuverNodeAtTA");
+        PatchedConicsOrbit referencedOrbit = GetLastOrbit() as PatchedConicsOrbit;
+        if (referencedOrbit == null)
+        {
+            Logger.LogError("CreateManeuverNodeAtTA: referencedOrbit is null!");
+            return;
+        }
+
+        double UT = referencedOrbit.GetUTforTrueAnomaly(TrueAnomalyRad, 0);
+
+        CreateManeuverNodeAtUT(burnVector, UT);
+    }
+
+    private void CreateManeuverNodeAtUT(Vector3d burnVector, double UT)
+    {
+        Logger.LogInfo("CreateManeuverNodeAtUT");
+        PatchedConicsOrbit referencedOrbit = GetLastOrbit() as PatchedConicsOrbit;
+        if (referencedOrbit == null)
+        {
+            Logger.LogError("CreateManeuverNodeAtUT: referencedOrbit is null!");
+            return;
+        }
+
+        if (UT < game.UniverseModel.UniversalTime + 1) // Don't set node to now or in the past
+            UT = game.UniverseModel.UniversalTime + 1;
+
+        ManeuverNodeData nodeData = new ManeuverNodeData(activeVessel.SimulationObject.GlobalId, true, UT);
+
+        IPatchedOrbit orbit = referencedOrbit;
+        orbit.PatchStartTransition = PatchTransitionType.Maneuver;
+        orbit.PatchEndTransition = PatchTransitionType.Final;
+
+        nodeData.SetManeuverState((PatchedConicsOrbit)orbit);
+
+        nodeData.BurnVector = burnVector;
+
+        Logger.LogInfo($"CreateManeuverNodeAtUT: BurnVector [{burnVector.x}, {burnVector.y}, {burnVector.z}] m/s");
+        Logger.LogInfo($"CreateManeuverNodeAtUT: BurnDuration {nodeData.BurnDuration} s");
+        Logger.LogInfo($"CreateManeuverNodeAtUT: Burn Time {nodeData.Time} s");
+
+        AddManeuverNode(nodeData);
+    }
+
+    private void AddManeuverNode(ManeuverNodeData nodeData)
+    {
+        Logger.LogInfo("AddManeuverNode");
+
+        // Get the ManeuverPlanComponent for the active vessel
+        var universeModel = game.UniverseModel;
+        VesselComponent vesselComponent;
+        if (currentNode != null)
+        {
+            vesselComponent = universeModel.FindVesselComponent(currentNode.RelatedSimID);
+        }
+        else
+        {
+            vesselComponent = activeVessel;
+        }
+        var simObject = vesselComponent.SimulationObject;
+        var maneuverPlanComponent = simObject.FindComponent<ManeuverPlanComponent>();
+
+        GameManager.Instance.Game.SpaceSimulation.Maneuvers.AddNodeToVessel(nodeData);
+
+        // Make sure we've got access to maneuverManager
+        //if (mapCore == null)
+        //{
+        //    Game.Map.TryGetMapCore(out mapCore);
+        //}
+        //if (m3d == null)
+        //{
+        //    m3d = mapCore.map3D;
+        //}
+        //if (maneuverManager == null)
+        //{
+        //    maneuverManager = m3d.ManeuverManager;
+        //}
+
+        // For KSP2, We want the to start burns early to make them centered on the node
+        // nodeData = activeVessel.SimulationObject.ManeuverPlan.ActiveNode;
+        nodeData.Time -= nodeData.BurnDuration / 2;
+
+        Logger.LogInfo($"AddManeuverNode: BurnVector   [{nodeData.BurnVector.x}, {nodeData.BurnVector.y}, {nodeData.BurnVector.z}] m/s");
+        Logger.LogInfo($"AddManeuverNode: BurnDuration {nodeData.BurnDuration} s");
+        Logger.LogInfo($"AddManeuverNode: Burn Time    {nodeData.Time}");
+
+        // Manage the maneuver on the map
+        try { maneuverManager.RemoveAll(); }
+        catch { Logger.LogError("AddManeuverNode: caught exception on call to mapCore.map3D.ManeuverManager.RemoveAll()"); }
+        try { maneuverManager?.GetNodeDataForVessels(); }
+        catch { Logger.LogError("AddManeuverNode: caught exception on call to mapCore.map3D.ManeuverManager.GetNodeDataForVessels()"); }
+        try { maneuverManager.UpdatePositionForGizmo(nodeData.NodeID); }
+        catch { Logger.LogError("AddManeuverNode: caught exception on call to mapCore.map3D.ManeuverManager.UpdatePositionForGizmo()"); }
+        try { maneuverManager.UpdateAll(); }
+        catch { Logger.LogError("AddManeuverNode: caught exception on call to mapCore.map3D.ManeuverManager.UpdateAll()"); }
+
+        try { maneuverPlanComponent.RefreshManeuverNodeState(0); } // Occasionally getting NREs here...
+        catch (NullReferenceException e) { Logger.LogError($"AddManeuverNode: caught NRE on call to maneuverPlanComponent.RefreshManeuverNodeState(0): {e}"); }
+        
+        // Set the currentNode  to the node we just created and added to the vessel
+        currentNode = nodeData;
+        Logger.LogInfo("AddManeuverNode Done");
+    }
+
     private void handleButtons()
     {
         if (currentNode == null)
@@ -533,190 +653,217 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             if (addNode)
             {
                 // Add an empty maneuver node
-                Logger.LogInfo("Adding New Node");
+                Logger.LogInfo("handleButtons: Adding New Node");
 
                 // Define empty node data
                 burnParams = Vector3d.zero;
                 double UT = game.UniverseModel.UniversalTime;
+                double burnUT;
                 if (activeVessel.Orbit.eccentricity < 1)
                 {
-                    UT += activeVessel.Orbit.TimeToAp;
+                    burnUT = UT + activeVessel.Orbit.TimeToAp;
+                }
+                else
+                {
+                    burnUT = UT + 30;
                 }
 
-                // Create the nodeData structure
-                ManeuverNodeData nodeData = new ManeuverNodeData(activeVessel.SimulationObject.GlobalId, false, game.UniverseModel.UniversalTime);
+                Vector3d burnVector;
+                burnVector.x = 0;
+                burnVector.y = 0;
+                burnVector.z = 0;
 
-                // Populate the nodeData structure
-                nodeData.BurnVector.x = 0;
-                nodeData.BurnVector.y = 0;
-                nodeData.BurnVector.z = 0;
-                nodeData.Time = UT;
+                CreateManeuverNodeAtUT(burnVector, burnUT);
 
-                // Call MakeNode as a Coroutine so that it can wait a tic between creating the node and updating the gizmo
-                StartCoroutine(MakeNode(nodeData));
+                //// Create the nodeData structure
+                //ManeuverNodeData nodeData = new ManeuverNodeData(activeVessel.SimulationObject.GlobalId, false, game.UniverseModel.UniversalTime);
+
+                //// Populate the nodeData structure
+                //nodeData.BurnVector.x = 0;
+                //nodeData.BurnVector.y = 0;
+                //nodeData.BurnVector.z = 0;
+                //nodeData.Time = UT;
+
+                //// Call MakeNode as a Coroutine so that it can wait a tic between creating the node and updating the gizmo
+                //StartCoroutine(MakeNode(nodeData));
             }
-            else return;
+            
+            return;
         }
-        if (pAbs || pInc1 || pInc2 || pDec1 || pDec2 || nAbs || nInc1 || nInc2 || nDec1 || nDec2 || rAbs || rInc1 || rInc2 || rDec1 || rDec2 || timeDec1 || timeDec2 || timeInc1 || timeInc2 || orbitDec || orbitInc || snapToAp || snapToPe || snapToANe || snapToDNe || snapToANt || snapToDNt)
+        else if (pAbs || pInc1 || pInc2 || pDec1 || pDec2 || nAbs || nInc1 || nInc2 || nDec1 || nDec2 || rAbs || rInc1 || rInc2 || rDec1 || rDec2)
         {
-            burnParams = Vector3d.zero;
-            if (pAbs)
+            burnParams = Vector3d.zero;  // Burn update vector, this is added to the existing burn
+
+            // Get the ManeuverPlanComponent for the active vessel
+            var universeModel = game.UniverseModel;
+            var vesselComponent = universeModel.FindVesselComponent(currentNode.RelatedSimID);
+            var simObject = vesselComponent.SimulationObject;
+            var maneuverPlanComponent = simObject.FindComponent<ManeuverPlanComponent>();
+
+            if (pAbs) // Set the prograde burn to the absoluteValue
             {
-                currentNode.BurnVector.z = absoluteValue;
+                burnParams.z = absoluteValue - currentNode.BurnVector.z;
+                // currentNode.BurnVector.z = absoluteValue;
             }
-            else if (pInc1)
+            else if (pInc1) // Add smallStep to the prograde burn
             {
                 burnParams.z += smallStep;
             }
-            else if (pInc2)
+            else if (pInc2) // Add bigStep to the prograde burn
             {
                 burnParams.z += bigStep;
             }
-            else if (nAbs)
+            else if (nAbs) // Set the normal burn to the absoluteValue
             {
-                currentNode.BurnVector.y = absoluteValue;
+                burnParams.y = absoluteValue - currentNode.BurnVector.y;
+                // currentNode.BurnVector.y = absoluteValue;
             }
-            else if (nInc1)
+            else if (nInc1) // Add smallStep to the normal burn
             {
                 burnParams.y += smallStep;
             }
-            else if (nInc2)
+            else if (nInc2) // Add bigStep to the normal burn
             {
                 burnParams.y += bigStep;
             }
-            else if (rAbs)
+            else if (rAbs) // Set the radial burn to the absoluteValue
             {
-                currentNode.BurnVector.x = absoluteValue;
+                burnParams.x = absoluteValue - currentNode.BurnVector.x;
+                // currentNode.BurnVector.x = absoluteValue;
             }
-            else if (rInc1)
+            else if (rInc1) // Add smallStep to the radial burn
             {
                 burnParams.x += smallStep;
             }
-            else if (rInc2)
+            else if (rInc2) // Add bigStep to the radial burn
             {
                 burnParams.x += bigStep;
             }
-            else if (pDec1)
+            else if (pDec1) // Subtract smallStep from the prograde burn
             {
                 burnParams.z -= smallStep;
             }
-            else if (pDec2)
+            else if (pDec2) // Subtract bigStep from the prograde burn
             {
                 burnParams.z -= bigStep;
             }
-            else if (nDec1)
+            else if (nDec1) // Subtract smallStep from the normal burn
             {
                 burnParams.y -= smallStep;
             }
-            else if (nDec2)
+            else if (nDec2) // Subtract bigStep from the normal burn
             {
                 burnParams.y -= bigStep;
             }
-            else if (rDec1)
+            else if (rDec1) // Subtract smallStep from the radial burn
             {
                 burnParams.x -= smallStep;
             }
-            else if (rDec2)
+            else if (rDec2) // Subtract bigStep from the radial burn
             {
                 burnParams.x -= bigStep;
             }
-            else if (timeDec1)
+
+            // Push the update to the node
+            maneuverPlanComponent.UpdateChangeOnNode(currentNode, burnParams);
+            try { maneuverPlanComponent.RefreshManeuverNodeState(0); } // Occasionally getting NREs here...
+            catch (NullReferenceException e) { Logger.LogError($"handleButtons: caught NRE on call to maneuverPlanComponent.RefreshManeuverNodeState(0): {e}"); }
+
+            // Manage the maneuver on the map
+            maneuverManager.RemoveAll();
+            try { maneuverManager?.GetNodeDataForVessels(); }
+            catch { Logger.LogError("handleButtons: caught exception on call to mapCore.map3D.ManeuverManager.GetNodeDataForVessels()"); }
+            try { maneuverManager.UpdatePositionForGizmo(currentNode.NodeID); }
+            catch { Logger.LogError("handleButtons: caught exception on call to mapCore.map3D.ManeuverManager.UpdatePositionForGizmo()"); }
+            try { maneuverManager.UpdateAll(); }
+            catch { Logger.LogError("handleButtons: caught exception on call to mapCore.map3D.ManeuverManager.UpdateAll()"); }
+        }
+        else if (timeDec1 || timeDec2 || timeInc1 || timeInc2 || orbitDec || orbitInc || snapToAp || snapToPe || snapToANe || snapToDNe || snapToANt || snapToDNt)
+        {
+            // Get the ManeuverPlanComponent for the active vessel
+            var universeModel = game.UniverseModel;
+            var vesselComponent = universeModel.FindVesselComponent(currentNode.RelatedSimID);
+            var simObject = vesselComponent.SimulationObject;
+            var maneuverPlanComponent = simObject.FindComponent<ManeuverPlanComponent>();
+
+            // Get some objects and info we need
+            var vessel = game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID);
+            var target = vessel?.TargetObject;
+            var UT = game.UniverseModel.UniversalTime;
+            var timeOfNodeFromNow = currentNode.Time - UT;
+
+            if (timeDec1) // Subtract timeSmallStep
             {
-                currentNode.Time -= timeSmallStep;
+                if (timeSmallStep < timeOfNodeFromNow) // If there is enough time
+                {
+                    currentNode.Time -= timeSmallStep;
+                }
             }
-            else if (timeDec2)
+            else if (timeDec2) // Subtract timeLargeStep
             {
-                currentNode.Time -= timeLargeStep;
+                if (timeLargeStep < timeOfNodeFromNow) // If there is enough time
+                {
+                    currentNode.Time -= timeLargeStep;
+                }
             }
-            else if (timeInc1)
+            else if (timeInc1) // Add timeSmallStep
             {
                 currentNode.Time += timeSmallStep;
             }
-            else if (timeInc2)
+            else if (timeInc2) // Add timeLargeStep
             {
                 currentNode.Time += timeLargeStep;
             }
-            else if (orbitDec)
+            else if (orbitDec) // Subtract one orbital period
             {
-                if (game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.period < (currentNode.Time - game.UniverseModel.UniversalTime))
+                if (vessel.Orbit.period < timeOfNodeFromNow) // If there is enough time
                 {
-                    currentNode.Time -= game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.period;
+                    currentNode.Time -= vessel.Orbit.period;
                 }
             }
-            else if (orbitInc)
+            else if (orbitInc) // Add one orbital period
             {
-                currentNode.Time += game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.period;
+                currentNode.Time += vessel.Orbit.period;
             }
             else if (snapToAp) // Snap the maneuver time to the next Ap
             {
-                currentNode.Time = game.UniverseModel.UniversalTime + game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.TimeToAp;
+                currentNode.Time = game.UniverseModel.UniversalTime + vessel.Orbit.TimeToAp;
             }
             else if (snapToPe) // Snap the maneuver time to the next Pe
             {
-                currentNode.Time = game.UniverseModel.UniversalTime + game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.TimeToPe;
+                currentNode.Time = game.UniverseModel.UniversalTime + vessel.Orbit.TimeToPe;
             }
             else if (snapToANe) // Snap the maneuver time to the AN relative to the equatorial plane
             {
-                Logger.LogInfo("Snapping Maneuver Time to TimeOfAscendingNodeEquatorial");
-                var UT = game.UniverseModel.UniversalTime;
-                var TAN = activeVessel.Orbit.TimeOfAscendingNodeEquatorial(UT);
-                var ANTA = activeVessel.Orbit.AscendingNodeEquatorialTrueAnomaly();
-                // var TAN = game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.TimeOfAscendingNodeEquatorial(UT);
-                currentNode.Time = TAN; // game.UniverseModel.UniversalTime + TAN;
-                Logger.LogInfo($"UT: {UT}");
-                Logger.LogInfo($"AscendingNodeEquatorialTrueAnomaly: {ANTA}");
-                Logger.LogInfo($"TimeOfAscendingNodeEquatorial: {TAN}");
-                // Logger.LogInfo($"UT + TimeOfAscendingNodeEquatorial: {TAN + UT}");
+                currentNode.Time = vessel.Orbit.TimeOfAscendingNodeEquatorial(UT);
             }
             else if (snapToDNe) // Snap the maneuver time to the DN relative to the equatorial plane
             {
-                Logger.LogInfo("Snapping Maneuver Time to TimeOfDescendingNodeEquatorial");
-                var UT = game.UniverseModel.UniversalTime;
-                var TDN = activeVessel.Orbit.TimeOfDescendingNodeEquatorial(UT);
-                var DNTA = activeVessel.Orbit.DescendingNodeEquatorialTrueAnomaly();
-                // var TDN = game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.TimeOfDescendingNodeEquatorial(UT);
-                currentNode.Time = TDN; // game.UniverseModel.UniversalTime + TDN;
-                Logger.LogInfo($"UT: {UT}");
-                Logger.LogInfo($"DescendingNodeEquatorialTrueAnomaly: {DNTA}");
-                Logger.LogInfo($"TimeOfDescendingNodeEquatorial: {TDN}");
-                // Logger.LogInfo($"UT + TimeOfDescendingNodeEquatorial: {TDN + UT}");
+                currentNode.Time = vessel.Orbit.TimeOfDescendingNodeEquatorial(UT);
             }
             else if (snapToANt) // Snap the maneuver time to the AN relative to selected target's orbit
             {
-                Logger.LogInfo("Snapping Maneuver Time to TimeOfAscendingNode");
-                var UT = game.UniverseModel.UniversalTime;
-                var TANt = activeVessel.Orbit.TimeOfAscendingNode(currentTarget.Orbit, UT);
-                var ANTA = activeVessel.Orbit.AscendingNodeTrueAnomaly(currentTarget.Orbit);
-                // var TANt = game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.TimeOfAscendingNode(currentTarget.Orbit, UT);
-                currentNode.Time = TANt; // game.UniverseModel.UniversalTime + TANt;
-                Logger.LogInfo($"UT: {UT}");
-                Logger.LogInfo($"AscendingNodeTrueAnomaly: {ANTA}");
-                Logger.LogInfo($"TimeOfAscendingNode: {TANt}");
-                // Logger.LogInfo($"UT + TimeOfAscendingNode: {TANt + UT}");
+                currentNode.Time = vessel.Orbit.TimeOfAscendingNode(target.Orbit, UT);
             }
             else if (snapToDNt) // Snap the maneuver time to the DN relative to selected target's orbit
             {
-                Logger.LogInfo("Snapping Maneuver Time to TimeOfDescendingNode");
-                var UT = game.UniverseModel.UniversalTime;
-                var TDNt = activeVessel.Orbit.TimeOfDescendingNode(currentTarget.Orbit, UT);
-                var DNTA = activeVessel.Orbit.DescendingNodeTrueAnomaly(currentTarget.Orbit);
-                // var TDNt = game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.TimeOfDescendingNode(currentTarget.Orbit, UT);
-                currentNode.Time = TDNt; // game.UniverseModel.UniversalTime + TDNt;
-                Logger.LogInfo($"UT: {UT}");
-                Logger.LogInfo($"DescendingNodeTrueAnomaly: {DNTA}");
-                Logger.LogInfo($"TimeOfDescendingNode: {TDNt}");
-                // Logger.LogInfo($"UT + TimeOfDescendingNode: {TDNt + UT}");
+                currentNode.Time = vessel.Orbit.TimeOfDescendingNode(target.Orbit, UT);
             }
 
-            // If there is a current node, update it
+            maneuverPlanComponent.UpdateTimeOnNode(currentNode, currentNode.Time); // This may not be necessary?
+            try { maneuverPlanComponent.RefreshManeuverNodeState(0); } // Occasionally getting NREs here...
+            catch (NullReferenceException e) { Logger.LogError($"handleButtons: caught NRE on call to maneuverPlanComponent.RefreshManeuverNodeState(0): {e}"); }
+
+            // Manage the maneuver on the map
+            maneuverManager.RemoveAll();
+            try { maneuverManager?.GetNodeDataForVessels(); }
+            catch { Logger.LogError("handleButtons: caught exception on call to mapCore.map3D.ManeuverManager.GetNodeDataForVessels()"); }
             if (currentNode != null)
             {
-                var universeModel = game.UniverseModel;
-                var vesselComponent = universeModel.FindVesselComponent(currentNode.RelatedSimID);
-                var simObject = vesselComponent.SimulationObject;
-                var maneuverPlanComponent = simObject.FindComponent<ManeuverPlanComponent>();
-                maneuverPlanComponent.UpdateChangeOnNode(currentNode, burnParams);
-                maneuverPlanComponent.RefreshManeuverNodeState(0); // Occasionally getting NREs here...
+                try { maneuverManager.UpdatePositionForGizmo(currentNode.NodeID); }
+                catch { Logger.LogError("handleButtons: caught exception on call to mapCore.map3D.ManeuverManager.UpdatePositionForGizmo()"); }
+                try { maneuverManager.UpdateAll(); }
+                catch { Logger.LogError("handleButtons: caught exception on call to mapCore.map3D.ManeuverManager.UpdateAll()"); }
             }
         }
     }
