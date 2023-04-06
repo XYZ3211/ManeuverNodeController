@@ -14,6 +14,7 @@ using KSP.Map;
 using MuMech;
 using System.Collections;
 using BepInEx.Logging;
+using SpaceWarp.API.Game.Messages;
 
 namespace ManeuverNodeController;
 
@@ -25,6 +26,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
 
     static bool loaded = false;
     private bool interfaceEnabled = false;
+    private bool GUIenabled = true;
     private Rect windowRect;
     private int windowWidth = Screen.width / 5; //384px on 1920x1080
     private int windowHeight = Screen.height / 3; //360px on 1920x1080
@@ -82,6 +84,25 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         base.OnInitialized();
         game = GameManager.Instance.Game;
         Logger = base.Logger;
+
+        // Subscribe to messages that indicate it's OK to raise the GUI
+        // StateChanges.FlightViewEntered += message => GUIenabled = true;
+        // StateChanges.Map3DViewEntered += message => GUIenabled = true;
+
+        // Subscribe to messages that indicate it's not OK to raise the GUI
+        // StateChanges.FlightViewLeft += message => GUIenabled = false;
+        // StateChanges.Map3DViewLeft += message => GUIenabled = false;
+        // StateChanges.VehicleAssemblyBuilderEntered += message => GUIenabled = false;
+        // StateChanges.KerbalSpaceCenterStateEntered += message => GUIenabled = false;
+        //StateChanges.BaseAssemblyEditorEntered += message => GUIenabled = false;
+        //StateChanges.MainMenuStateEntered += message => GUIenabled = false;
+        //StateChanges.ColonyViewEntered += message => GUIenabled = false;
+        // StateChanges.TrainingCenterEntered += message => GUIenabled = false;
+        //StateChanges.MissionControlEntered += message => GUIenabled = false;
+        // StateChanges.TrackingStationEntered += message => GUIenabled = false;
+        //StateChanges.ResearchAndDevelopmentEntered += message => GUIenabled = false;
+        //StateChanges.LaunchpadEntered += message => GUIenabled = false;
+        //StateChanges.RunwayEntered += message => GUIenabled = false;
 
         // Setup the list of input field names associated with TextField GUI inputs
         inputFields.Add("Prograde dV");
@@ -193,9 +214,21 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
 
     void OnGUI()
     {
+        GUIenabled = false;
+        var gameState = Game.GlobalGameState.GetState();
+        if (gameState == GameState.Map3DView) GUIenabled = true;
+        if (gameState == GameState.FlightView) GUIenabled = true;
+        //if (Game.GlobalGameState.GetState() == GameState.TrainingCenter) GUIenabled = false;
+        //if (Game.GlobalGameState.GetState() == GameState.TrackingStation) GUIenabled = false;
+        //if (Game.GlobalGameState.GetState() == GameState.VehicleAssemblyBuilder) GUIenabled = false;
+        //// if (Game.GlobalGameState.GetState() == GameState.MissionControl) GUIenabled = false;
+        //if (Game.GlobalGameState.GetState() == GameState.Loading) GUIenabled = false;
+        //if (Game.GlobalGameState.GetState() == GameState.KerbalSpaceCenter) GUIenabled = false;
+        //if (Game.GlobalGameState.GetState() == GameState.Launchpad) GUIenabled = false;
+        //if (Game.GlobalGameState.GetState() == GameState.Runway) GUIenabled = false;
         activeVessel = GameManager.Instance?.Game?.ViewController?.GetActiveVehicle(true)?.GetSimVessel(true);
         currentTarget = activeVessel?.TargetObject;
-        if (interfaceEnabled)
+        if (interfaceEnabled && GUIenabled)
         {
             GUI.skin = Skins.ConsoleSkin;
             windowRect = GUILayout.Window(
@@ -466,52 +499,6 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         GUILayout.EndHorizontal();
     }
 
-    private IEnumerator UpdateNode(ManeuverNodeData nodeData)
-    {
-        MapCore mapCore = null;
-        Game.Map.TryGetMapCore(out mapCore);
-        var m3d = mapCore.map3D;
-        var maneuverManager = m3d.ManeuverManager;
-
-        var universeModel = game.UniverseModel;
-        VesselComponent vesselComponent;
-        if (currentNode != null)
-        {
-            vesselComponent = universeModel.FindVesselComponent(currentNode.RelatedSimID);
-        }
-        else
-        {
-            vesselComponent = activeVessel;
-        }
-        var simObject = vesselComponent.SimulationObject;
-        var maneuverPlanComponent = simObject.FindComponent<ManeuverPlanComponent>();
-
-        // Wait a tick for things to get created
-        yield return new WaitForFixedUpdate();
-        
-        // Manage the maneuver on the map
-        maneuverManager.RemoveAll();
-        try { maneuverManager?.GetNodeDataForVessels(); }
-        catch { Logger.LogError("UpdateNode: caught exception on call to mapCore.map3D.ManeuverManager.GetNodeDataForVessels()"); }
-        try { maneuverManager.UpdateAll(); }
-        catch { Logger.LogError("UpdateNode: caught exception on call to mapCore.map3D.ManeuverManager.UpdateAll()"); }
-        try { maneuverManager.UpdatePositionForGizmo(nodeData.NodeID); }
-        catch { Logger.LogError("UpdateNode: caught exception on call to mapCore.map3D.ManeuverManager.UpdatePositionForGizmo()"); }
-
-        // Wait a tick for things to get created
-        //yield return new WaitForFixedUpdate();
-        //Logger.LogInfo($"UpdateNode: Burn time {nodeData.Time}");
-        //maneuverPlanComponent.UpdateTimeOnNode(nodeData, nodeData.Time); // This may not be necessary?
-        //Logger.LogInfo($"UpdateNode: Burn Updated: {nodeData.Time}");
-        //maneuverPlanComponent.UpdateChangeOnNode(nodeData, burnParams);
-
-        // Wait a tick for things to get created
-        yield return new WaitForFixedUpdate();
-
-        try { maneuverPlanComponent.RefreshManeuverNodeState(0); } // Occasionally getting NREs here...
-        catch (NullReferenceException e) { Logger.LogError($"UpdateNode: caught NRE on call to maneuverPlanComponent.RefreshManeuverNodeState(0): {e}"); }
-    }
-
     private IPatchedOrbit GetLastOrbit()
     {
         Logger.LogInfo("GetLastOrbit");
@@ -549,23 +536,23 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     private void CreateManeuverNodeAtUT(Vector3d burnVector, double UT)
     {
         Logger.LogInfo("CreateManeuverNodeAtUT");
-        PatchedConicsOrbit referencedOrbit = GetLastOrbit() as PatchedConicsOrbit;
-        if (referencedOrbit == null)
-        {
-            Logger.LogError("CreateManeuverNodeAtUT: referencedOrbit is null!");
-            return;
-        }
+        //PatchedConicsOrbit referencedOrbit = GetLastOrbit() as PatchedConicsOrbit;
+        //if (referencedOrbit == null)
+        //{
+        //    Logger.LogError("CreateManeuverNodeAtUT: referencedOrbit is null!");
+        //    return;
+        //}
 
         if (UT < game.UniverseModel.UniversalTime + 1) // Don't set node to now or in the past
             UT = game.UniverseModel.UniversalTime + 1;
 
-        ManeuverNodeData nodeData = new ManeuverNodeData(activeVessel.SimulationObject.GlobalId, true, UT);
+        ManeuverNodeData nodeData = new ManeuverNodeData(activeVessel.SimulationObject.GlobalId, false, UT);
 
-        IPatchedOrbit orbit = referencedOrbit;
-        orbit.PatchStartTransition = PatchTransitionType.Maneuver;
-        orbit.PatchEndTransition = PatchTransitionType.Final;
+        //IPatchedOrbit orbit = referencedOrbit;
+        //orbit.PatchStartTransition = PatchTransitionType.Maneuver;
+        //orbit.PatchEndTransition = PatchTransitionType.Final;
 
-        nodeData.SetManeuverState((PatchedConicsOrbit)orbit);
+        //nodeData.SetManeuverState((PatchedConicsOrbit)orbit);
 
         nodeData.BurnVector = burnVector;
 
@@ -595,6 +582,52 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         StartCoroutine(UpdateNode(nodeData));
 
         Logger.LogInfo("AddManeuverNode Done");
+    }
+
+    private IEnumerator UpdateNode(ManeuverNodeData nodeData)
+    {
+        MapCore mapCore = null;
+        Game.Map.TryGetMapCore(out mapCore);
+        var m3d = mapCore.map3D;
+        var maneuverManager = m3d.ManeuverManager;
+
+        var universeModel = game.UniverseModel;
+        VesselComponent vesselComponent;
+        if (currentNode != null)
+        {
+            vesselComponent = universeModel.FindVesselComponent(currentNode.RelatedSimID);
+        }
+        else
+        {
+            vesselComponent = activeVessel;
+        }
+        var simObject = vesselComponent.SimulationObject;
+        var maneuverPlanComponent = simObject.FindComponent<ManeuverPlanComponent>();
+
+        // Wait a tick for things to get created
+        yield return new WaitForFixedUpdate();
+
+        // Manage the maneuver on the map
+        maneuverManager.RemoveAll();
+        try { maneuverManager?.GetNodeDataForVessels(); }
+        catch { Logger.LogError("UpdateNode: caught exception on call to mapCore.map3D.ManeuverManager.GetNodeDataForVessels()"); }
+        try { maneuverManager.UpdateAll(); }
+        catch { Logger.LogError("UpdateNode: caught exception on call to mapCore.map3D.ManeuverManager.UpdateAll()"); }
+        try { maneuverManager.UpdatePositionForGizmo(nodeData.NodeID); }
+        catch { Logger.LogError("UpdateNode: caught exception on call to mapCore.map3D.ManeuverManager.UpdatePositionForGizmo()"); }
+
+        // Wait a tick for things to get created
+        //yield return new WaitForFixedUpdate();
+        //Logger.LogInfo($"UpdateNode: Burn time {nodeData.Time}");
+        //maneuverPlanComponent.UpdateTimeOnNode(nodeData, nodeData.Time); // This may not be necessary?
+        //Logger.LogInfo($"UpdateNode: Burn Updated: {nodeData.Time}");
+        //maneuverPlanComponent.UpdateChangeOnNode(nodeData, burnParams);
+
+        // Wait a tick for things to get created
+        yield return new WaitForFixedUpdate();
+
+        try { maneuverPlanComponent.RefreshManeuverNodeState(0); } // Occasionally getting NREs here...
+        catch (NullReferenceException e) { Logger.LogError($"UpdateNode: caught NRE on call to maneuverPlanComponent.RefreshManeuverNodeState(0): {e}"); }
     }
 
     private void handleButtons()
