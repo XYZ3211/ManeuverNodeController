@@ -62,6 +62,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     private GUIStyle textInputStyle;
     private GUIStyle sectionToggleStyle;
     private GUIStyle closeBtnStyle;
+    private GUIStyle snapBtnStyle;
     private GUIStyle nameLabelStyle;
     private GUIStyle valueLabelStyle;
     private GUIStyle unitLabelStyle;
@@ -144,12 +145,24 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             padding = new RectOffset(0, 0, 0, 3),
             contentOffset = new Vector2(0, 2),
             fixedHeight = 16,
-            fixedWidth = (float)(windowWidth / 9),
+            fixedWidth = (float)(windowWidth / 9) - 5,
             // fontSize = 16,
             clipping = TextClipping.Overflow,
             margin = new RectOffset(0, 0, 10, 0)
         };
 
+        snapBtnStyle = new GUIStyle(_spaceWarpUISkin.button)
+        {
+            alignment = TextAnchor.MiddleCenter,
+            padding = new RectOffset(0, 0, 0, 3),
+            contentOffset = new Vector2(0, 2),
+            fixedHeight = 20,
+            fixedWidth = (float)(windowWidth / 8) - 5,
+            // fontSize = 16,
+            clipping = TextClipping.Overflow,
+            margin = new RectOffset(0, 0, 10, 0)
+        };
+        
         sectionToggleStyle = new GUIStyle(_spaceWarpUISkin.toggle)
         {
             padding = new RectOffset(14, 0, 3, 3)
@@ -262,7 +275,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         warnStyle = new GUIStyle(GUI.skin.GetStyle("Label"));
         warnStyle.normal.textColor = Color.yellow;
         progradeStyle = new GUIStyle(GUI.skin.GetStyle("Label"));
-        progradeStyle.normal.textColor = Color.yellow;
+        progradeStyle.normal.textColor = Color.green;
         progradeStyle.fixedHeight = 24;
         normalStyle = new GUIStyle(GUI.skin.GetStyle("Label"));
         normalStyle.normal.textColor = Color.magenta;
@@ -293,9 +306,9 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         }
         else
         {
-            DrawEntry("Total Maneuver ∆v", currentNode.BurnRequiredDV.ToString("n2"), "m/s");
+            DrawEntry("Total Maneuver ∆v", currentNode.BurnRequiredDV.ToString("n2"), labelStyle, "m/s");
             dvRemaining = (activeVessel.Orbiter.ManeuverPlanSolver.GetVelocityAfterFirstManeuver(out UT).vector - activeVessel.Orbit.GetOrbitalVelocityAtUTZup(UT)).magnitude;
-            DrawEntry("∆v Remaining", dvRemaining.ToString("n3"), "m/s");
+            DrawEntry("∆v Remaining", dvRemaining.ToString("n3"), labelStyle, "m/s");
             GUILayout.Box("", horizontalDivider);
             DrawEntry("Prograde ∆v", currentNode.BurnVector.z.ToString("n2"), progradeStyle, "m/s");
             DrawEntry("Normal ∆v", currentNode.BurnVector.y.ToString("n2"), normalStyle, "m/s");
@@ -313,7 +326,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
 
             GUILayout.BeginHorizontal();
             string inputStateString = gameInputState ? "Enabled" : "Disabled";
-            GUILayout.Label($"Game Input: {inputStateString}");
+            GUILayout.Label($"Game Input: {inputStateString}", labelStyle);
             GUILayout.EndHorizontal();
 
             handleButtons();
@@ -344,7 +357,6 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     {
         string nextApA, nextPeA, nextInc, nextEcc, nextLAN;
 
-        GUILayout.Box("", horizontalDivider);
         DrawEntryTextField("Absolute ∆v", ref absoluteValueString, "m/s");
         double.TryParse(absoluteValueString, out absoluteValue);
         DrawEntryTextField("Small Step ∆v", ref smallStepString, "m/s");
@@ -356,30 +368,49 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         DrawEntry5Button("Normal", normalStyle, ref nDec2, "<<", ref nDec1, "<", ref nInc1, ">", ref nInc2, ">>", ref nAbs, "Abs");
         DrawEntry5Button("Radial", radialStyle, ref rDec2, "<<", ref rDec1, "<", ref rInc1, ">", ref rInc2, ">>", ref rAbs, "Abs");
         GUILayout.Box("", horizontalDivider);
+        GUILayout.Box("", horizontalDivider);
         SnapSelectionGUI();
         GUILayout.Box("", horizontalDivider);
         DrawEntryTextField("Small Time Step", ref timeSmallStepString, "seconds");
         double.TryParse(timeSmallStepString, out timeSmallStep);
         DrawEntryTextField("Large Time Step", ref timeLargeStepString, "seconds");
         double.TryParse(timeLargeStepString, out timeLargeStep);
+        GUILayout.Box("", horizontalDivider);
         DrawEntry4Button("Time", labelStyle, ref timeDec2, "<<", ref timeDec1, "<", ref timeInc1, ">", ref timeInc2, ">>");
         GUILayout.Box("", horizontalDivider);
         var numOrbits = Math.Truncate((currentNode.Time - game.UniverseModel.UniversalTime) / game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.period).ToString("n0");
         DrawEntry("Maneuver Node in", $"{numOrbits} orbit(s)");
         DrawEntry2Button("Orbit", labelStyle, ref orbitDec, "-", ref orbitInc, "+");
         GUILayout.Box("", horizontalDivider);
-        Draw2Entries("Starting Orbit", "New Orbit");
-        var patch = currentNode.ManeuverTrajectoryPatch;
+        Draw2Entries("Starting Orbit", "New Orbit", labelStyle);
+        var patch = currentNode?.ManeuverTrajectoryPatch;
+        nextApA = "Oopsie!";
+        nextPeA = "Oopsie!";
+        nextInc = "Oopsie!";
+        nextEcc = "Oopsie!";
+        nextLAN = "Oopsie!";
         if (patch != null)
         {
-            if (patch.eccentricity < 1)
-                nextApA = (patch.ApoapsisArl/1000).ToString("n3");
-            else
-                nextApA = "Inf";
-            nextPeA = (patch.PeriapsisArl/1000).ToString("n3");
-            nextInc = patch.inclination.ToString("n3");
-            nextEcc = patch.eccentricity.ToString("n3");
-            nextLAN = patch.longitudeOfAscendingNode.ToString("n3");
+            try
+            {
+                if (patch.eccentricity < 1)
+                    nextApA = (patch.ApoapsisArl / 1000).ToString("n3");
+                else
+                    nextApA = "Inf";
+                nextPeA = (patch.PeriapsisArl / 1000).ToString("n3");
+                nextInc = patch.inclination.ToString("n3");
+                nextEcc = patch.eccentricity.ToString("n3");
+                nextLAN = patch.longitudeOfAscendingNode.ToString("n3");
+            }
+            catch (Exception e)
+            {
+                Logger.LogError($"drawSimpleMode: Caught Exception getting orbit info for maneuver patch: {e}");
+                nextApA = "Err";
+                nextPeA = "Err";
+                nextInc = "Err";
+                nextEcc = "Err";
+                nextLAN = "Err";
+            }
         }
         else
         {
@@ -389,11 +420,11 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             nextEcc = "NaN";
             nextLAN = "NaN";
         }
-        Draw2Entries("Ap", "Ap", (activeVessel.Orbit.ApoapsisArl / 1000).ToString("n3"), nextApA, "km");
-        Draw2Entries("Pe", "Pe", (activeVessel.Orbit.PeriapsisArl / 1000).ToString("n3"), nextPeA, "km");
-        Draw2Entries("Inc", "Inc", activeVessel.Orbit.inclination.ToString("n3"), nextInc, "°");
-        Draw2Entries("Ecc", "Ecc", activeVessel.Orbit.eccentricity.ToString("n3"), nextEcc);
-        Draw2Entries("LAN", "LAN", activeVessel.Orbit.longitudeOfAscendingNode.ToString("n3"), nextLAN, "°");
+        Draw2Entries("Ap", "Ap", nameLabelStyle, (activeVessel.Orbit.ApoapsisArl / 1000).ToString("n3"), nextApA, "km");
+        Draw2Entries("Pe", "Pe", nameLabelStyle, (activeVessel.Orbit.PeriapsisArl / 1000).ToString("n3"), nextPeA, "km");
+        Draw2Entries("Inc", "Inc", nameLabelStyle, activeVessel.Orbit.inclination.ToString("n3"), nextInc, "°");
+        Draw2Entries("Ecc", "Ecc", nameLabelStyle, activeVessel.Orbit.eccentricity.ToString("n3"), nextEcc);
+        Draw2Entries("LAN", "LAN", nameLabelStyle, activeVessel.Orbit.longitudeOfAscendingNode.ToString("n3"), nextLAN, "°");
         GUILayout.Box("", horizontalDivider);
     }
 
@@ -450,10 +481,15 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         GUILayout.Space(spacingAfterEntry);
     }
 
-    private void Draw2Entries(string entryName1, string entryName2, string value1 = "", string value2 = "", string unit = "")
+    private void Draw2Entries(string entryName1, string entryName2, GUIStyle entryStyle = null, string value1 = "", string value2 = "", string unit = "")
     {
+        if (entryStyle == null)
+        {
+            entryStyle = nameLabelStyle;
+            entryStyle.fixedHeight = valueLabelStyle.fixedHeight;
+        }
         GUILayout.BeginHorizontal();
-        GUILayout.Label($"{entryName1} : ", nameLabelStyle);
+        GUILayout.Label($"{entryName1} : ", entryStyle);
         if (value1.Length > 0)
         {
             GUILayout.Space(5);
@@ -462,7 +498,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             GUILayout.Label(unit, unitLabelStyle);
         }
         GUILayout.FlexibleSpace();
-        GUILayout.Label($"{entryName2}: ", nameLabelStyle);
+        GUILayout.Label($"{entryName2}: ", entryStyle);
         if (value2.Length > 0)
         {
             GUILayout.Space(5);
@@ -503,11 +539,13 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     {
         GUILayout.BeginHorizontal();
         button1 = GUILayout.Button(button1Str, ctrlBtnStyle); // GUILayout.Width(windowWidth / 9));
+        GUILayout.Space(5);
         button2 = GUILayout.Button(button2Str, ctrlBtnStyle); // GUILayout.Width(windowWidth / 9));
         GUILayout.FlexibleSpace();
         GUILayout.Label(entryName, entryStyle);
         GUILayout.FlexibleSpace();
         button3 = GUILayout.Button(button3Str, ctrlBtnStyle); // GUILayout.Width(windowWidth / 9));
+        GUILayout.Space(5);
         button4 = GUILayout.Button(button4Str, ctrlBtnStyle); // GUILayout.Width(windowWidth / 9));
         GUILayout.EndHorizontal();
         GUILayout.Space(spacingAfterEntry);
@@ -517,12 +555,15 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     {
         GUILayout.BeginHorizontal();
         button1 = GUILayout.Button(button1Str, ctrlBtnStyle); // GUILayout.Width(windowWidth / 9));
+        GUILayout.Space(5);
         button2 = GUILayout.Button(button2Str, ctrlBtnStyle); // GUILayout.Width(windowWidth / 9));
         GUILayout.FlexibleSpace();
         GUILayout.Label(entryName, entryStyle);
         GUILayout.FlexibleSpace();
         button3 = GUILayout.Button(button3Str, ctrlBtnStyle); // GUILayout.Width(windowWidth / 9));
+        GUILayout.Space(5);
         button4 = GUILayout.Button(button4Str, ctrlBtnStyle); // GUILayout.Width(windowWidth / 9));
+        GUILayout.Space(5);
         button5 = GUILayout.Button(button5Str, ctrlBtnStyle); // GUILayout.Width(windowWidth / 9));
         GUILayout.EndHorizontal();
         GUILayout.Space(spacingAfterEntry);
@@ -561,18 +602,24 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         private void SnapSelectionGUI()
     {
         GUILayout.BeginHorizontal();
-        GUILayout.Label("SnapTo: ", GUILayout.Width(windowWidth / 5));
-        snapToAp = GUILayout.Button("Ap", GUILayout.Width(windowWidth / 9));
-        snapToPe = GUILayout.Button("Pe", GUILayout.Width(windowWidth / 9));
-        snapToANe = GUILayout.Button("ANe", GUILayout.Width(windowWidth / 9));
-        snapToDNe = GUILayout.Button("DNe", GUILayout.Width(windowWidth / 9));
+        GUILayout.Label("SnapTo: ", nameLabelStyle); //  GUILayout.Width(windowWidth / 5));
+        snapToAp = GUILayout.Button("Ap", snapBtnStyle);
+        GUILayout.Space(5);
+        snapToPe = GUILayout.Button("Pe", snapBtnStyle);
+        GUILayout.Space(5);
+        snapToANe = GUILayout.Button("ANe", snapBtnStyle);
+        GUILayout.Space(5);
+        snapToDNe = GUILayout.Button("DNe", snapBtnStyle);
         if (currentTarget != null)
         {
-            snapToANt = GUILayout.Button("ANt", GUILayout.Width(windowWidth / 9));
-            snapToDNt = GUILayout.Button("DNt", GUILayout.Width(windowWidth / 9));
+            GUILayout.Space(5);
+            snapToANt = GUILayout.Button("ANt", snapBtnStyle);
+            GUILayout.Space(5);
+            snapToDNt = GUILayout.Button("DNt", snapBtnStyle);
         }
         GUILayout.FlexibleSpace();
         GUILayout.EndHorizontal();
+        GUILayout.Space(spacingAfterEntry);
     }
 
     private IPatchedOrbit GetLastOrbit()
