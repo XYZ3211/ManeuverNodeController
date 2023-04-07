@@ -14,7 +14,6 @@ using KSP.Map;
 using MuMech;
 using System.Collections;
 using BepInEx.Logging;
-using SpaceWarp.API.Game.Messages;
 
 namespace ManeuverNodeController;
 
@@ -71,11 +70,6 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     private int spacingAfterEntry = -12;
     private int spacingAfterSection = 5;
 
-    // Set things up so we'll have access to mapCpre.Map3D.ManeuverManager
-    //MapCore mapCore = null;
-    //Map3DView m3d;
-    //Map3DManeuvers maneuverManager;
-
     //public ManualLogSource logger;
     public new static ManualLogSource Logger { get; set; }
 
@@ -94,23 +88,23 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         // StateChanges.Map3DViewLeft += message => GUIenabled = false;
         // StateChanges.VehicleAssemblyBuilderEntered += message => GUIenabled = false;
         // StateChanges.KerbalSpaceCenterStateEntered += message => GUIenabled = false;
-        //StateChanges.BaseAssemblyEditorEntered += message => GUIenabled = false;
-        //StateChanges.MainMenuStateEntered += message => GUIenabled = false;
-        //StateChanges.ColonyViewEntered += message => GUIenabled = false;
+        // StateChanges.BaseAssemblyEditorEntered += message => GUIenabled = false;
+        // StateChanges.MainMenuStateEntered += message => GUIenabled = false;
+        // StateChanges.ColonyViewEntered += message => GUIenabled = false;
         // StateChanges.TrainingCenterEntered += message => GUIenabled = false;
-        //StateChanges.MissionControlEntered += message => GUIenabled = false;
+        // StateChanges.MissionControlEntered += message => GUIenabled = false;
         // StateChanges.TrackingStationEntered += message => GUIenabled = false;
-        //StateChanges.ResearchAndDevelopmentEntered += message => GUIenabled = false;
-        //StateChanges.LaunchpadEntered += message => GUIenabled = false;
-        //StateChanges.RunwayEntered += message => GUIenabled = false;
+        // StateChanges.ResearchAndDevelopmentEntered += message => GUIenabled = false;
+        // StateChanges.LaunchpadEntered += message => GUIenabled = false;
+        // StateChanges.RunwayEntered += message => GUIenabled = false;
 
         // Setup the list of input field names associated with TextField GUI inputs
-        inputFields.Add("Prograde dV");
-        inputFields.Add("Normal dV");
-        inputFields.Add("Radial dV");
-        inputFields.Add("Absolute dV");
-        inputFields.Add("Small Step dV");
-        inputFields.Add("Large Step dV");
+        inputFields.Add("Prograde ∆v");
+        inputFields.Add("Normal ∆v");
+        inputFields.Add("Radial ∆v");
+        inputFields.Add("Absolute ∆v");
+        inputFields.Add("Small Step ∆v");
+        inputFields.Add("Large Step ∆v");
         inputFields.Add("Small Time Step");
         inputFields.Add("Large Time Step");
 
@@ -139,6 +133,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             padding = new RectOffset(10, 10, 0, 0),
             contentOffset = new Vector2(0, 2),
             fixedHeight = 18,
+            fixedWidth = (float)(windowWidth / 4),
             clipping = TextClipping.Overflow,
             margin = new RectOffset(0, 0, 10, 0)
         };
@@ -149,8 +144,8 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             padding = new RectOffset(0, 0, 0, 3),
             contentOffset = new Vector2(0, 2),
             fixedHeight = 16,
-            fixedWidth = 16,
-            fontSize = 16,
+            fixedWidth = (float)(windowWidth / 9),
+            // fontSize = 16,
             clipping = TextClipping.Overflow,
             margin = new RectOffset(0, 0, 10, 0)
         };
@@ -218,17 +213,10 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         var gameState = Game.GlobalGameState.GetState();
         if (gameState == GameState.Map3DView) GUIenabled = true;
         if (gameState == GameState.FlightView) GUIenabled = true;
-        //if (Game.GlobalGameState.GetState() == GameState.TrainingCenter) GUIenabled = false;
-        //if (Game.GlobalGameState.GetState() == GameState.TrackingStation) GUIenabled = false;
-        //if (Game.GlobalGameState.GetState() == GameState.VehicleAssemblyBuilder) GUIenabled = false;
-        //// if (Game.GlobalGameState.GetState() == GameState.MissionControl) GUIenabled = false;
-        //if (Game.GlobalGameState.GetState() == GameState.Loading) GUIenabled = false;
-        //if (Game.GlobalGameState.GetState() == GameState.KerbalSpaceCenter) GUIenabled = false;
-        //if (Game.GlobalGameState.GetState() == GameState.Launchpad) GUIenabled = false;
-        //if (Game.GlobalGameState.GetState() == GameState.Runway) GUIenabled = false;
+
         activeVessel = GameManager.Instance?.Game?.ViewController?.GetActiveVehicle(true)?.GetSimVessel(true);
         currentTarget = activeVessel?.TargetObject;
-        if (interfaceEnabled && GUIenabled)
+        if (interfaceEnabled && GUIenabled && activeVessel != null)
         {
             GUI.skin = Skins.ConsoleSkin;
             windowRect = GUILayout.Window(
@@ -275,10 +263,13 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         warnStyle.normal.textColor = Color.yellow;
         progradeStyle = new GUIStyle(GUI.skin.GetStyle("Label"));
         progradeStyle.normal.textColor = Color.yellow;
+        progradeStyle.fixedHeight = 24;
         normalStyle = new GUIStyle(GUI.skin.GetStyle("Label"));
         normalStyle.normal.textColor = Color.magenta;
+        normalStyle.fixedHeight = 24;
         radialStyle = new GUIStyle(GUI.skin.GetStyle("Label"));
         radialStyle.normal.textColor = Color.cyan;
+        radialStyle.fixedHeight = 24;
         horizontalDivider.fixedHeight = 2;
         horizontalDivider.margin = new RectOffset(0, 0, 4, 4);
         // game = GameManager.Instance.Game;
@@ -302,32 +293,13 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         }
         else
         {
-            GUILayout.BeginHorizontal();
-            GUILayout.Label($"Total Maneuver ∆v (m/s): ");
-            GUILayout.FlexibleSpace();
-            GUILayout.Label(currentNode.BurnRequiredDV.ToString("n2"));
-            GUILayout.EndHorizontal();
-            GUILayout.BeginHorizontal();
-            GUILayout.Label($"∆v Remaining (m/s): ");
-            GUILayout.FlexibleSpace();
+            DrawEntry("Total Maneuver ∆v", currentNode.BurnRequiredDV.ToString("n2"), "m/s");
             dvRemaining = (activeVessel.Orbiter.ManeuverPlanSolver.GetVelocityAfterFirstManeuver(out UT).vector - activeVessel.Orbit.GetOrbitalVelocityAtUTZup(UT)).magnitude;
-            GUILayout.Label(dvRemaining.ToString("n3"));
-            GUILayout.EndHorizontal();
-            GUILayout.BeginHorizontal();
-            GUILayout.Label($"Prograde ∆v (m/s): ");
-            GUILayout.FlexibleSpace();
-            GUILayout.Label(currentNode.BurnVector.z.ToString("n2"));
-            GUILayout.EndHorizontal();
-            GUILayout.BeginHorizontal();
-            GUILayout.Label($"Normal ∆v (m/s): ");
-            GUILayout.FlexibleSpace();
-            GUILayout.Label(currentNode.BurnVector.y.ToString("n2"));
-            GUILayout.EndHorizontal();
-            GUILayout.BeginHorizontal();
-            GUILayout.Label($"Radial ∆v (m/s): ");
-            GUILayout.FlexibleSpace();
-            GUILayout.Label(currentNode.BurnVector.x.ToString("n2"));
-            GUILayout.EndHorizontal();
+            DrawEntry("∆v Remaining", dvRemaining.ToString("n3"), "m/s");
+            GUILayout.Box("", horizontalDivider);
+            DrawEntry("Prograde ∆v", currentNode.BurnVector.z.ToString("n2"), progradeStyle, "m/s");
+            DrawEntry("Normal ∆v", currentNode.BurnVector.y.ToString("n2"), normalStyle, "m/s");
+            DrawEntry("Radial ∆v", currentNode.BurnVector.x.ToString("n2"), radialStyle, "m/s");
             GUILayout.Box("", horizontalDivider);
             if (advancedMode)
             {
@@ -352,24 +324,12 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
 
     private void drawAdvancedMode()
     {
-        GUILayout.BeginHorizontal();
-        GUILayout.Label("Prograde ∆v (m/s): ", GUILayout.Width(windowWidth / 2));
-        GUI.SetNextControlName("Prograde dV");
-        progradeString = GUILayout.TextField(progradeString, progradeStyle);
+        DrawEntryTextField("Prograde ∆v", ref progradeString, "m/s");
         double.TryParse(progradeString, out burnParams.z);
-        GUILayout.EndHorizontal();
-        GUILayout.BeginHorizontal();
-        GUILayout.Label("Normal ∆v (m/s): ", GUILayout.Width(windowWidth / 2));
-        GUI.SetNextControlName("Normal dV");
-        normalString = GUILayout.TextField(normalString, normalStyle);
+        DrawEntryTextField("Normal ∆v", ref normalString, "m/s");
         double.TryParse(normalString, out burnParams.y);
-        GUILayout.EndHorizontal();
-        GUILayout.BeginHorizontal();
-        GUILayout.Label("Radial ∆v (m/s): ", GUILayout.Width(windowWidth / 2));
-        GUI.SetNextControlName("Radial dV");
-        radialString = GUILayout.TextField(radialString, radialStyle);
+        DrawEntryTextField("Radial ∆v", ref radialString, "m/s");
         double.TryParse(radialString, out burnParams.x);
-        GUILayout.EndHorizontal();
         if (GUILayout.Button("Apply Changes to Node"))
         {
             ManeuverNodeData nodeData = GameManager.Instance.Game.SpaceSimulation.Maneuvers.GetNodesForVessel(GameManager.Instance.Game.ViewController.GetActiveVehicle(true).Guid)[0];
@@ -382,91 +342,59 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
 
     private void drawSimpleMode()
     {
-        GUILayout.BeginHorizontal();
-        GUILayout.Label("Absolute ∆v (m/s): ", GUILayout.Width(windowWidth / 2));
-        GUI.SetNextControlName("Absolute dV");
-        absoluteValueString = GUILayout.TextField(absoluteValueString);
+        string nextApA, nextPeA, nextInc, nextEcc, nextLAN;
+
+        GUILayout.Box("", horizontalDivider);
+        DrawEntryTextField("Absolute ∆v", ref absoluteValueString, "m/s");
         double.TryParse(absoluteValueString, out absoluteValue);
-        GUILayout.EndHorizontal();
-        GUILayout.BeginHorizontal();
-        GUILayout.Label("Small Step ∆v (m/s): ", GUILayout.Width(windowWidth / 2));
-        GUI.SetNextControlName("Small Step dV");
-        smallStepString = GUILayout.TextField(smallStepString);
+        DrawEntryTextField("Small Step ∆v", ref smallStepString, "m/s");
         double.TryParse(smallStepString, out smallStep);
-        GUILayout.EndHorizontal();
-        GUILayout.BeginHorizontal();
-        GUILayout.Label("Large Step ∆v (m/s): ", GUILayout.Width(windowWidth / 2));
-        GUI.SetNextControlName("Large Step dV");
-        bigStepString = GUILayout.TextField(bigStepString);
+        DrawEntryTextField("Large Step ∆v", ref bigStepString, "m/s");
         double.TryParse(bigStepString, out bigStep);
-        GUILayout.EndHorizontal();
-        GUILayout.BeginHorizontal();
-        pDec2 = GUILayout.Button("<<", GUILayout.Width(windowWidth / 9));
-        pDec1 = GUILayout.Button("<", GUILayout.Width(windowWidth / 9));
-        GUILayout.FlexibleSpace();
-        GUILayout.Label("Prograde", progradeStyle);
-        GUILayout.FlexibleSpace();
-        pInc1 = GUILayout.Button(">", GUILayout.Width(windowWidth / 9));
-        pInc2 = GUILayout.Button(">>", GUILayout.Width(windowWidth / 9));
-        pAbs = GUILayout.Button("Abs", GUILayout.Width(windowWidth / 9));
-        GUILayout.EndHorizontal();
-        GUILayout.BeginHorizontal();
-        nDec2 = GUILayout.Button("<<", GUILayout.Width(windowWidth / 9));
-        nDec1 = GUILayout.Button("<", GUILayout.Width(windowWidth / 9));
-        GUILayout.FlexibleSpace();
-        GUILayout.Label("Normal", normalStyle);
-        GUILayout.FlexibleSpace();
-        nInc1 = GUILayout.Button(">", GUILayout.Width(windowWidth / 9));
-        nInc2 = GUILayout.Button(">>", GUILayout.Width(windowWidth / 9));
-        nAbs = GUILayout.Button("Abs", GUILayout.Width(windowWidth / 9));
-        GUILayout.EndHorizontal();
-        GUILayout.BeginHorizontal();
-        rDec2 = GUILayout.Button("<<", GUILayout.Width(windowWidth / 9));
-        rDec1 = GUILayout.Button("<", GUILayout.Width(windowWidth / 9));
-        GUILayout.FlexibleSpace();
-        GUILayout.Label("Radial", radialStyle);
-        GUILayout.FlexibleSpace();
-        rInc1 = GUILayout.Button(">", GUILayout.Width(windowWidth / 9));
-        rInc2 = GUILayout.Button(">>", GUILayout.Width(windowWidth / 9));
-        rAbs = GUILayout.Button("Abs", GUILayout.Width(windowWidth / 9));
-        GUILayout.EndHorizontal();
+        GUILayout.Box("", horizontalDivider);
+        DrawEntry5Button("Prograde", progradeStyle, ref pDec2, "<<", ref pDec1, "<", ref pInc1, ">", ref pInc2, ">>", ref pAbs, "Abs");
+        DrawEntry5Button("Normal", normalStyle, ref nDec2, "<<", ref nDec1, "<", ref nInc1, ">", ref nInc2, ">>", ref nAbs, "Abs");
+        DrawEntry5Button("Radial", radialStyle, ref rDec2, "<<", ref rDec1, "<", ref rInc1, ">", ref rInc2, ">>", ref rAbs, "Abs");
         GUILayout.Box("", horizontalDivider);
         SnapSelectionGUI();
         GUILayout.Box("", horizontalDivider);
-        GUILayout.BeginHorizontal();
-        GUILayout.Label("Small Time Step (seconds): ", GUILayout.Width(2*windowWidth / 3));
-        GUI.SetNextControlName("Small Time Step");
-        timeSmallStepString = GUILayout.TextField(timeSmallStepString);
+        DrawEntryTextField("Small Time Step", ref timeSmallStepString, "seconds");
         double.TryParse(timeSmallStepString, out timeSmallStep);
-        GUILayout.EndHorizontal();
-        GUILayout.BeginHorizontal();
-        GUILayout.Label("Large Time Step (seconds): ", GUILayout.Width(2*windowWidth / 3));
-        GUI.SetNextControlName("Large Time Step");
-        timeLargeStepString = GUILayout.TextField(timeLargeStepString);
+        DrawEntryTextField("Large Time Step", ref timeLargeStepString, "seconds");
         double.TryParse(timeLargeStepString, out timeLargeStep);
-        GUILayout.EndHorizontal();
-        GUILayout.BeginHorizontal();
-        timeDec2 = GUILayout.Button("<<", GUILayout.Width(windowWidth / 9));
-        timeDec1 = GUILayout.Button("<", GUILayout.Width(windowWidth / 9));
-        GUILayout.FlexibleSpace();
-        GUILayout.Label("Time", labelStyle);
-        GUILayout.FlexibleSpace();
-        timeInc1 = GUILayout.Button(">", GUILayout.Width(windowWidth / 9));
-        timeInc2 = GUILayout.Button(">>", GUILayout.Width(windowWidth / 9));
-        GUILayout.EndHorizontal();
+        DrawEntry4Button("Time", labelStyle, ref timeDec2, "<<", ref timeDec1, "<", ref timeInc1, ">", ref timeInc2, ">>");
         GUILayout.Box("", horizontalDivider);
-        GUILayout.BeginHorizontal();
-        GUILayout.Label("Maneuver Node in: ");
-        GUILayout.FlexibleSpace();
-        GUILayout.Label($"{Math.Truncate((currentNode.Time - game.UniverseModel.UniversalTime) / game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.period).ToString("n0")} orbit(s) ");
-        GUILayout.EndHorizontal();
-        GUILayout.BeginHorizontal();
-        orbitDec = GUILayout.Button("-", GUILayout.Width(windowWidth / 7));
-        GUILayout.FlexibleSpace();
-        GUILayout.Label("Orbit", labelStyle);
-        GUILayout.FlexibleSpace();
-        orbitInc = GUILayout.Button("+", GUILayout.Width(windowWidth / 7));
-        GUILayout.EndHorizontal();
+        var numOrbits = Math.Truncate((currentNode.Time - game.UniverseModel.UniversalTime) / game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.period).ToString("n0");
+        DrawEntry("Maneuver Node in", $"{numOrbits} orbit(s)");
+        DrawEntry2Button("Orbit", labelStyle, ref orbitDec, "-", ref orbitInc, "+");
+        GUILayout.Box("", horizontalDivider);
+        Draw2Entries("Starting Orbit", "New Orbit");
+        var patch = currentNode.ManeuverTrajectoryPatch;
+        if (patch != null)
+        {
+            if (patch.eccentricity < 1)
+                nextApA = (patch.ApoapsisArl/1000).ToString("n3");
+            else
+                nextApA = "Inf";
+            nextPeA = (patch.PeriapsisArl/1000).ToString("n3");
+            nextInc = patch.inclination.ToString("n3");
+            nextEcc = patch.eccentricity.ToString("n3");
+            nextLAN = patch.longitudeOfAscendingNode.ToString("n3");
+        }
+        else
+        {
+            nextApA = "NaN";
+            nextPeA = "NaN";
+            nextInc = "NaN";
+            nextEcc = "NaN";
+            nextLAN = "NaN";
+        }
+        Draw2Entries("Ap", "Ap", (activeVessel.Orbit.ApoapsisArl / 1000).ToString("n3"), nextApA, "km");
+        Draw2Entries("Pe", "Pe", (activeVessel.Orbit.PeriapsisArl / 1000).ToString("n3"), nextPeA, "km");
+        Draw2Entries("Inc", "Inc", activeVessel.Orbit.inclination.ToString("n3"), nextInc, "°");
+        Draw2Entries("Ecc", "Ecc", activeVessel.Orbit.eccentricity.ToString("n3"), nextEcc);
+        Draw2Entries("LAN", "LAN", activeVessel.Orbit.longitudeOfAscendingNode.ToString("n3"), nextLAN, "°");
+        GUILayout.Box("", horizontalDivider);
     }
 
     private bool CloseButton()
@@ -481,8 +409,156 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         ToggleButton(interfaceEnabled);
     }
 
-    // Draws the snap selection GUI.
-    private void SnapSelectionGUI()
+    //private void DrawSoloToggle(string sectionNamem, ref bool toggle)
+    //{
+    //    GUILayout.Space(5);
+    //    GUILayout.BeginHorizontal();
+    //    toggle = GUILayout.Toggle(toggle, sectionNamem, sectionToggleStyle);
+    //    GUILayout.EndHorizontal();
+    //    GUILayout.Space(-5);
+    //}
+
+    //private void DrawSectionHeader(string sectionName, string value = "") // was (string sectionName, ref bool isPopout, string value = "")
+    //{
+    //    GUILayout.BeginHorizontal();
+    //    // Don't need popout buttons for ROC
+    //    // isPopout = isPopout ? !CloseButton() : GUILayout.Button("⇖", popoutBtnStyle);
+
+    //    GUILayout.Label($"<b>{sectionName}</b>");
+    //    GUILayout.FlexibleSpace();
+    //    GUILayout.Label(value, valueLabelStyle);
+    //    GUILayout.Space(5);
+    //    GUILayout.Label("", unitLabelStyle);
+    //    GUILayout.EndHorizontal();
+    //    GUILayout.Space(spacingAfterHeader);
+    //}
+
+    private void DrawEntry(string entryName, string value, GUIStyle entryStyle = null, string unit = "")
+    {
+        if (entryStyle == null)
+            entryStyle = nameLabelStyle;
+        GUILayout.BeginHorizontal();
+        if (unit.Length > 0)
+            GUILayout.Label($"{entryName} ({unit}): ", entryStyle);
+        else
+            GUILayout.Label($"{entryName}: ", entryStyle);
+        GUILayout.FlexibleSpace();
+        GUILayout.Label(value, valueLabelStyle);
+        GUILayout.Space(5);
+        GUILayout.Label(unit, unitLabelStyle);
+        GUILayout.EndHorizontal();
+        GUILayout.Space(spacingAfterEntry);
+    }
+
+    private void Draw2Entries(string entryName1, string entryName2, string value1 = "", string value2 = "", string unit = "")
+    {
+        GUILayout.BeginHorizontal();
+        GUILayout.Label($"{entryName1} : ", nameLabelStyle);
+        if (value1.Length > 0)
+        {
+            GUILayout.Space(5);
+            GUILayout.Label(value1, valueLabelStyle);
+            GUILayout.Space(5);
+            GUILayout.Label(unit, unitLabelStyle);
+        }
+        GUILayout.FlexibleSpace();
+        GUILayout.Label($"{entryName2}: ", nameLabelStyle);
+        if (value2.Length > 0)
+        {
+            GUILayout.Space(5);
+            GUILayout.Label(value2, valueLabelStyle);
+            GUILayout.Space(5);
+            GUILayout.Label(unit, unitLabelStyle);
+        }
+        GUILayout.EndHorizontal();
+        GUILayout.Space(spacingAfterEntry);
+    }
+    
+    //private void DrawEntryButton(string entryName, ref bool button, string buttonStr, string value, string unit = "")
+    //{
+    //    GUILayout.BeginHorizontal();
+    //    GUILayout.Label(entryName, nameLabelStyle);
+    //    GUILayout.FlexibleSpace();
+    //    button = GUILayout.Button(buttonStr, ctrlBtnStyle);
+    //    GUILayout.Label(value, valueLabelStyle);
+    //    GUILayout.Space(5);
+    //    GUILayout.Label(unit, unitLabelStyle);
+    //    GUILayout.EndHorizontal();
+    //    GUILayout.Space(spacingAfterEntry);
+    //}
+
+    private void DrawEntry2Button(string entryName, GUIStyle entryStyle, ref bool button1, string button1Str, ref bool button2, string button2Str)
+    {
+        GUILayout.BeginHorizontal();
+        button1 = GUILayout.Button(button1Str, ctrlBtnStyle); // GUILayout.Width(windowWidth / 9));
+        GUILayout.FlexibleSpace();
+        GUILayout.Label(entryName, entryStyle);
+        GUILayout.FlexibleSpace();
+        button2 = GUILayout.Button(button2Str, ctrlBtnStyle); // GUILayout.Width(windowWidth / 9));
+        GUILayout.EndHorizontal();
+        GUILayout.Space(spacingAfterEntry);
+    }
+
+    private void DrawEntry4Button(string entryName, GUIStyle entryStyle, ref bool button1, string button1Str, ref bool button2, string button2Str, ref bool button3, string button3Str, ref bool button4, string button4Str)
+    {
+        GUILayout.BeginHorizontal();
+        button1 = GUILayout.Button(button1Str, ctrlBtnStyle); // GUILayout.Width(windowWidth / 9));
+        button2 = GUILayout.Button(button2Str, ctrlBtnStyle); // GUILayout.Width(windowWidth / 9));
+        GUILayout.FlexibleSpace();
+        GUILayout.Label(entryName, entryStyle);
+        GUILayout.FlexibleSpace();
+        button3 = GUILayout.Button(button3Str, ctrlBtnStyle); // GUILayout.Width(windowWidth / 9));
+        button4 = GUILayout.Button(button4Str, ctrlBtnStyle); // GUILayout.Width(windowWidth / 9));
+        GUILayout.EndHorizontal();
+        GUILayout.Space(spacingAfterEntry);
+    }
+
+    private void DrawEntry5Button(string entryName, GUIStyle entryStyle, ref bool button1, string button1Str, ref bool button2, string button2Str, ref bool button3, string button3Str, ref bool button4, string button4Str, ref bool button5, string button5Str)
+    {
+        GUILayout.BeginHorizontal();
+        button1 = GUILayout.Button(button1Str, ctrlBtnStyle); // GUILayout.Width(windowWidth / 9));
+        button2 = GUILayout.Button(button2Str, ctrlBtnStyle); // GUILayout.Width(windowWidth / 9));
+        GUILayout.FlexibleSpace();
+        GUILayout.Label(entryName, entryStyle);
+        GUILayout.FlexibleSpace();
+        button3 = GUILayout.Button(button3Str, ctrlBtnStyle); // GUILayout.Width(windowWidth / 9));
+        button4 = GUILayout.Button(button4Str, ctrlBtnStyle); // GUILayout.Width(windowWidth / 9));
+        button5 = GUILayout.Button(button5Str, ctrlBtnStyle); // GUILayout.Width(windowWidth / 9));
+        GUILayout.EndHorizontal();
+        GUILayout.Space(spacingAfterEntry);
+    }
+
+    private void DrawEntryTextField(string entryName, ref string textEntry, string unit = "")
+    {
+        GUILayout.BeginHorizontal();
+        if (unit.Length > 0)
+            GUILayout.Label($"{entryName} ({unit}): ", nameLabelStyle);
+        else
+            GUILayout.Label($"{entryName}: ", nameLabelStyle);
+        // GUILayout.FlexibleSpace();
+        GUI.SetNextControlName(entryName);
+        textEntry = GUILayout.TextField(textEntry, textInputStyle);
+        // GUILayout.Space(5);
+        // GUILayout.Label(unit, unitLabelStyle);
+        GUILayout.EndHorizontal();
+        GUILayout.Space(spacingAfterEntry);
+    }
+
+    //private void DrawSectionEnd() // was (ref bool isPopout)
+    //{
+    //    //if (isPopout)
+    //    //{
+    //    //    GUI.DragWindow(new Rect(0, 0, windowWidth, windowHeight));
+    //    //    GUILayout.Space(spacingBelowPopout);
+    //    //}
+    //    //else
+    //    //{
+    //    GUILayout.Space(spacingAfterSection);
+    //    //}
+    //}
+
+        // Draws the snap selection GUI.
+        private void SnapSelectionGUI()
     {
         GUILayout.BeginHorizontal();
         GUILayout.Label("SnapTo: ", GUILayout.Width(windowWidth / 5));
@@ -615,13 +691,6 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         catch { Logger.LogError("UpdateNode: caught exception on call to mapCore.map3D.ManeuverManager.UpdateAll()"); }
         try { maneuverManager.UpdatePositionForGizmo(nodeData.NodeID); }
         catch { Logger.LogError("UpdateNode: caught exception on call to mapCore.map3D.ManeuverManager.UpdatePositionForGizmo()"); }
-
-        // Wait a tick for things to get created
-        //yield return new WaitForFixedUpdate();
-        //Logger.LogInfo($"UpdateNode: Burn time {nodeData.Time}");
-        //maneuverPlanComponent.UpdateTimeOnNode(nodeData, nodeData.Time); // This may not be necessary?
-        //Logger.LogInfo($"UpdateNode: Burn Updated: {nodeData.Time}");
-        //maneuverPlanComponent.UpdateChangeOnNode(nodeData, burnParams);
 
         // Wait a tick for things to get created
         yield return new WaitForFixedUpdate();
