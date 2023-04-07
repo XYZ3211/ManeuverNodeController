@@ -4,7 +4,6 @@
  * and GPLv2 (GPLv2-LICENSE) license or any later version.
  */
 
-using System;
 using System.Globalization;
 using static MechJebLib.Utils.Statics;
 

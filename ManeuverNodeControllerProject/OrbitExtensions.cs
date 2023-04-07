@@ -1,19 +1,9 @@
-﻿//using BepInEx;
-//using System;
-using UnityEngine;
+﻿
 using KSP.Game;
 using KSP.Sim;
 using KSP.Sim.impl;
-//using KSP.Sim.State;
-//using KSP.Sim.Maneuver;
-//using SpaceWarp;
-//using SpaceWarp.API;
-//using SpaceWarp.API.Mods;
-//using SpaceWarp.API.Assets;
-//using SpaceWarp.API.UI;
-//using SpaceWarp.API.UI.Appbar;
-//using KSP.UI.Binding;
 using ManeuverNodeController;
+
 // using KSP.Api;
 
 namespace MuMech
@@ -532,7 +522,7 @@ namespace MuMech
         //large enough that it never attains the given true anomaly
         public static double TimeOfTrueAnomaly(this PatchedConicsOrbit o, double trueAnomaly, double UT)
         {
-            ManeuverNodeControllerMod.Logger.LogWarning($"ManeuverNodeController.OrbitExtensions: trueAnomaly: {trueAnomaly*UtilMath.Deg2Rad}");
+            // ManeuverNodeControllerMod.Logger.LogWarning($"OrbitExtensions.TimeOfTrueAnomaly: trueAnomaly: {trueAnomaly*UtilMath.Deg2Rad}");
             return o.GetUTforTrueAnomaly(trueAnomaly*UtilMath.Deg2Rad, o.period);
             //return o.UTAtMeanAnomaly(o.GetMeanAnomalyAtEccentricAnomaly(o.GetEccentricAnomalyAtTrueAnomaly(trueAnomaly)), UT);
         }

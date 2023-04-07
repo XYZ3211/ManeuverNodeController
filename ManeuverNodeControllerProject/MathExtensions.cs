@@ -1,7 +1,5 @@
-﻿using System;
-using MechJebLib.Primitives;
+﻿using MechJebLib.Primitives;
 using UnityEngine;
-using ManeuverNodeController;
 
 namespace MuMech
 {

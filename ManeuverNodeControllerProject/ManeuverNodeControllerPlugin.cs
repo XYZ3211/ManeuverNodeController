@@ -384,11 +384,11 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         GUILayout.Box("", horizontalDivider);
         Draw2Entries("Starting Orbit", "New Orbit", labelStyle);
         var patch = currentNode?.ManeuverTrajectoryPatch;
-        nextApA = "Oopsie!";
-        nextPeA = "Oopsie!";
-        nextInc = "Oopsie!";
-        nextEcc = "Oopsie!";
-        nextLAN = "Oopsie!";
+        //nextApA = "Oopsie!";
+        //nextPeA = "Oopsie!";
+        //nextInc = "Oopsie!";
+        //nextEcc = "Oopsie!";
+        //nextLAN = "Oopsie!";
         if (patch != null)
         {
             try
@@ -753,7 +753,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             if (addNode)
             {
                 // Add an empty maneuver node
-                Logger.LogInfo("handleButtons: Adding New Node");
+                // Logger.LogInfo("handleButtons: Adding New Node");
 
                 // Define empty node data
                 burnParams = Vector3d.zero;
@@ -854,11 +854,11 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             }
 
             // Push the update to the node
-            Logger.LogInfo("handleButtons: Pushing new burn info to node");
-            Logger.LogInfo($"handleButtons: burnParams         [{burnParams.x}, {burnParams.y}, {burnParams.z}] m/s");
+            //Logger.LogInfo("handleButtons: Pushing new burn info to node");
+            //Logger.LogInfo($"handleButtons: burnParams         [{burnParams.x}, {burnParams.y}, {burnParams.z}] m/s");
             maneuverPlanComponent.UpdateChangeOnNode(currentNode, burnParams);
             Logger.LogInfo($"handleButtons: Updated BurnVector    [{currentNode.BurnVector.x}, {currentNode.BurnVector.y}, {currentNode.BurnVector.z}] m/s");
-            Logger.LogInfo($"handleButtons: BurnVector.normalized [{currentNode.BurnVector.normalized.x}, {currentNode.BurnVector.normalized.y}, {currentNode.BurnVector.normalized.z}] m/s");
+            //Logger.LogInfo($"handleButtons: BurnVector.normalized [{currentNode.BurnVector.normalized.x}, {currentNode.BurnVector.normalized.y}, {currentNode.BurnVector.normalized.z}] m/s");
             // IPatchedOrbit patchedOrbit = !currentNode.IsOnManeuverTrajectory ? (IPatchedOrbit)simObject.Orbiter.PatchedConicSolver.FindPatchContainingUT(currentNode.Time) : (IPatchedOrbit)currentNode.ManeuverTrajectoryPatch;
 
             StartCoroutine(UpdateNode(currentNode));
