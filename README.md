@@ -1,7 +1,7 @@
 # Maneuver Node Controller
  Provides an interface to finely tune maneuver nodes. Enable the GUI with ALT + N when controlling a vessel.
  
-![Maneuver Node Controller Screenshot](mncImage.png)
+![Maneuver Node Controller Screenshot](https://i.imgur.com/M36w3mn.png)
 
  # Installation Instructions
  1. Install BepInEx mod loader with Space Warp 1.0.1 or later and run the game, then close it. The combo BepInEx with SpaceWarp can be found here: https://spacedock.info/mod/3277/Space%20Warp%20+%20BepInEx
