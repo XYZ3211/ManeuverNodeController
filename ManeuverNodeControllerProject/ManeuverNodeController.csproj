@@ -5,7 +5,7 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <LangVersion>latest</LangVersion>
         <ImplicitUsings>true</ImplicitUsings>
-        <AssemblyName>com.github.schlosrat.maneuver_node_controller</AssemblyName>
+        <AssemblyName>com.github.xyz3211.maneuver_node_controller</AssemblyName>
         <Product>Maneuver Node Controller</Product>
         <Description>Provides an interface to finely tune maneuver nodes</Description>
         <Version>0.8.0</Version>
