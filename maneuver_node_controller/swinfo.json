@@ -1,9 +1,9 @@
 {
   "mod_id": "maneuver_node_controller",
-  "author": "schlosrat",
+  "author": "XYZ3211, schlosrat",
   "name": "Maneuver Node Controller",
   "description": "Provides an interface to finely tune maneuver nodes",
-  "source": "https://github.com/schlosrat/ManeuverNodeController",
+  "source": "https://github.com/XYZ3211/ManeuverNodeController",
   "version": "0.8.0",
   "version_check": "",
   "dependencies": [
