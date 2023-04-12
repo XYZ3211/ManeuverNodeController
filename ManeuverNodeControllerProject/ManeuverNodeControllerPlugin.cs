@@ -356,6 +356,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     private void drawSimpleMode()
     {
         string nextApA, nextPeA, nextInc, nextEcc, nextLAN;
+        var UT = game.UniverseModel.UniversalTime;
 
         DrawEntryTextField("Absolute ∆v", ref absoluteValueString, "m/s");
         double.TryParse(absoluteValueString, out absoluteValue);
@@ -381,14 +382,10 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         var numOrbits = Math.Truncate((currentNode.Time - game.UniverseModel.UniversalTime) / game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.period).ToString("n0");
         DrawEntry("Maneuver Node in", $"{numOrbits} orbit(s)");
         DrawEntry2Button("Orbit", labelStyle, ref orbitDec, "-", ref orbitInc, "+");
+        Draw2Entries("Start", "Duration", nameLabelStyle, (currentNode.Time - UT).ToString("n2"), currentNode.BurnDuration.ToString("n2"), "s");
         GUILayout.Box("", horizontalDivider);
         Draw2Entries("Starting Orbit", "New Orbit", labelStyle);
         var patch = currentNode?.ManeuverTrajectoryPatch;
-        //nextApA = "Oopsie!";
-        //nextPeA = "Oopsie!";
-        //nextInc = "Oopsie!";
-        //nextEcc = "Oopsie!";
-        //nextLAN = "Oopsie!";
         if (patch != null)
         {
             try
@@ -643,7 +640,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
 
     private void CreateManeuverNodeAtTA(Vector3d burnVector, double TrueAnomalyRad)
     {
-        Logger.LogInfo("CreateManeuverNodeAtTA");
+        // Logger.LogInfo("CreateManeuverNodeAtTA");
         PatchedConicsOrbit referencedOrbit = GetLastOrbit() as PatchedConicsOrbit;
         if (referencedOrbit == null)
         {
@@ -658,7 +655,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
 
     private void CreateManeuverNodeAtUT(Vector3d burnVector, double UT)
     {
-        Logger.LogInfo("CreateManeuverNodeAtUT");
+        // Logger.LogInfo("CreateManeuverNodeAtUT");
         //PatchedConicsOrbit referencedOrbit = GetLastOrbit() as PatchedConicsOrbit;
         //if (referencedOrbit == null)
         //{
@@ -679,32 +676,33 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
 
         nodeData.BurnVector = burnVector;
 
-        Logger.LogInfo($"CreateManeuverNodeAtUT: BurnVector [{burnVector.x}, {burnVector.y}, {burnVector.z}] m/s");
-        Logger.LogInfo($"CreateManeuverNodeAtUT: BurnDuration {nodeData.BurnDuration} s");
-        Logger.LogInfo($"CreateManeuverNodeAtUT: Burn Time {nodeData.Time} s");
+        //Logger.LogInfo($"CreateManeuverNodeAtUT: BurnVector [{burnVector.x}, {burnVector.y}, {burnVector.z}] m/s");
+        //Logger.LogInfo($"CreateManeuverNodeAtUT: BurnDuration {nodeData.BurnDuration} s");
+        //Logger.LogInfo($"CreateManeuverNodeAtUT: Burn Time {nodeData.Time} s");
 
         AddManeuverNode(nodeData);
     }
 
     private void AddManeuverNode(ManeuverNodeData nodeData)
     {
-        Logger.LogInfo("AddManeuverNode");
+        //Logger.LogInfo("AddManeuverNode");
 
+        // Add the node to the vessel's orbit
         GameManager.Instance.Game.SpaceSimulation.Maneuvers.AddNodeToVessel(nodeData);
 
         // For KSP2, We want the to start burns early to make them centered on the node
         nodeData.Time -= nodeData.BurnDuration / 2;
 
-        Logger.LogInfo($"AddManeuverNode: BurnVector   [{nodeData.BurnVector.x}, {nodeData.BurnVector.y}, {nodeData.BurnVector.z}] m/s");
+        //Logger.LogInfo($"AddManeuverNode: BurnVector   [{nodeData.BurnVector.x}, {nodeData.BurnVector.y}, {nodeData.BurnVector.z}] m/s");
         Logger.LogInfo($"AddManeuverNode: BurnDuration {nodeData.BurnDuration} s");
-        Logger.LogInfo($"AddManeuverNode: Burn Time    {nodeData.Time}");
+        //Logger.LogInfo($"AddManeuverNode: Burn Time    {nodeData.Time}");
 
         // Set the currentNode  to the node we just created and added to the vessel
         currentNode = nodeData;
 
         StartCoroutine(UpdateNode(nodeData));
 
-        Logger.LogInfo("AddManeuverNode Done");
+        //Logger.LogInfo("AddManeuverNode Done");
     }
 
     private IEnumerator UpdateNode(ManeuverNodeData nodeData)
@@ -726,6 +724,15 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         }
         var simObject = vesselComponent.SimulationObject;
         var maneuverPlanComponent = simObject.FindComponent<ManeuverPlanComponent>();
+
+        var UT = game.UniverseModel.UniversalTime;
+        if (nodeData.Time < UT + 1)
+        {
+            Logger.LogWarning($"UpdateNode: Attempted to set nodeData.Time to {nodeData.Time - UT} s from now.");
+            nodeData.Time = UT + 1;
+            Logger.LogWarning($"UpdateNode: Forcing nodeData.Time to {nodeData.Time} to prevent setting a node in the past.");
+            maneuverPlanComponent.UpdateTimeOnNode(nodeData, nodeData.Time); // May not need this?
+        }
 
         // Wait a tick for things to get created
         yield return new WaitForFixedUpdate();
