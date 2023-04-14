@@ -3,7 +3,7 @@
   "author": "XYZ3211, schlosrat",
   "name": "Maneuver Node Controller",
   "description": "Provides an interface to finely tune maneuver nodes",
-  "source": "https://github.com/schlosrat/ManeuverNodeController",
+  "source": "https://github.com/XYZ3211/ManeuverNodeController",
   "version": "0.8.1",
   "version_check": "",
   "dependencies": [
