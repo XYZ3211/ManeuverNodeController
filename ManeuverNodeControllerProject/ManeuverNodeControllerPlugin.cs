@@ -52,6 +52,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     private ManeuverNodeData currentNode = null;
     List<ManeuverNodeData> activeNodes;
     private Vector3d burnParams;
+    private PatchedConicsOrbit orbit;
 
     private GUIStyle errorStyle, warnStyle, progradeStyle, normalStyle, radialStyle, labelStyle;
     private GameInstance game;
@@ -229,6 +230,10 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
 
         activeVessel = GameManager.Instance?.Game?.ViewController?.GetActiveVehicle(true)?.GetSimVessel(true);
         currentTarget = activeVessel?.TargetObject;
+        // orbit = GetLastOrbit() as PatchedConicsOrbit;
+        if (activeVessel != null)
+            orbit = activeVessel.Orbit;
+
         if (interfaceEnabled && GUIenabled && activeVessel != null)
         {
             GUI.skin = Skins.ConsoleSkin;
@@ -288,6 +293,8 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         // game = GameManager.Instance.Game;
         activeNodes = game.SpaceSimulation.Maneuvers.GetNodesForVessel(GameManager.Instance.Game.ViewController.GetActiveVehicle(true).Guid);
         currentNode = (activeNodes.Count() > 0) ? activeNodes[0] : null;
+        // var orbit = GetLastOrbit() as PatchedConicsOrbit;
+
         double UT;
         double dvRemaining;
 
@@ -307,7 +314,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         else
         {
             DrawEntry("Total Maneuver ∆v", currentNode.BurnRequiredDV.ToString("n2"), labelStyle, "m/s");
-            dvRemaining = (activeVessel.Orbiter.ManeuverPlanSolver.GetVelocityAfterFirstManeuver(out UT).vector - activeVessel.Orbit.GetOrbitalVelocityAtUTZup(UT)).magnitude;
+            dvRemaining = (activeVessel.Orbiter.ManeuverPlanSolver.GetVelocityAfterFirstManeuver(out UT).vector - orbit.GetOrbitalVelocityAtUTZup(UT)).magnitude; // activeVessel.Orbit
             DrawEntry("∆v Remaining", dvRemaining.ToString("n3"), labelStyle, "m/s");
             GUILayout.Box("", horizontalDivider);
             DrawEntry("Prograde ∆v", currentNode.BurnVector.z.ToString("n2"), progradeStyle, "m/s");
@@ -417,11 +424,11 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             nextEcc = "NaN";
             nextLAN = "NaN";
         }
-        Draw2Entries("Ap", "Ap", nameLabelStyle, (activeVessel.Orbit.ApoapsisArl / 1000).ToString("n3"), nextApA, "km");
-        Draw2Entries("Pe", "Pe", nameLabelStyle, (activeVessel.Orbit.PeriapsisArl / 1000).ToString("n3"), nextPeA, "km");
-        Draw2Entries("Inc", "Inc", nameLabelStyle, activeVessel.Orbit.inclination.ToString("n3"), nextInc, "°");
-        Draw2Entries("Ecc", "Ecc", nameLabelStyle, activeVessel.Orbit.eccentricity.ToString("n3"), nextEcc);
-        Draw2Entries("LAN", "LAN", nameLabelStyle, activeVessel.Orbit.longitudeOfAscendingNode.ToString("n3"), nextLAN, "°");
+        Draw2Entries("Ap", "Ap", nameLabelStyle, (orbit.ApoapsisArl / 1000).ToString("n3"), nextApA, "km");  // activeVessel.Orbit
+        Draw2Entries("Pe", "Pe", nameLabelStyle, (orbit.PeriapsisArl / 1000).ToString("n3"), nextPeA, "km");  // activeVessel.Orbit
+        Draw2Entries("Inc", "Inc", nameLabelStyle, orbit.inclination.ToString("n3"), nextInc, "°");  // activeVessel.Orbit
+        Draw2Entries("Ecc", "Ecc", nameLabelStyle, orbit.eccentricity.ToString("n3"), nextEcc);  // activeVessel.Orbit
+        Draw2Entries("LAN", "LAN", nameLabelStyle, orbit.longitudeOfAscendingNode.ToString("n3"), nextLAN, "°");  // activeVessel.Orbit
         GUILayout.Box("", horizontalDivider);
     }
 
@@ -619,29 +626,33 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         GUILayout.Space(spacingAfterEntry);
     }
 
-    private IPatchedOrbit GetLastOrbit()
+    private IPatchedOrbit GetLastOrbit(bool silent = true)
     {
-        Logger.LogInfo("GetLastOrbit");
+        // Logger.LogInfo("GetLastOrbit");
         List<ManeuverNodeData> patchList =
             Game.SpaceSimulation.Maneuvers.GetNodesForVessel(activeVessel.SimulationObject.GlobalId);
 
-        Logger.LogMessage($"GetLastOrbit: patchList.Count = {patchList.Count}");
+        if (!silent)
+            Logger.LogMessage($"GetLastOrbit: patchList.Count = {patchList.Count}");
 
         if (patchList.Count == 0)
         {
-            // Logger.LogMessage($"GetLastOrbit: activeVessel.Orbit = {activeVessel.Orbit}");
+            if (!silent)
+                Logger.LogMessage($"GetLastOrbit: last orbit is activeVessel.Orbit: {activeVessel.Orbit}");
             return activeVessel.Orbit;
         }
-        Logger.LogMessage($"GetLastOrbit: ManeuverTrajectoryPatch = {patchList[patchList.Count - 1].ManeuverTrajectoryPatch}");
-        IPatchedOrbit orbit = patchList[patchList.Count - 1].ManeuverTrajectoryPatch;
+        // Logger.LogMessage($"GetLastOrbit: ManeuverTrajectoryPatch = {patchList[patchList.Count - 1].ManeuverTrajectoryPatch}");
+        IPatchedOrbit lastOrbit = patchList[patchList.Count - 1].ManeuverTrajectoryPatch;
+        if (!silent)
+            Logger.LogMessage($"GetLastOrbit: last orbit is patch {patchList.Count - 1}: {lastOrbit}");
 
-        return orbit;
+        return lastOrbit;
     }
 
     private void CreateManeuverNodeAtTA(Vector3d burnVector, double TrueAnomalyRad)
     {
         // Logger.LogInfo("CreateManeuverNodeAtTA");
-        PatchedConicsOrbit referencedOrbit = GetLastOrbit() as PatchedConicsOrbit;
+        PatchedConicsOrbit referencedOrbit = GetLastOrbit(false) as PatchedConicsOrbit;
         if (referencedOrbit == null)
         {
             Logger.LogError("CreateManeuverNodeAtTA: referencedOrbit is null!");
@@ -656,7 +667,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     private void CreateManeuverNodeAtUT(Vector3d burnVector, double UT)
     {
         // Logger.LogInfo("CreateManeuverNodeAtUT");
-        //PatchedConicsOrbit referencedOrbit = GetLastOrbit() as PatchedConicsOrbit;
+        //PatchedConicsOrbit referencedOrbit = GetLastOrbit(false) as PatchedConicsOrbit;
         //if (referencedOrbit == null)
         //{
         //    Logger.LogError("CreateManeuverNodeAtUT: referencedOrbit is null!");
@@ -755,6 +766,8 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
 
     private void handleButtons()
     {
+        // var orbit = GetLastOrbit() as PatchedConicsOrbit;
+
         if (currentNode == null)
         {
             if (addNode)
@@ -766,9 +779,9 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
                 burnParams = Vector3d.zero;
                 double UT = game.UniverseModel.UniversalTime;
                 double burnUT;
-                if (activeVessel.Orbit.eccentricity < 1)
+                if (orbit.eccentricity < 1) // activeVessel.Orbit
                 {
-                    burnUT = UT + activeVessel.Orbit.TimeToAp;
+                    burnUT = UT + orbit.TimeToAp;  // activeVessel.Orbit
                 }
                 else
                 {
