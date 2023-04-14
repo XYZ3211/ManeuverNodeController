@@ -308,7 +308,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         {
             DrawEntry("Total Maneuver ∆v", currentNode.BurnRequiredDV.ToString("n2"), labelStyle, "m/s");
             dvRemaining = (activeVessel.Orbiter.ManeuverPlanSolver.GetVelocityAfterFirstManeuver(out UT).vector - activeVessel.Orbit.GetOrbitalVelocityAtUTZup(UT)).magnitude;
-            DrawEntry("∆v Remaining", dvRemaining.ToString("n3"), labelStyle, "m/s");
+            DrawEntry("Total ∆v Remaining", dvRemaining.ToString("n2"), labelStyle, "m/s");
             GUILayout.Box("", horizontalDivider);
             DrawEntry("Prograde ∆v", currentNode.BurnVector.z.ToString("n2"), progradeStyle, "m/s");
             DrawEntry("Normal ∆v", currentNode.BurnVector.y.ToString("n2"), normalStyle, "m/s");
