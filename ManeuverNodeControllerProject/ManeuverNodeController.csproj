@@ -10,9 +10,8 @@
         <Description>Provides an interface to finely tune maneuver nodes</Description>
         <Version>0.8.2</Version>
         <RestoreAdditionalProjectSources>
-            https://api.nuget.org/v3/index.json;
-            https://nuget.bepinex.dev/v3/index.json
-        </RestoreAdditionalProjectSources>
+			https://nuget.spacewarp.org/v3/index.json
+		</RestoreAdditionalProjectSources>
         <RootNamespace>ManeuverNodeController</RootNamespace>
         <ModId Condition="'$(ModId)'==''">maneuver_node_controller</ModId>
     </PropertyGroup>
@@ -29,7 +28,7 @@
         <PackageReference Include="BepInEx.Core" Version="5.*" />
         <PackageReference Include="BepInEx.PluginInfoProps" Version="2.*" />
         <PackageReference Include="HarmonyX" Version="2.10.1" />
-        <PackageReference Include="SpaceWarp" Version="1.0.1" />
+        <PackageReference Include="SpaceWarp" Version="1.1.1" />
         <PackageReference Include="UnityEngine.Modules" Version="2020.3.33" IncludeAssets="compile" />
     </ItemGroup>
     <Target Name="PostBuild" AfterTargets="PostBuildEvent">
