@@ -16,7 +16,7 @@ using BepInEx.Logging;
 namespace ManeuverNodeController;
 
 [BepInDependency(SpaceWarpPlugin.ModGuid, SpaceWarpPlugin.ModVer)]
-[BepInPlugin("com.github.schlosrat.maneuvernodecontroller", "Maneuver Node Controller", "0.7.0")]
+[BepInPlugin("com.github.xyz3211.maneuver_node_controller", "Maneuver Node Controller", "0.7.0")]
 public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
 {
     private static ManeuverNodeControllerMod Instance { get; set; }
