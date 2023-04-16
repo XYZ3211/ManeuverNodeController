@@ -19,6 +19,10 @@ namespace ManeuverNodeController;
 [BepInPlugin("com.github.xyz3211.maneuver_node_controller", "Maneuver Node Controller", "0.7.0")]
 public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
 {
+    // These are useful in case some other mod wants to add a dependency to this one
+    public const string ModGuid = MyPluginInfo.PLUGIN_GUID;
+    public const string ModName = MyPluginInfo.PLUGIN_NAME;
+    public const string ModVer = MyPluginInfo.PLUGIN_VERSION;
     public static ManeuverNodeControllerMod Instance { get; set; }
 
     static bool loaded = false;
