@@ -656,14 +656,20 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
 
     private void DrawEntryTextField(string entryName, ref string textEntry, string unit = "")
     {
+        double num;
+        Color normal;
         GUILayout.BeginHorizontal();
         if (unit.Length > 0)
             GUILayout.Label($"{entryName} ({unit}): ", nameLabelStyle);
         else
             GUILayout.Label($"{entryName}: ", nameLabelStyle);
         // GUILayout.FlexibleSpace();
+        normal = GUI.color;
+        bool parsed = double.TryParse(textEntry, out num);
+        if (!parsed) GUI.color = Color.red;
         GUI.SetNextControlName(entryName);
         textEntry = GUILayout.TextField(textEntry, textInputStyle);
+        GUI.color = normal;
         // GUILayout.Space(5);
         // GUILayout.Label(unit, unitLabelStyle);
         GUILayout.EndHorizontal();
