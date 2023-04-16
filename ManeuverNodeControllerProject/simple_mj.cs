@@ -44,7 +44,7 @@ public static class OrbitExtensions
     //the ascending node is in the past.
     //NOTE: this function will throw an ArgumentException if a is a hyperbolic orbit and the "ascending node"
     //occurs at a true anomaly that a does not actually ever attain
-    public static double TimeOfAscendingNode(this PatchedConicsOrbit a, IKeplerOrbit b, double UT)
+    public static double TimeOfAN(this PatchedConicsOrbit a, IKeplerOrbit b, double UT)
     {
         return a.TimeOfTrueAnomaly(a.AscendingNodeTrueAnomaly(b), UT);
     }
@@ -55,7 +55,7 @@ public static class OrbitExtensions
     //the descending node is in the past.
     //NOTE: this function will throw an ArgumentException if a is a hyperbolic orbit and the "descending node"
     //occurs at a true anomaly that a does not actually ever attain
-    public static double TimeOfDescendingNode(this PatchedConicsOrbit a, IKeplerOrbit b, double UT)
+    public static double TimeOfDN(this PatchedConicsOrbit a, IKeplerOrbit b, double UT)
     {
         return a.TimeOfTrueAnomaly(a.DescendingNodeTrueAnomaly(b), UT);
     }
@@ -66,7 +66,7 @@ public static class OrbitExtensions
     //ascending node is in the past.
     //NOTE: this function will throw an ArgumentException if o is a hyperbolic orbit and the
     //"ascending node" occurs at a true anomaly that o does not actually ever attain.
-    public static double TimeOfAscendingNodeEquatorial(this PatchedConicsOrbit o, double UT)
+    public static double TimeOfANEquatorial(this PatchedConicsOrbit o, double UT)
     {
         return o.TimeOfTrueAnomaly(o.AscendingNodeEquatorialTrueAnomaly(), UT);
     }
@@ -78,7 +78,7 @@ public static class OrbitExtensions
     //descending node is in the past.
     //NOTE: this function will throw an ArgumentException if o is a hyperbolic orbit and the
     //"descending node" occurs at a true anomaly that o does not actually ever attain.
-    public static double TimeOfDescendingNodeEquatorial(this PatchedConicsOrbit o, double UT)
+    public static double TimeOfDNEquatorial(this PatchedConicsOrbit o, double UT)
     {
         return o.TimeOfTrueAnomaly(o.DescendingNodeEquatorialTrueAnomaly(), UT);
     }
