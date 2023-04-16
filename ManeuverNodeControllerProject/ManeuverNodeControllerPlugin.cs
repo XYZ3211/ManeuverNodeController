@@ -81,6 +81,9 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     public override void OnInitialized()
     {
         base.OnInitialized();
+
+        Instance = this;
+
         game = GameManager.Instance.Game;
         Logger = base.Logger;
 
@@ -1105,19 +1108,19 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             }
             else if (snapToANe) // Snap the maneuver time to the AN relative to the equatorial plane
             {
-                currentNode.Time = vessel.Orbit.TimeOfAscendingNodeEquatorial(UT);
+                currentNode.Time = vessel.Orbit.TimeOfANEquatorial(UT);
             }
             else if (snapToDNe) // Snap the maneuver time to the DN relative to the equatorial plane
             {
-                currentNode.Time = vessel.Orbit.TimeOfDescendingNodeEquatorial(UT);
+                currentNode.Time = vessel.Orbit.TimeOfDNEquatorial(UT);
             }
             else if (snapToANt) // Snap the maneuver time to the AN relative to selected target's orbit
             {
-                currentNode.Time = vessel.Orbit.TimeOfAscendingNode(target.Orbit, UT);
+                currentNode.Time = vessel.Orbit.TimeOfAN(target.Orbit, UT);
             }
             else if (snapToDNt) // Snap the maneuver time to the DN relative to selected target's orbit
             {
-                currentNode.Time = vessel.Orbit.TimeOfDescendingNode(target.Orbit, UT);
+                currentNode.Time = vessel.Orbit.TimeOfDN(target.Orbit, UT);
             }
 
             //Logger.LogInfo($"handleButtons: Burn time was {oldBurnTime}, is {currentNode.Time}");
