@@ -8,7 +8,7 @@
         <AssemblyName>com.github.xyz3211.maneuver_node_controller</AssemblyName>
         <Product>Maneuver Node Controller</Product>
         <Description>Provides an interface to finely tune maneuver nodes</Description>
-        <Version>0.8.2</Version>
+        <Version>0.8.3</Version>
         <RestoreAdditionalProjectSources>
 			https://nuget.spacewarp.org/v3/index.json
 		</RestoreAdditionalProjectSources>
