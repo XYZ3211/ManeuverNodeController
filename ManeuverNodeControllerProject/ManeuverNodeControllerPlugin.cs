@@ -19,7 +19,7 @@ namespace ManeuverNodeController;
 [BepInPlugin("com.github.xyz3211.maneuver_node_controller", "Maneuver Node Controller", "0.7.0")]
 public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
 {
-    private static ManeuverNodeControllerMod Instance { get; set; }
+    public static ManeuverNodeControllerMod Instance { get; set; }
 
     static bool loaded = false;
     private bool interfaceEnabled = false;
