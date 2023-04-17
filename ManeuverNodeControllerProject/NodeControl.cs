@@ -60,7 +60,7 @@ public static class NodeControl
 
     private static IPatchedOrbit GetLastOrbit(VesselComponent activeVessel, bool silent = true)
     {
-        // Logger.LogInfo("GetLastOrbit");
+        // ManeuverNodeControllerMod.Logger.LogInfo("GetLastOrbit");
         List<ManeuverNodeData> patchList =
             GameManager.Instance.Game.SpaceSimulation.Maneuvers.GetNodesForVessel(activeVessel.SimulationObject.GlobalId);
 
@@ -85,7 +85,7 @@ public static class NodeControl
 
     public static void CreateManeuverNodeAtTA(ref ManeuverNodeData currentNode, Vector3d burnVector, VesselComponent activeVessel, double TrueAnomalyRad, double burnDurationOffsetFactor = -0.5)
     {
-        // Logger.LogInfo("CreateManeuverNodeAtTA");
+        // ManeuverNodeControllerMod.Logger.LogInfo("CreateManeuverNodeAtTA");
         PatchedConicsOrbit referencedOrbit = GetLastOrbit(activeVessel, false) as PatchedConicsOrbit;
         if (referencedOrbit == null)
         {
@@ -100,37 +100,37 @@ public static class NodeControl
 
     public static void CreateManeuverNodeAtUT(ref ManeuverNodeData currentNode, Vector3d burnVector, VesselComponent activeVessel, double UT, double burnDurationOffsetFactor = -0.5)
     {
-        // Logger.LogInfo("CreateManeuverNodeAtUT");
-        //PatchedConicsOrbit referencedOrbit = GetLastOrbit(false) as PatchedConicsOrbit;
-        //if (referencedOrbit == null)
-        //{
-        //    Logger.LogError("CreateManeuverNodeAtUT: referencedOrbit is null!");
-        //    return;
-        //}
+        // ManeuverNodeControllerMod.Logger.LogInfo("CreateManeuverNodeAtUT");
+        // PatchedConicsOrbit referencedOrbit = GetLastOrbit(false) as PatchedConicsOrbit;
+        // if (referencedOrbit == null)
+        // {
+        //     ManeuverNodeControllerMod.Logger.LogError("CreateManeuverNodeAtUT: referencedOrbit is null!");
+        //     return;
+        // }
 
         if (UT < GameManager.Instance.Game.UniverseModel.UniversalTime + 1) // Don't set node to now or in the past
             UT = GameManager.Instance.Game.UniverseModel.UniversalTime + 1;
 
         currentNode = new ManeuverNodeData(activeVessel.SimulationObject.GlobalId, false, UT);
 
-        //IPatchedOrbit orbit = referencedOrbit;
-        //orbit.PatchStartTransition = PatchTransitionType.Maneuver;
-        //orbit.PatchEndTransition = PatchTransitionType.Final;
+        // IPatchedOrbit orbit = referencedOrbit;
+        // orbit.PatchStartTransition = PatchTransitionType.Maneuver;
+        // orbit.PatchEndTransition = PatchTransitionType.Final;
 
-        //nodeData.SetManeuverState((PatchedConicsOrbit)orbit);
+        // currentNode.SetManeuverState((PatchedConicsOrbit)orbit);
 
         currentNode.BurnVector = burnVector;
 
-        //Logger.LogInfo($"CreateManeuverNodeAtUT: BurnVector [{burnVector.x}, {burnVector.y}, {burnVector.z}] m/s");
-        //Logger.LogInfo($"CreateManeuverNodeAtUT: BurnDuration {nodeData.BurnDuration} s");
-        //Logger.LogInfo($"CreateManeuverNodeAtUT: Burn Time {nodeData.Time} s");
+        // ManeuverNodeControllerMod.Logger.LogInfo($"CreateManeuverNodeAtUT: BurnVector [{burnVector.x}, {burnVector.y}, {burnVector.z}] m/s");
+        // ManeuverNodeControllerMod.Logger.LogInfo($"CreateManeuverNodeAtUT: BurnDuration {nodeData.BurnDuration} s");
+        // ManeuverNodeControllerMod.Logger.LogInfo($"CreateManeuverNodeAtUT: Burn Time {nodeData.Time} s");
 
         AddManeuverNode(ref currentNode, activeVessel, burnDurationOffsetFactor);
     }
 
     private static void AddManeuverNode(ref ManeuverNodeData currentNode,VesselComponent activeVessel, double burnDurationOffsetFactor)
     {
-        //Logger.LogInfo("AddManeuverNode");
+        // ManeuverNodeControllerMod.Logger.LogInfo("AddManeuverNode");
 
         // Add the node to the vessel's orbit
         // GameManager.Instance.Game.SpaceSimulation.Maneuvers.AddNodeToVessel(nodeData);
@@ -149,10 +149,10 @@ public static class NodeControl
 
         UpdateNode(ref currentNode, activeVessel, nodeTimeAdj);
 
-        //Logger.LogInfo("AddManeuverNode Done");
+        // ManeuverNodeControllerMod.Logger.LogInfo("AddManeuverNode Done");
     }
 
-    public static void UpdateNode(ref ManeuverNodeData currentNode, VesselComponent activeVessel, double nodeTimeAdj = 0) // was: return type IEnumerator
+    public static void UpdateNode(ref ManeuverNodeData currentNode, VesselComponent activeVessel, double nodeTimeAdj = 0)
     {
         MapCore mapCore = null;
         GameManager.Instance.Game.Map.TryGetMapCore(out mapCore);
@@ -195,13 +195,10 @@ public static class NodeControl
             maneuverPlanComponent.UpdateTimeOnNode(currentNode, currentNode.Time); // This may not be necessary?
         }
 
-        // Wait a tick for things to get created
-        // yield return new WaitForFixedUpdate();
-
         try { maneuverPlanComponent.RefreshManeuverNodeState(0); }
         catch (NullReferenceException e) { ManeuverNodeControllerMod.Logger.LogError($"UpdateNode: caught NRE on call to maneuverPlanComponent.RefreshManeuverNodeState(0): {e}"); }
 
-        if (currentNode != null) // just don't do it... was: if (currentNode != null)
+        if (currentNode != null)
         {
             // Manage the maneuver on the map
             maneuverManager.RemoveAll();
@@ -217,10 +214,9 @@ public static class NodeControl
     public static void AddNode(PatchedConicsOrbit orbit, ref ManeuverNodeData currentNode, VesselComponent activeVessel)
     {
         // Add an empty maneuver node
-        // Logger.LogInfo("handleButtons: Adding New Node");
+        // ManeuverNodeControllerMod.Logger.LogInfo("handleButtons: Adding New Node");
 
         // Define empty node data
-        // burnParams = Vector3d.zero;
         double UT = GameManager.Instance.Game.UniverseModel.UniversalTime;
         double burnUT;
         if (orbit.eccentricity < 1) // activeVessel.Orbit
@@ -239,5 +235,4 @@ public static class NodeControl
 
         CreateManeuverNodeAtUT(ref currentNode, burnVector, activeVessel, burnUT, 0);
     }
-
 }
