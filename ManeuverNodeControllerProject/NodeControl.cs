@@ -3,7 +3,6 @@ using KSP.Map;
 using KSP.Sim.impl;
 using KSP.Sim.Maneuver;
 using KSP.Sim;
-using KSP.Messages.PropertyWatchers;
 
 namespace ManeuverNodeController;
 

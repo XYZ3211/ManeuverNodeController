@@ -9,8 +9,6 @@ using SpaceWarp.API.Assets;
 using SpaceWarp.API.UI;
 using SpaceWarp.API.UI.Appbar;
 using KSP.UI.Binding;
-using KSP.Sim;
-using KSP.Map;
 using BepInEx.Logging;
 using static ManeuverNodeController.NodeControl;
 
