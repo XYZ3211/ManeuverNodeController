@@ -1,5 +1,4 @@
-﻿using KSP.Game;
-using KSP.Sim;
+﻿using KSP.Sim;
 using KSP.Sim.impl;
 
 namespace ManeuverNodeController;
