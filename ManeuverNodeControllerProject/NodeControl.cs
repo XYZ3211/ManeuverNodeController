@@ -16,10 +16,9 @@ public static class NodeControl
         return (activeNodes.Count() > 0) ? activeNodes[0] : null;
     }
 
-    public static void DeleteNodes(VesselComponent activeVessel, ref int SelectedNodeIndex)
+    public static void DeleteNodes(ref int SelectedNodeIndex)
     {
-        // var activeVesselPlan = MicroUtility.ActiveVessel.SimulationObject.FindComponent<ManeuverPlanComponent>();
-        var activeVesselPlan = activeVessel.SimulationObject.FindComponent<ManeuverPlanComponent>();
+        var activeVesselPlan = Utility.activeVessel.SimulationObject.FindComponent<ManeuverPlanComponent>();
         List<ManeuverNodeData> nodeData = new List<ManeuverNodeData>();
 
         var nodeToDelete = activeVesselPlan.GetNodes()[SelectedNodeIndex];
@@ -30,28 +29,28 @@ public static class NodeControl
             if (!nodeData.Contains(node) && (!nodeToDelete.IsOnManeuverTrajectory || nodeToDelete.Time < node.Time))
                 nodeData.Add(node);
         }
-        GameManager.Instance.Game.SpaceSimulation.Maneuvers.RemoveNodesFromVessel(activeVessel.GlobalId, nodeData);
+        GameManager.Instance.Game.SpaceSimulation.Maneuvers.RemoveNodesFromVessel(Utility.activeVessel.GlobalId, nodeData);
         SelectedNodeIndex = 0;
     }
 
-    //internal override void RefreshData()
+    //internal static override void RefreshData()
     //{
     //    base.RefreshData();
     //    RefreshManeuverNodes();
 
     //    // Add SelectedNodeIndex to base entries as well. They will show the correct node's info.
-    //    (Entries.Find(e => e.GetType() == typeof(ProjectedAp)) as ProjectedAp).SelectedNodeIndex = SelectedNodeIndex;
-    //    (Entries.Find(e => e.GetType() == typeof(ProjectedPe)) as ProjectedPe).SelectedNodeIndex = SelectedNodeIndex;
-    //    (Entries.Find(e => e.GetType() == typeof(DeltaVRequired)) as DeltaVRequired).SelectedNodeIndex = SelectedNodeIndex;
-    //    (Entries.Find(e => e.GetType() == typeof(TimeToNode)) as TimeToNode).SelectedNodeIndex = SelectedNodeIndex;
-    //    (Entries.Find(e => e.GetType() == typeof(BurnTime)) as BurnTime).SelectedNodeIndex = SelectedNodeIndex;
+    //    //(Entries.Find(e => e.GetType() == typeof(ProjectedAp)) as ProjectedAp).SelectedNodeIndex = SelectedNodeIndex;
+    //    //(Entries.Find(e => e.GetType() == typeof(ProjectedPe)) as ProjectedPe).SelectedNodeIndex = SelectedNodeIndex;
+    //    //(Entries.Find(e => e.GetType() == typeof(DeltaVRequired)) as DeltaVRequired).SelectedNodeIndex = SelectedNodeIndex;
+    //    //(Entries.Find(e => e.GetType() == typeof(TimeToNode)) as TimeToNode).SelectedNodeIndex = SelectedNodeIndex;
+    //    //(Entries.Find(e => e.GetType() == typeof(BurnTime)) as BurnTime).SelectedNodeIndex = SelectedNodeIndex;
     //}
 
-    internal static void RefreshManeuverNodes(VesselComponent activeVessel)
+    internal static void RefreshManeuverNodes()
     {
-        //MicroUtility.RefreshActiveVesselAndCurrentManeuver(); -> check if we need this here
+        //Utility.RefreshActiveVesselAndCurrentManeuver(); -> check if we need this here
 
-        ManeuverPlanComponent activeVesselPlan = activeVessel.SimulationObject.FindComponent<ManeuverPlanComponent>();
+        ManeuverPlanComponent activeVesselPlan = Utility.activeVessel.SimulationObject.FindComponent<ManeuverPlanComponent>();
         if (activeVesselPlan != null)
         {
             Nodes = activeVesselPlan.GetNodes();
