@@ -133,10 +133,10 @@ public static class NodeControl
         // ManeuverNodeControllerMod.Logger.LogInfo("AddManeuverNode");
 
         // Add the node to the vessel's orbit
-        // GameManager.Instance.Game.SpaceSimulation.Maneuvers.AddNodeToVessel(nodeData);
-        ManeuverPlanComponent maneuverPlan;
-        maneuverPlan = Utility.activeVessel.SimulationObject.ManeuverPlan;
-        maneuverPlan.AddNode(nodeData, true);
+        GameManager.Instance.Game.SpaceSimulation.Maneuvers.AddNodeToVessel(nodeData);
+        //ManeuverPlanComponent maneuverPlan;
+        //maneuverPlan = Utility.activeVessel.SimulationObject.ManeuverPlan;
+        //maneuverPlan.AddNode(nodeData, true);
         Utility.activeVessel.Orbiter.ManeuverPlanSolver.UpdateManeuverTrajectory();
 
         // For KSP2, We want the to start burns early to make them centered on the node
