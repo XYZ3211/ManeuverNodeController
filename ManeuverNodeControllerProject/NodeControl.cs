@@ -9,14 +9,15 @@ namespace ManeuverNodeController;
 public static class NodeControl
 {
     // public static int SelectedNodeIndex = 0;
-    internal static List<ManeuverNodeData> Nodes = new();
-    public static ManeuverNodeData getCurrentNode(ref List<ManeuverNodeData> activeNodes)
-    {
-        activeNodes = GameManager.Instance.Game.SpaceSimulation.Maneuvers.GetNodesForVessel(GameManager.Instance.Game.ViewController.GetActiveVehicle(true).Guid);
-        return (activeNodes.Count() > 0) ? activeNodes[0] : null;
-    }
+    public static List<ManeuverNodeData> Nodes = new();
 
-    public static void DeleteNodes(ref int SelectedNodeIndex)
+    //public static ManeuverNodeData getCurrentNode(ref List<ManeuverNodeData> activeNodes)
+    //{
+    //    activeNodes = GameManager.Instance.Game.SpaceSimulation.Maneuvers.GetNodesForVessel(GameManager.Instance.Game.ViewController.GetActiveVehicle(true).Guid);
+    //    return (activeNodes.Count() > 0) ? activeNodes[0] : null;
+    //}
+
+    public static void DeleteNodes(int SelectedNodeIndex)
     {
         var activeVesselPlan = Utility.activeVessel.SimulationObject.FindComponent<ManeuverPlanComponent>();
         List<ManeuverNodeData> nodeData = new List<ManeuverNodeData>();
@@ -30,7 +31,6 @@ public static class NodeControl
                 nodeData.Add(node);
         }
         GameManager.Instance.Game.SpaceSimulation.Maneuvers.RemoveNodesFromVessel(Utility.activeVessel.GlobalId, nodeData);
-        SelectedNodeIndex = 0;
     }
 
     //internal static override void RefreshData()
@@ -50,7 +50,7 @@ public static class NodeControl
     {
         //Utility.RefreshActiveVesselAndCurrentManeuver(); -> check if we need this here
 
-        ManeuverPlanComponent activeVesselPlan = Utility.activeVessel.SimulationObject.FindComponent<ManeuverPlanComponent>();
+        ManeuverPlanComponent activeVesselPlan = Utility.activeVessel?.SimulationObject?.FindComponent<ManeuverPlanComponent>();
         if (activeVesselPlan != null)
         {
             Nodes = activeVesselPlan.GetNodes();
