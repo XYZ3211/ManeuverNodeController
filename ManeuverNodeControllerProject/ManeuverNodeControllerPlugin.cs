@@ -12,6 +12,19 @@ using KSP.UI.Binding;
 using BepInEx.Logging;
 using static ManeuverNodeController.NodeControl;
 using KSP.Sim;
+using KSP.Map;
+using UnityEngine.Networking.Types;
+using KSP.Api;
+using KSP.Logging;
+using KSP.Messages;
+using KSP.Sim.Converters;
+using KSP.Sim.Definitions;
+using KSP.Sim.DeltaV;
+using KSP.Sim.State;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using static AwesomeTechnologies.External.ClipperLib.Clipper;
 
 namespace ManeuverNodeController;
 
@@ -407,8 +420,8 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         var Orbiter = Utility.activeVessel.Orbiter;
         var ManeuverPlanSolver = Orbiter?.ManeuverPlanSolver;
         var PatchedConicsList = ManeuverPlanSolver?.PatchedConicsList;
-        ManeuverPlanComponent activeVesselPlan = Utility.activeVessel?.SimulationObject?.FindComponent<ManeuverPlanComponent>();
-        var nodes = activeVesselPlan?.GetNodes();
+        // ManeuverPlanComponent activeVesselPlan = Utility.activeVessel?.SimulationObject?.FindComponent<ManeuverPlanComponent>();
+        // var nodes = activeVesselPlan?.GetNodes();
 
         if (NodeControl.Nodes.Count == 0) // No nodes: Just show current orbit - shouldn't ever get here...
         {
@@ -683,6 +696,11 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     {
         // var orbit = GetLastOrbit() as PatchedConicsOrbit;
 
+        MapCore mapCore = null;
+        GameManager.Instance.Game.Map.TryGetMapCore(out mapCore);
+        var m3d = mapCore.map3D;
+        var maneuverManager = m3d.ManeuverManager;
+
         if (thisNode == null)
         {
             if (addNode) AddNode(orbit);
@@ -701,74 +719,89 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             if (pAbs) // Set the prograde burn to the absoluteValue
             {
                 burnParams.z = absoluteValue - thisNode.BurnVector.z;
+                // thisNode.BurnVector.z = absoluteValue;
             }
             else if (pInc1) // Add smallStep to the prograde burn
             {
                 burnParams.z += smallStep;
+                // thisNode.BurnVector.z += smallStep;
             }
             else if (pInc2) // Add bigStep to the prograde burn
             {
                 burnParams.z += bigStep;
-            }
-            else if (nAbs) // Set the normal burn to the absoluteValue
-            {
-                burnParams.y = absoluteValue - thisNode.BurnVector.y;
-            }
-            else if (nInc1) // Add smallStep to the normal burn
-            {
-                burnParams.y += smallStep;
-            }
-            else if (nInc2) // Add bigStep to the normal burn
-            {
-                burnParams.y += bigStep;
-            }
-            else if (rAbs) // Set the radial burn to the absoluteValue
-            {
-                burnParams.x = absoluteValue - thisNode.BurnVector.x;
-            }
-            else if (rInc1) // Add smallStep to the radial burn
-            {
-                burnParams.x += smallStep;
-            }
-            else if (rInc2) // Add bigStep to the radial burn
-            {
-                burnParams.x += bigStep;
+                // thisNode.BurnVector.z += bigStep;
             }
             else if (pDec1) // Subtract smallStep from the prograde burn
             {
                 burnParams.z -= smallStep;
+                // thisNode.BurnVector.z -= smallStep;
             }
             else if (pDec2) // Subtract bigStep from the prograde burn
             {
                 burnParams.z -= bigStep;
+                // thisNode.BurnVector.z -= bigStep;
+            }
+            else if (nAbs) // Set the normal burn to the absoluteValue
+            {
+                burnParams.y = absoluteValue - thisNode.BurnVector.y;
+                // thisNode.BurnVector.y = absoluteValue;
+            }
+            else if (nInc1) // Add smallStep to the normal burn
+            {
+                burnParams.y += smallStep;
+                // thisNode.BurnVector.y += smallStep;
+            }
+            else if (nInc2) // Add bigStep to the normal burn
+            {
+                burnParams.y += bigStep;
+                // thisNode.BurnVector.y += bigStep;
             }
             else if (nDec1) // Subtract smallStep from the normal burn
             {
                 burnParams.y -= smallStep;
+                // thisNode.BurnVector.y -= smallStep;
             }
             else if (nDec2) // Subtract bigStep from the normal burn
             {
                 burnParams.y -= bigStep;
+                // thisNode.BurnVector.y -= bigStep;
+            }
+            else if (rAbs) // Set the radial burn to the absoluteValue
+            {
+                burnParams.x = absoluteValue - thisNode.BurnVector.x;
+                // thisNode.BurnVector.x = absoluteValue;
+            }
+            else if (rInc1) // Add smallStep to the radial burn
+            {
+                burnParams.x += smallStep;
+                // thisNode.BurnVector.x += smallStep;
+            }
+            else if (rInc2) // Add bigStep to the radial burn
+            {
+                burnParams.x += bigStep;
+                // thisNode.BurnVector.x += bigStep;
             }
             else if (rDec1) // Subtract smallStep from the radial burn
             {
                 burnParams.x -= smallStep;
+                // thisNode.BurnVector.x -= smallStep;
             }
             else if (rDec2) // Subtract bigStep from the radial burn
             {
                 burnParams.x -= bigStep;
+                // thisNode.BurnVector.x -= bigStep;
             }
 
             // Push the update to the node
             //Logger.LogInfo("handleButtons: Pushing new burn info to node");
             //Logger.LogInfo($"handleButtons: burnParams         [{burnParams.x}, {burnParams.y}, {burnParams.z}] m/s");
             maneuverPlanComponent.UpdateChangeOnNode(thisNode, burnParams);
+
+            // Call FixStuff to update the nodes in a way that allows the game to catch up with the updates
+            StartCoroutine(FixStuff(maneuverPlanComponent));
+
             Logger.LogInfo($"handleButtons: Updated BurnVector    [{thisNode.BurnVector.x}, {thisNode.BurnVector.y}, {thisNode.BurnVector.z}] m/s");
             //Logger.LogInfo($"handleButtons: BurnVector.normalized [{thisNode.BurnVector.normalized.x}, {thisNode.BurnVector.normalized.y}, {thisNode.BurnVector.normalized.z}] m/s");
-            // IPatchedOrbit patchedOrbit = !thisNode.IsOnManeuverTrajectory ? (IPatchedOrbit)simObject.Orbiter.PatchedConicSolver.FindPatchContainingUT(thisNode.Time) : (IPatchedOrbit)thisNode.ManeuverTrajectoryPatch;
-            Utility.RefreshActiveVesselAndCurrentManeuver();
-
-            UpdateNode(thisNode);
 
         }
         else if (timeDec1 || timeDec2 || timeInc1 || timeInc2 || orbitDec || orbitInc || snapToAp || snapToPe || snapToANe || snapToDNe || snapToANt || snapToDNt)
@@ -777,6 +810,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             var universeModel = game.UniverseModel;
             var vesselComponent = universeModel.FindVesselComponent(thisNode.RelatedSimID);
             var simObject = vesselComponent.SimulationObject;
+            // var maneuverProvider = WHERE CAN WE FIND THIS? It's defined in KSP.SIM.Maneuver.
             var maneuverPlanComponent = simObject.FindComponent<ManeuverPlanComponent>();
 
             // Get some objects and info we need
@@ -787,11 +821,13 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             var timeOfNodeFromNow = oldBurnTime - UT;
 
             double nodeTime = thisNode.Time;
+
             if (timeDec1) // Subtract timeSmallStep
             {
                 if (timeSmallStep < timeOfNodeFromNow) // If there is enough time
                 {
                     nodeTime -= timeSmallStep;
+                    // thisNode.Time -= timeSmallStep;
                 }
             }
             else if (timeDec2) // Subtract timeLargeStep
@@ -799,57 +835,73 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
                 if (timeLargeStep < timeOfNodeFromNow) // If there is enough time
                 {
                     nodeTime -= timeLargeStep;
+                    // thisNode.Time -= timeLargeStep;
                 }
             }
             else if (timeInc1) // Add timeSmallStep
             {
                 nodeTime += timeSmallStep;
+                // thisNode.Time += timeSmallStep;
             }
             else if (timeInc2) // Add timeLargeStep
             {
                 nodeTime += timeLargeStep;
+                // thisNode.Time += timeLargeStep;
             }
             else if (orbitDec) // Subtract one orbital period
             {
                 if (vessel.Orbit.period < timeOfNodeFromNow) // If there is enough time
                 {
                     nodeTime -= vessel.Orbit.period;
+                    // thisNode.Time -= vessel.Orbit.period;
                 }
             }
             else if (orbitInc) // Add one orbital period
             {
                 nodeTime += vessel.Orbit.period;
+                // thisNode.Time += vessel.Orbit.period;
             }
             else if (snapToAp) // Snap the maneuver time to the next Ap
             {
                 nodeTime = UT + vessel.Orbit.TimeToAp;
+                // thisNode.Time = UT + vessel.Orbit.TimeToAp;
             }
             else if (snapToPe) // Snap the maneuver time to the next Pe
             {
                 nodeTime = UT + vessel.Orbit.TimeToPe;
+                // thisNode.Time = UT + vessel.Orbit.TimeToPe;
             }
             else if (snapToANe) // Snap the maneuver time to the AN relative to the equatorial plane
             {
                 nodeTime = vessel.Orbit.TimeOfANEquatorial(UT);
+                // thisNode.Time = vessel.Orbit.TimeOfANEquatorial(UT);
             }
             else if (snapToDNe) // Snap the maneuver time to the DN relative to the equatorial plane
             {
                 nodeTime = vessel.Orbit.TimeOfDNEquatorial(UT);
+                // thisNode.Time = vessel.Orbit.TimeOfDNEquatorial(UT);
             }
             else if (snapToANt) // Snap the maneuver time to the AN relative to selected target's orbit
             {
                 nodeTime = vessel.Orbit.TimeOfAN(target.Orbit, UT);
+                // thisNode.Time = vessel.Orbit.TimeOfAN(target.Orbit, UT);
             }
             else if (snapToDNt) // Snap the maneuver time to the DN relative to selected target's orbit
             {
                 nodeTime = vessel.Orbit.TimeOfDN(target.Orbit, UT);
+                // thisNode.Time = vessel.Orbit.TimeOfDN(target.Orbit, UT);
             }
 
-            //Logger.LogInfo($"handleButtons: Burn time was {oldBurnTime}, is {thisNode.Time}");
+            // Push the update to the node
+            // thisNode.Time = nodeTime;
             maneuverPlanComponent.UpdateTimeOnNode(thisNode, nodeTime);
-            Utility.RefreshActiveVesselAndCurrentManeuver();
-            
-            UpdateNode(thisNode);
+
+            // Call FixStuff to update the nodes in a way that allows the game to catch up with the updates
+            StartCoroutine(FixStuff(maneuverPlanComponent));
+
+            Logger.LogInfo($"handleButtons: Burn time was {oldBurnTime}, is {thisNode.Time}");
+
+            // UpdateNode(thisNode);
 
         }
         else if (decNode || incNode || delNode || addNode)
@@ -873,5 +925,24 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             }
 
         }
+    }
+    private IEnumerator FixStuff(ManeuverPlanComponent maneuverPlanComponent)
+    {
+        yield return (object)new WaitForFixedUpdate();
+
+        NodeControl.RefreshManeuverNodes();
+
+        yield return (object)new WaitForFixedUpdate();
+
+        for (int i = SelectedNodeIndex; i < NodeControl.Nodes.Count; i++)
+        {
+            var node = NodeControl.Nodes[i];
+            maneuverPlanComponent.UpdateNodeDetails(node);
+            maneuverPlanComponent.RefreshManeuverNodeState(i);
+        }
+
+        yield return (object)new WaitForFixedUpdate();
+
+        NodeControl.RefreshManeuverNodes();
     }
 }   
