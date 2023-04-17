@@ -50,9 +50,9 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     private bool gameInputState = true;
     public List<String> inputFields = new List<String>();
 
-    private VesselComponent activeVessel;
+    // private VesselComponent activeVessel;
     private SimulationObjectModel currentTarget;
-    private ManeuverNodeData currentNode = null;
+    // private ManeuverNodeData Utility.currentNode = null;
     List<ManeuverNodeData> activeNodes;
     private Vector3d burnParams;
     private PatchedConicsOrbit orbit;
@@ -62,20 +62,20 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     private GUIStyle horizontalDivider = new GUIStyle();
     private GUISkin _spaceWarpUISkin;
     private GUIStyle ctrlBtnStyle;
-    private GUIStyle bigBtnStyle;
+    // private GUIStyle bigBtnStyle;
     private GUIStyle smallBtnStyle;
-    private GUIStyle mainWindowStyle;
+    // private GUIStyle mainWindowStyle;
     private GUIStyle textInputStyle;
-    private GUIStyle sectionToggleStyle;
+    // private GUIStyle sectionToggleStyle;
     private GUIStyle closeBtnStyle;
     private GUIStyle snapBtnStyle;
     private GUIStyle nameLabelStyle;
     private GUIStyle valueLabelStyle;
     private GUIStyle unitLabelStyle;
-    private string unitColorHex;
-    private int spacingAfterHeader = -12;
+    // private string unitColorHex;
+    // private int spacingAfterHeader = -12;
     private int spacingAfterEntry = -12;
-    private int spacingAfterSection = 5;
+    // private int spacingAfterSection = 5;
 
     internal int SelectedNodeIndex = 0;
     internal List<ManeuverNodeData> Nodes = new();
@@ -133,12 +133,12 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
 
         _spaceWarpUISkin = Skins.ConsoleSkin;
         
-        mainWindowStyle = new GUIStyle(_spaceWarpUISkin.window)
-        {
-            padding = new RectOffset(8, 8, 20, 8),
-            contentOffset = new Vector2(0, -22),
-            fixedWidth = windowWidth
-        };
+        //mainWindowStyle = new GUIStyle(_spaceWarpUISkin.window)
+        //{
+        //    padding = new RectOffset(8, 8, 20, 8),
+        //    contentOffset = new Vector2(0, -22),
+        //    fixedWidth = windowWidth
+        //};
 
         textInputStyle = new GUIStyle(_spaceWarpUISkin.textField)
         {
@@ -163,17 +163,17 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             margin = new RectOffset(0, 0, 10, 0)
         };
 
-        bigBtnStyle = new GUIStyle(_spaceWarpUISkin.button)
-        {
-            alignment = TextAnchor.MiddleCenter,
-            padding = new RectOffset(0, 0, 0, 3),
-            contentOffset = new Vector2(0, 2),
-            fixedHeight = 25, // 16,
-            fixedWidth = (int)(windowWidth * 0.6),
-            fontSize = 16,
-            clipping = TextClipping.Overflow,
-            margin = new RectOffset(0, 0, 10, 0)
-        };
+        //bigBtnStyle = new GUIStyle(_spaceWarpUISkin.button)
+        //{
+        //    alignment = TextAnchor.MiddleCenter,
+        //    padding = new RectOffset(0, 0, 0, 3),
+        //    contentOffset = new Vector2(0, 2),
+        //    fixedHeight = 25, // 16,
+        //    fixedWidth = (int)(windowWidth * 0.6),
+        //    fontSize = 16,
+        //    clipping = TextClipping.Overflow,
+        //    margin = new RectOffset(0, 0, 10, 0)
+        //};
 
         smallBtnStyle = new GUIStyle(_spaceWarpUISkin.button)
         {
@@ -199,10 +199,10 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             margin = new RectOffset(0, 0, 10, 0)
         };
         
-        sectionToggleStyle = new GUIStyle(_spaceWarpUISkin.toggle)
-        {
-            padding = new RectOffset(14, 0, 3, 3)
-        };
+        //sectionToggleStyle = new GUIStyle(_spaceWarpUISkin.toggle)
+        //{
+        //    padding = new RectOffset(14, 0, 3, 3)
+        //};
 
         nameLabelStyle = new GUIStyle(_spaceWarpUISkin.label);
         nameLabelStyle.normal.textColor = new Color(.7f, .75f, .75f, 1);
@@ -219,7 +219,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             alignment = TextAnchor.MiddleLeft
         };
         unitLabelStyle.normal.textColor = new Color(.7f, .75f, .75f, 1);
-        unitColorHex = ColorUtility.ToHtmlStringRGBA(unitLabelStyle.normal.textColor);
+        // unitColorHex = ColorUtility.ToHtmlStringRGBA(unitLabelStyle.normal.textColor);
 
         closeBtnStyle = new GUIStyle(_spaceWarpUISkin.button)
         {
@@ -227,7 +227,24 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         };
 
         closeBtnRect = new Rect(windowWidth - 23, 6, 16, 16);
-        
+
+        labelStyle = warnStyle = new GUIStyle(_spaceWarpUISkin.label); // GUI.skin.GetStyle("Label"));
+        errorStyle = new GUIStyle(_spaceWarpUISkin.label); // GUI.skin.GetStyle("Label"));
+        errorStyle.normal.textColor = Color.red;
+        warnStyle = new GUIStyle(_spaceWarpUISkin.label); // GUI.skin.GetStyle("Label"));
+        warnStyle.normal.textColor = Color.yellow;
+        progradeStyle = new GUIStyle(_spaceWarpUISkin.label); // GUI.skin.GetStyle("Label"));
+        progradeStyle.normal.textColor = Color.green;
+        progradeStyle.fixedHeight = 24;
+        normalStyle = new GUIStyle(_spaceWarpUISkin.label); // GUI.skin.GetStyle("Label"));
+        normalStyle.normal.textColor = Color.magenta;
+        normalStyle.fixedHeight = 24;
+        radialStyle = new GUIStyle(_spaceWarpUISkin.label); // GUI.skin.GetStyle("Label"));
+        radialStyle.normal.textColor = Color.cyan;
+        radialStyle.fixedHeight = 24;
+        horizontalDivider.fixedHeight = 2;
+        horizontalDivider.margin = new RectOffset(0, 0, 4, 4);
+
         Appbar.RegisterAppButton(
             "Maneuver Node Cont.",
             "BTN-ManeuverNodeController",
@@ -268,13 +285,14 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         if (gameState == GameState.Map3DView) GUIenabled = true;
         if (gameState == GameState.FlightView) GUIenabled = true;
 
-        activeVessel = GameManager.Instance?.Game?.ViewController?.GetActiveVehicle(true)?.GetSimVessel(true);
-        currentTarget = activeVessel?.TargetObject;
+        Utility.RefreshActiveVesselAndCurrentManeuver();
+        // activeVessel = GameManager.Instance?.Game?.ViewController?.GetActiveVehicle(true)?.GetSimVessel(true);
+        currentTarget = Utility.activeVessel?.TargetObject;
         // orbit = GetLastOrbit() as PatchedConicsOrbit;
-        if (activeVessel != null)
-            orbit = activeVessel.Orbit;
+        if (Utility.activeVessel != null)
+            orbit = Utility.activeVessel.Orbit;
 
-        if (interfaceEnabled && GUIenabled && activeVessel != null)
+        if (interfaceEnabled && GUIenabled && Utility.activeVessel != null)
         {
             GUI.skin = Skins.ConsoleSkin;
             windowRect = GUILayout.Window(
@@ -307,43 +325,25 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         }
     }
 
-
-
     private void FillWindow(int windowID)
     {
         if (CloseButton())
         {
             CloseWindow();
         }
-        
-        labelStyle = warnStyle = new GUIStyle(GUI.skin.GetStyle("Label"));
-        errorStyle = new GUIStyle(GUI.skin.GetStyle("Label"));
-        errorStyle.normal.textColor = Color.red;
-        warnStyle = new GUIStyle(GUI.skin.GetStyle("Label"));
-        warnStyle.normal.textColor = Color.yellow;
-        progradeStyle = new GUIStyle(GUI.skin.GetStyle("Label"));
-        progradeStyle.normal.textColor = Color.green;
-        progradeStyle.fixedHeight = 24;
-        normalStyle = new GUIStyle(GUI.skin.GetStyle("Label"));
-        normalStyle.normal.textColor = Color.magenta;
-        normalStyle.fixedHeight = 24;
-        radialStyle = new GUIStyle(GUI.skin.GetStyle("Label"));
-        radialStyle.normal.textColor = Color.cyan;
-        radialStyle.fixedHeight = 24;
-        horizontalDivider.fixedHeight = 2;
-        horizontalDivider.margin = new RectOffset(0, 0, 4, 4);
 
         // game = GameManager.Instance.Game;
         // activeNodes = game.SpaceSimulation.Maneuvers.GetNodesForVessel(GameManager.Instance.Game.ViewController.GetActiveVehicle(true).Guid);
-        // currentNode = (activeNodes.Count() > 0) ? activeNodes[0] : null;
+        // Utility.currentNode = (activeNodes.Count() > 0) ? activeNodes[0] : null;
         // var orbit = GetLastOrbit() as PatchedConicsOrbit;
-        currentNode = NodeControl.getCurrentNode(ref activeNodes);
+        Utility.RefreshActiveVesselAndCurrentManeuver();
+        // Utility.currentNode = NodeControl.getCurrentNode(ref activeNodes);
 
         double UT;
         double dvRemaining;
 
         GUILayout.BeginVertical();
-        if (currentNode == null)
+        if (Utility.currentNode == null)
         {
             GUILayout.BeginHorizontal();
             GUILayout.Label("The active vessel has no maneuver nodes.", errorStyle);
@@ -361,13 +361,15 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             Draw2Button(ref delNode, "Del Node", ref addNode, "Add Node");
             GUILayout.Box("", horizontalDivider);
 
-            DrawEntry("Total Maneuver ∆v", currentNode.BurnRequiredDV.ToString("n2"), labelStyle, "m/s");
-            dvRemaining = (activeVessel.Orbiter.ManeuverPlanSolver.GetVelocityAfterFirstManeuver(out UT).vector - orbit.GetOrbitalVelocityAtUTZup(UT)).magnitude; // activeVessel.Orbit
+            DrawEntry("Total Maneuver ∆v", Utility.currentNode.BurnRequiredDV.ToString("n2"), labelStyle, "m/s");
+            dvRemaining = (Utility.activeVessel.Orbiter.ManeuverPlanSolver.GetVelocityAfterFirstManeuver(out UT).vector - orbit.GetOrbitalVelocityAtUTZup(UT)).magnitude;
+            UT = game.UniverseModel.UniversalTime;
             DrawEntry("∆v Remaining", dvRemaining.ToString("n3"), labelStyle, "m/s");
+            Draw2Entries("Start", "Duration", labelStyle, (Utility.currentNode.Time - UT).ToString("n2"), Utility.currentNode.BurnDuration.ToString("n2"), "s");
             GUILayout.Box("", horizontalDivider);
-            DrawEntry("Prograde ∆v", currentNode.BurnVector.z.ToString("n2"), progradeStyle, "m/s");
-            DrawEntry("Normal ∆v", currentNode.BurnVector.y.ToString("n2"), normalStyle, "m/s");
-            DrawEntry("Radial ∆v", currentNode.BurnVector.x.ToString("n2"), radialStyle, "m/s");
+            DrawEntry("Prograde ∆v", Utility.currentNode.BurnVector.z.ToString("n2"), progradeStyle, "m/s");
+            DrawEntry("Normal ∆v", Utility.currentNode.BurnVector.y.ToString("n2"), normalStyle, "m/s");
+            DrawEntry("Radial ∆v", Utility.currentNode.BurnVector.x.ToString("n2"), radialStyle, "m/s");
             GUILayout.Box("", horizontalDivider);
             if (advancedMode)
             {
@@ -408,7 +410,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     private void drawSimpleMode()
     {
         string nextApA, nextPeA, nextInc, nextEcc, nextLAN;
-        var UT = game.UniverseModel.UniversalTime;
+        // var UT = game.UniverseModel.UniversalTime;
 
         DrawEntryTextField("Absolute ∆v", ref absoluteValueString, "m/s");
         double.TryParse(absoluteValueString, out absoluteValue);
@@ -431,18 +433,17 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         GUILayout.Box("", horizontalDivider);
         DrawEntry4Button("Time", labelStyle, ref timeDec2, "<<", ref timeDec1, "<", ref timeInc1, ">", ref timeInc2, ">>");
         GUILayout.Box("", horizontalDivider);
-        var numOrbits = Math.Truncate((currentNode.Time - game.UniverseModel.UniversalTime) / game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.period).ToString("n0");
+        var numOrbits = Math.Truncate((Utility.currentNode.Time - game.UniverseModel.UniversalTime) / game.UniverseModel.FindVesselComponent(Utility.currentNode.RelatedSimID).Orbit.period).ToString("n0");
         DrawEntry("Maneuver Node in", $"{numOrbits} orbit(s)");
         DrawEntry2Button("Orbit", labelStyle, ref orbitDec, "-", ref orbitInc, "+");
-        Draw2Entries("Start", "Duration", nameLabelStyle, (currentNode.Time - UT).ToString("n2"), currentNode.BurnDuration.ToString("n2"), "s");
         GUILayout.Box("", horizontalDivider);
-        Draw2Entries("Starting Orbit", "New Orbit", labelStyle);
+        Draw2Entries("Before Node", "After Node", labelStyle);
         //IPatchedOrbit lastPatch, thisPatch, nextPatch;
         //List<ManeuverNodeData> patchList =
-        //    Game.SpaceSimulation.Maneuvers.GetNodesForVessel(activeVessel.SimulationObject.GlobalId); // GetNodesForVessel(kspVessel.GetGlobalIDActiveVessel())
+        //    Game.SpaceSimulation.Maneuvers.GetNodesForVessel(Utility.activeVessel.SimulationObject.GlobalId); // GetNodesForVessel(kspVessel.GetGlobalIDActiveVessel())
         //if (patchList.Count == 0)
         //{
-        //    Logger.LogDebug($"GetLastOrbit: last orbit is activeVessel.Orbit: {activeVessel.Orbit}");
+        //    Logger.LogDebug($"GetLastOrbit: last orbit is Utility.activeVessel.Orbit: {Utility.activeVessel.Orbit}");
         //}
         //else
         //{
@@ -452,7 +453,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         //    Logger.LogDebug($"lastPatch: {lastPatch as PatchedConicsOrbit}");
         //}
 
-        var patch = currentNode?.ManeuverTrajectoryPatch;
+        var patch = Utility.currentNode?.ManeuverTrajectoryPatch;
         if (patch != null)
         {
             try
@@ -484,11 +485,11 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             nextEcc = "NaN";
             nextLAN = "NaN";
         }
-        Draw2Entries("Ap", "Ap", nameLabelStyle, (orbit.ApoapsisArl / 1000).ToString("n3"), nextApA, "km");  // activeVessel.Orbit
-        Draw2Entries("Pe", "Pe", nameLabelStyle, (orbit.PeriapsisArl / 1000).ToString("n3"), nextPeA, "km");  // activeVessel.Orbit
-        Draw2Entries("Inc", "Inc", nameLabelStyle, orbit.inclination.ToString("n3"), nextInc, "°");  // activeVessel.Orbit
-        Draw2Entries("Ecc", "Ecc", nameLabelStyle, orbit.eccentricity.ToString("n3"), nextEcc);  // activeVessel.Orbit
-        Draw2Entries("LAN", "LAN", nameLabelStyle, orbit.longitudeOfAscendingNode.ToString("n3"), nextLAN, "°");  // activeVessel.Orbit
+        Draw2Entries("Ap", "Ap", nameLabelStyle, (orbit.ApoapsisArl / 1000).ToString("n3"), nextApA, "km");
+        Draw2Entries("Pe", "Pe", nameLabelStyle, (orbit.PeriapsisArl / 1000).ToString("n3"), nextPeA, "km");
+        Draw2Entries("Inc", "Inc", nameLabelStyle, orbit.inclination.ToString("n3"), nextInc, "°");
+        Draw2Entries("Ecc", "Ecc", nameLabelStyle, orbit.eccentricity.ToString("n3"), nextEcc);
+        Draw2Entries("LAN", "LAN", nameLabelStyle, orbit.longitudeOfAscendingNode.ToString("n3"), nextLAN, "°");
         GUILayout.Box("", horizontalDivider);
     }
 
@@ -738,9 +739,9 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     {
         // var orbit = GetLastOrbit() as PatchedConicsOrbit;
 
-        if (currentNode == null)
+        if (Utility.currentNode == null)
         {
-            if (addNode) AddNode(orbit, ref currentNode, activeVessel);
+            if (addNode) AddNode(orbit);
             return;
         }
         else if (pAbs || pInc1 || pInc2 || pDec1 || pDec2 || nAbs || nInc1 || nInc2 || nDec1 || nDec2 || rAbs || rInc1 || rInc2 || rDec1 || rDec2)
@@ -749,14 +750,13 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
 
             // Get the ManeuverPlanComponent for the active vessel
             var universeModel = game.UniverseModel;
-            var vesselComponent = universeModel.FindVesselComponent(currentNode.RelatedSimID);
+            var vesselComponent = universeModel.FindVesselComponent(Utility.currentNode.RelatedSimID);
             var simObject = vesselComponent.SimulationObject;
             var maneuverPlanComponent = simObject.FindComponent<ManeuverPlanComponent>();
 
             if (pAbs) // Set the prograde burn to the absoluteValue
             {
-                burnParams.z = absoluteValue - currentNode.BurnVector.z;
-                // currentNode.BurnVector.z = absoluteValue;
+                burnParams.z = absoluteValue - Utility.currentNode.BurnVector.z;
             }
             else if (pInc1) // Add smallStep to the prograde burn
             {
@@ -768,8 +768,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             }
             else if (nAbs) // Set the normal burn to the absoluteValue
             {
-                burnParams.y = absoluteValue - currentNode.BurnVector.y;
-                // currentNode.BurnVector.y = absoluteValue;
+                burnParams.y = absoluteValue - Utility.currentNode.BurnVector.y;
             }
             else if (nInc1) // Add smallStep to the normal burn
             {
@@ -781,8 +780,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             }
             else if (rAbs) // Set the radial burn to the absoluteValue
             {
-                burnParams.x = absoluteValue - currentNode.BurnVector.x;
-                // currentNode.BurnVector.x = absoluteValue;
+                burnParams.x = absoluteValue - Utility.currentNode.BurnVector.x;
             }
             else if (rInc1) // Add smallStep to the radial burn
             {
@@ -820,91 +818,94 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             // Push the update to the node
             //Logger.LogInfo("handleButtons: Pushing new burn info to node");
             //Logger.LogInfo($"handleButtons: burnParams         [{burnParams.x}, {burnParams.y}, {burnParams.z}] m/s");
-            maneuverPlanComponent.UpdateChangeOnNode(currentNode, burnParams);
-            Logger.LogInfo($"handleButtons: Updated BurnVector    [{currentNode.BurnVector.x}, {currentNode.BurnVector.y}, {currentNode.BurnVector.z}] m/s");
-            //Logger.LogInfo($"handleButtons: BurnVector.normalized [{currentNode.BurnVector.normalized.x}, {currentNode.BurnVector.normalized.y}, {currentNode.BurnVector.normalized.z}] m/s");
-            // IPatchedOrbit patchedOrbit = !currentNode.IsOnManeuverTrajectory ? (IPatchedOrbit)simObject.Orbiter.PatchedConicSolver.FindPatchContainingUT(currentNode.Time) : (IPatchedOrbit)currentNode.ManeuverTrajectoryPatch;
+            maneuverPlanComponent.UpdateChangeOnNode(Utility.currentNode, burnParams);
+            Logger.LogInfo($"handleButtons: Updated BurnVector    [{Utility.currentNode.BurnVector.x}, {Utility.currentNode.BurnVector.y}, {Utility.currentNode.BurnVector.z}] m/s");
+            //Logger.LogInfo($"handleButtons: BurnVector.normalized [{Utility.currentNode.BurnVector.normalized.x}, {Utility.currentNode.BurnVector.normalized.y}, {Utility.currentNode.BurnVector.normalized.z}] m/s");
+            // IPatchedOrbit patchedOrbit = !Utility.currentNode.IsOnManeuverTrajectory ? (IPatchedOrbit)simObject.Orbiter.PatchedConicSolver.FindPatchContainingUT(Utility.currentNode.Time) : (IPatchedOrbit)Utility.currentNode.ManeuverTrajectoryPatch;
+            Utility.RefreshActiveVesselAndCurrentManeuver();
 
-            UpdateNode(ref currentNode, activeVessel);
+            UpdateNode(Utility.currentNode);
 
         }
         else if (timeDec1 || timeDec2 || timeInc1 || timeInc2 || orbitDec || orbitInc || snapToAp || snapToPe || snapToANe || snapToDNe || snapToANt || snapToDNt)
         {
             // Get the ManeuverPlanComponent for the active vessel
             var universeModel = game.UniverseModel;
-            var vesselComponent = universeModel.FindVesselComponent(currentNode.RelatedSimID);
+            var vesselComponent = universeModel.FindVesselComponent(Utility.currentNode.RelatedSimID);
             var simObject = vesselComponent.SimulationObject;
             var maneuverPlanComponent = simObject.FindComponent<ManeuverPlanComponent>();
 
             // Get some objects and info we need
-            var vessel = game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID);
+            var vessel = game.UniverseModel.FindVesselComponent(Utility.currentNode.RelatedSimID);
             var target = vessel?.TargetObject;
             var UT = game.UniverseModel.UniversalTime;
-            var oldBurnTime = currentNode.Time;
+            var oldBurnTime = Utility.currentNode.Time;
             var timeOfNodeFromNow = oldBurnTime - UT;
 
+            double nodeTime = Utility.currentNode.Time;
             if (timeDec1) // Subtract timeSmallStep
             {
                 if (timeSmallStep < timeOfNodeFromNow) // If there is enough time
                 {
-                    currentNode.Time -= timeSmallStep;
+                    nodeTime -= timeSmallStep;
                 }
             }
             else if (timeDec2) // Subtract timeLargeStep
             {
                 if (timeLargeStep < timeOfNodeFromNow) // If there is enough time
                 {
-                    currentNode.Time -= timeLargeStep;
+                    nodeTime -= timeLargeStep;
                 }
             }
             else if (timeInc1) // Add timeSmallStep
             {
-                currentNode.Time += timeSmallStep;
+                nodeTime += timeSmallStep;
             }
             else if (timeInc2) // Add timeLargeStep
             {
-                currentNode.Time += timeLargeStep;
+                nodeTime += timeLargeStep;
             }
             else if (orbitDec) // Subtract one orbital period
             {
                 if (vessel.Orbit.period < timeOfNodeFromNow) // If there is enough time
                 {
-                    currentNode.Time -= vessel.Orbit.period;
+                    nodeTime -= vessel.Orbit.period;
                 }
             }
             else if (orbitInc) // Add one orbital period
             {
-                currentNode.Time += vessel.Orbit.period;
+                nodeTime += vessel.Orbit.period;
             }
             else if (snapToAp) // Snap the maneuver time to the next Ap
             {
-                currentNode.Time = UT + vessel.Orbit.TimeToAp;
+                nodeTime = UT + vessel.Orbit.TimeToAp;
             }
             else if (snapToPe) // Snap the maneuver time to the next Pe
             {
-                currentNode.Time = UT + vessel.Orbit.TimeToPe;
+                nodeTime = UT + vessel.Orbit.TimeToPe;
             }
             else if (snapToANe) // Snap the maneuver time to the AN relative to the equatorial plane
             {
-                currentNode.Time = vessel.Orbit.TimeOfANEquatorial(UT);
+                nodeTime = vessel.Orbit.TimeOfANEquatorial(UT);
             }
             else if (snapToDNe) // Snap the maneuver time to the DN relative to the equatorial plane
             {
-                currentNode.Time = vessel.Orbit.TimeOfDNEquatorial(UT);
+                nodeTime = vessel.Orbit.TimeOfDNEquatorial(UT);
             }
             else if (snapToANt) // Snap the maneuver time to the AN relative to selected target's orbit
             {
-                currentNode.Time = vessel.Orbit.TimeOfAN(target.Orbit, UT);
+                nodeTime = vessel.Orbit.TimeOfAN(target.Orbit, UT);
             }
             else if (snapToDNt) // Snap the maneuver time to the DN relative to selected target's orbit
             {
-                currentNode.Time = vessel.Orbit.TimeOfDN(target.Orbit, UT);
+                nodeTime = vessel.Orbit.TimeOfDN(target.Orbit, UT);
             }
 
-            //Logger.LogInfo($"handleButtons: Burn time was {oldBurnTime}, is {currentNode.Time}");
-            maneuverPlanComponent.UpdateTimeOnNode(currentNode, currentNode.Time); // This may not be necessary?
+            //Logger.LogInfo($"handleButtons: Burn time was {oldBurnTime}, is {Utility.currentNode.Time}");
+            maneuverPlanComponent.UpdateTimeOnNode(Utility.currentNode, nodeTime);
+            Utility.RefreshActiveVesselAndCurrentManeuver();
             
-            UpdateNode(ref currentNode, activeVessel);
+            UpdateNode(Utility.currentNode);
 
         }
         else if (decNode || incNode || delNode || addNode)
@@ -919,11 +920,11 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             }
             else if (addNode)
             {
-                AddNode(orbit, ref currentNode, activeVessel);
+                AddNode(orbit);
             }
             else if (addNode)
             {
-                DeleteNodes(activeVessel, ref SelectedNodeIndex);
+                DeleteNodes(ref SelectedNodeIndex);
             }
         }
     }
