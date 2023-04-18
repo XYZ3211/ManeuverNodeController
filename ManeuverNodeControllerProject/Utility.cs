@@ -70,7 +70,7 @@ public static class Utility
             return "-∞";
         }
 
-        seconds = Math.Ceiling(seconds);
+        var cap = Math.Floor(seconds);
 
         string result = "";
         string spacing = "";
@@ -85,10 +85,10 @@ public static class Utility
             seconds = Math.Abs(seconds);
         }
 
-        int days = (int)(seconds / 21600);
-        int hours = (int)((seconds - (days * 21600)) / 3600);
-        int minutes = (int)((seconds - (hours * 3600) - (days * 21600)) / 60);
-        int secs = (int)(seconds - (days * 21600) - (hours * 3600) - (minutes * 60));
+        int days = (int)(cap / 21600);
+        int hours = (int)((cap - (days * 21600)) / 3600);
+        int minutes = (int)((cap - (hours * 3600) - (days * 21600)) / 60);
+        double secs = (seconds - (days * 21600) - (hours * 3600) - (minutes * 60));
 
         if (days > 0)
         {
@@ -98,7 +98,7 @@ public static class Utility
         if (hours > 0 || days > 0)
         {
             {
-                result += $"{hours}{spacing}h ";
+                result += $"{hours}:";
             }
         }
 
@@ -106,21 +106,21 @@ public static class Utility
         {
             if (hours > 0 || days > 0)
             {
-                result += $"{minutes:00.}{spacing}>m ";
+                result += $"{minutes:00.}:";
             }
             else
             {
-                result += $"{minutes}{spacing}m ";
+                result += $"{minutes}:";
             }
         }
 
         if (minutes > 0 || hours > 0 || days > 0)
         {
-            result += returnLastUnit ? $"{secs:00.}{spacing}s" : $"{secs:00.}";
+            result += returnLastUnit ? $"{secs:00.00}{spacing}" : $"{secs:00.00}";
         }
         else
         {
-            result += returnLastUnit ? $"{secs}{spacing}s" : $"{secs}";
+            result += returnLastUnit ? $"{secs:00.00}{spacing}" : $"{secs:00.00}";
         }
 
         return result;
