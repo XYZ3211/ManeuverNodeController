@@ -263,40 +263,40 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         //maneuverWindow.OnManeuverRemovedMessage(message);
 
         // Grab the time of the currently selected node
-        double selectedNodeTime = NodeControl.Nodes[SelectedNodeIndex].Time;
+        //double selectedNodeTime = NodeControl.Nodes[SelectedNodeIndex].Time;
 
-        Logger.LogDebug($"OnManeuverRemovedMessage: SelectedNodeIndex = {SelectedNodeIndex}");
-        Logger.LogDebug($"OnManeuverRemovedMessage: selectedNodeTime = {selectedNodeTime}");
+        //Logger.LogDebug($"OnManeuverRemovedMessage: SelectedNodeIndex = {SelectedNodeIndex}");
+        //Logger.LogDebug($"OnManeuverRemovedMessage: selectedNodeTime = {selectedNodeTime}");
         // Update the lsit of nodes to capture the effect of the node deletion
-        var nodeCount = NodeControl.RefreshManeuverNodes();
+        NodeControl.RefreshManeuverNodes();
 
         // If we got a valid selectedNodeTime
-        if (selectedNodeTime != null)
-        {
-            // Look for the node with the selectedNodeTime
-            int newSelectedNode = -1;
-            for (int i = 0; i < nodeCount; i++)
-            {
-                Logger.LogDebug($"OnManeuverRemovedMessage: Node[{i}].Time = {Nodes[i].Time}");
-                if (selectedNodeTime == Nodes[i].Time)
-                {
-                    newSelectedNode = i;
-                    Logger.LogDebug($"OnManeuverRemovedMessage: Found Node {i} with matching time");
-                    SelectedNodeIndex = newSelectedNode;
-                    Logger.LogDebug($"OnManeuverRemovedMessage: Setting SelectedNodeIndex to {newSelectedNode}");
-                }
-            }
-            if (newSelectedNode < 0)
-            {
-                SelectedNodeIndex = 0;
-                Logger.LogDebug($"OnManeuverRemovedMessage: No node with matching time found. Setting newSelectedNode to 0");
-            }
-        }
-        else
-        {
-            SelectedNodeIndex = 0;
-            Logger.LogDebug($"OnManeuverRemovedMessage: selectedNodeTime was null. Setting newSelectedNode to 0");
-        }
+        //if (selectedNodeTime != null)
+        //{
+        //    // Look for the node with the selectedNodeTime
+        //    int newSelectedNode = -1;
+        //    for (int i = 0; i < nodeCount; i++)
+        //    {
+        //        Logger.LogDebug($"OnManeuverRemovedMessage: Node[{i}].Time = {Nodes[i].Time}");
+        //        if (selectedNodeTime == Nodes[i].Time)
+        //        {
+        //            newSelectedNode = i;
+        //            Logger.LogDebug($"OnManeuverRemovedMessage: Found Node {i} with matching time");
+        //            SelectedNodeIndex = newSelectedNode;
+        //            Logger.LogDebug($"OnManeuverRemovedMessage: Setting SelectedNodeIndex to {newSelectedNode}");
+        //        }
+        //    }
+        //    if (newSelectedNode < 0)
+        //    {
+        //        SelectedNodeIndex = 0;
+        //        Logger.LogDebug($"OnManeuverRemovedMessage: No node with matching time found. Setting newSelectedNode to 0");
+        //    }
+        //}
+        //else
+        //{
+        //    SelectedNodeIndex = 0;
+        //    Logger.LogDebug($"OnManeuverRemovedMessage: selectedNodeTime was null. Setting newSelectedNode to 0");
+        //}
 
         // SelectedNodeIndex = 0;
     }
