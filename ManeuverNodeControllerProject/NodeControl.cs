@@ -3,6 +3,7 @@ using KSP.Map;
 using KSP.Sim.impl;
 using KSP.Sim.Maneuver;
 using KSP.Sim;
+using HarmonyLib;
 
 namespace ManeuverNodeController;
 
@@ -19,37 +20,30 @@ public static class NodeControl
 
     public static void DeleteNodes(int SelectedNodeIndex)
     {
-        var activeVesselPlan = Utility.activeVessel.SimulationObject.FindComponent<ManeuverPlanComponent>();
-        List<ManeuverNodeData> nodeData = new List<ManeuverNodeData>();
+        //var activeVesselPlan = Utility.activeVessel.SimulationObject.FindComponent<ManeuverPlanComponent>();
+        //List<ManeuverNodeData> nodeData = new List<ManeuverNodeData>();
+        var nodes = Utility.activeVessel.SimulationObject?.FindComponent<ManeuverPlanComponent>()?.GetNodes();
+        List<ManeuverNodeData> nodesToDelete = new List<ManeuverNodeData>();
 
-        var nodeToDelete = activeVesselPlan.GetNodes()[SelectedNodeIndex];
-        nodeData.Add(nodeToDelete);
+        //var nodeToDelete = activeVesselPlan.GetNodes()[SelectedNodeIndex];
+        //nodeData.Add(nodeToDelete);
+        // This should never happen, but better be safe
+        if (SelectedNodeIndex + 1 > nodes.Count)
+            SelectedNodeIndex = Math.Max(0, nodes.Count - 1);
 
-        foreach (ManeuverNodeData node in activeVesselPlan.GetNodes())
+        var nodeToDelete = nodes[SelectedNodeIndex];
+        nodesToDelete.Add(nodeToDelete);
+
+        foreach (ManeuverNodeData node in nodes)
         {
-            if (!nodeData.Contains(node) && (!nodeToDelete.IsOnManeuverTrajectory || nodeToDelete.Time < node.Time))
-                nodeData.Add(node);
+            if (!nodesToDelete.Contains(node) && (!nodeToDelete.IsOnManeuverTrajectory || nodeToDelete.Time < node.Time))
+                nodesToDelete.Add(node);
         }
-        GameManager.Instance.Game.SpaceSimulation.Maneuvers.RemoveNodesFromVessel(Utility.activeVessel.GlobalId, nodeData);
+        GameManager.Instance.Game.SpaceSimulation.Maneuvers.RemoveNodesFromVessel(Utility.activeVessel.GlobalId, nodesToDelete);
     }
-
-    //internal static override void RefreshData()
-    //{
-    //    base.RefreshData();
-    //    RefreshManeuverNodes();
-
-    //    // Add SelectedNodeIndex to base entries as well. They will show the correct node's info.
-    //    //(Entries.Find(e => e.GetType() == typeof(ProjectedAp)) as ProjectedAp).SelectedNodeIndex = SelectedNodeIndex;
-    //    //(Entries.Find(e => e.GetType() == typeof(ProjectedPe)) as ProjectedPe).SelectedNodeIndex = SelectedNodeIndex;
-    //    //(Entries.Find(e => e.GetType() == typeof(DeltaVRequired)) as DeltaVRequired).SelectedNodeIndex = SelectedNodeIndex;
-    //    //(Entries.Find(e => e.GetType() == typeof(TimeToNode)) as TimeToNode).SelectedNodeIndex = SelectedNodeIndex;
-    //    //(Entries.Find(e => e.GetType() == typeof(BurnTime)) as BurnTime).SelectedNodeIndex = SelectedNodeIndex;
-    //}
 
     internal static void RefreshManeuverNodes()
     {
-        //Utility.RefreshActiveVesselAndCurrentManeuver(); -> check if we need this here
-
         ManeuverPlanComponent activeVesselPlan = Utility.activeVessel?.SimulationObject?.FindComponent<ManeuverPlanComponent>();
         if (activeVesselPlan != null)
         {
@@ -60,23 +54,24 @@ public static class NodeControl
     private static IPatchedOrbit GetLastOrbit(bool silent = true)
     {
         // ManeuverNodeControllerMod.Logger.LogInfo("GetLastOrbit");
-        List<ManeuverNodeData> patchList =
-            GameManager.Instance.Game.SpaceSimulation.Maneuvers.GetNodesForVessel(Utility.activeVessel.SimulationObject.GlobalId);
+        //List<ManeuverNodeData> patchList =
+        //    GameManager.Instance.Game.SpaceSimulation.Maneuvers.GetNodesForVessel(Utility.activeVessel.SimulationObject.GlobalId);
 
         if (!silent)
-            ManeuverNodeControllerMod.Logger.LogMessage($"GetLastOrbit: patchList.Count = {patchList.Count}");
+            ManeuverNodeControllerMod.Logger.LogMessage($"GetLastOrbit: Nodes.Count = {Nodes.Count}");
 
-        if (patchList.Count == 0)
+        if (Nodes.Count == 0) // There are no nodes, so use the activeVessel.Orbit
         {
             if (!silent)
                 ManeuverNodeControllerMod.Logger.LogMessage($"GetLastOrbit: last orbit is activeVessel.Orbit: {Utility.activeVessel.Orbit}");
             return Utility.activeVessel.Orbit;
         }
-        IPatchedOrbit lastOrbit = patchList[patchList.Count - 1].ManeuverTrajectoryPatch;
+
+        // Get the last patch in the list
+        IPatchedOrbit lastOrbit = Nodes[Nodes.Count - 1].ManeuverTrajectoryPatch;
         if (!silent)
         {
-            ManeuverNodeControllerMod.Logger.LogMessage($"GetLastOrbit: ManeuverTrajectoryPatch = {patchList[patchList.Count - 1].ManeuverTrajectoryPatch}");
-            ManeuverNodeControllerMod.Logger.LogMessage($"GetLastOrbit: last orbit is patch {patchList.Count - 1}: {lastOrbit}");
+            ManeuverNodeControllerMod.Logger.LogMessage($"GetLastOrbit: last orbit is patch {Nodes.Count - 1}: {lastOrbit}");
         }
 
         return lastOrbit;
@@ -99,25 +94,64 @@ public static class NodeControl
 
     public static void CreateManeuverNodeAtUT(Vector3d burnVector, double UT, double burnDurationOffsetFactor = -0.5)
     {
-        // ManeuverNodeControllerMod.Logger.LogInfo("CreateManeuverNodeAtUT");
-        // PatchedConicsOrbit referencedOrbit = GetLastOrbit(false) as PatchedConicsOrbit;
-        // if (referencedOrbit == null)
-        // {
-        //     ManeuverNodeControllerMod.Logger.LogError("CreateManeuverNodeAtUT: referencedOrbit is null!");
-        //     return;
-        // }
+        ManeuverNodeControllerMod.Logger.LogInfo("CreateManeuverNodeAtUT");
+        PatchedConicsOrbit referencedOrbit = GetLastOrbit(false) as PatchedConicsOrbit;
+        if (referencedOrbit == null)
+        {
+            ManeuverNodeControllerMod.Logger.LogError("CreateManeuverNodeAtUT: referencedOrbit is null!");
+            return;
+        }
 
         if (UT < GameManager.Instance.Game.UniverseModel.UniversalTime + 1) // Don't set node to now or in the past
             UT = GameManager.Instance.Game.UniverseModel.UniversalTime + 1;
 
-        /// FIX ME!!!
-        ManeuverNodeData nodeData = new ManeuverNodeData(Utility.activeVessel.SimulationObject.GlobalId, false, UT);
+        // Get the patch to put this node on
+        ManeuverPlanSolver maneuverPlanSolver = Utility.activeVessel.Orbiter?.ManeuverPlanSolver;
+        IPatchedOrbit orbit = Utility.activeVessel.Orbit;
+        // maneuverPlanSolver.FindPatchContainingUt(UT, maneuverPlanSolver.ManeuverTrajectory, out orbit, out int _);
+        for (int i = 0; i < Nodes.Count; i++)
+        {
+            if (UT > Nodes[i].Time) orbit = Nodes[i].ManeuverTrajectoryPatch;
+        }
 
         // IPatchedOrbit orbit = referencedOrbit;
         // orbit.PatchStartTransition = PatchTransitionType.Maneuver;
         // orbit.PatchEndTransition = PatchTransitionType.Final;
+        //Initial,
+        //Final,
+        //Encounter,
+        //Escape,
+        //Maneuver,
+        //Collision,
+        //EndThrust,
+        //PartialOutOfFuel,
+        //CompletelyOutOfFuel,
 
-        // Utility.currentNode.SetManeuverState((PatchedConicsOrbit)orbit);
+        // Build the node data
+        ManeuverNodeData nodeData;
+        if (Nodes.Count == 0) // There are no nodes
+        {
+            nodeData = new ManeuverNodeData(Utility.activeVessel.SimulationObject.GlobalId, false, UT);
+            orbit.PatchEndTransition = PatchTransitionType.Maneuver;
+        }
+        else if (UT < Nodes[0].Time) // request time is before the first node
+        {
+            nodeData = new ManeuverNodeData(Utility.activeVessel.SimulationObject.GlobalId, false, UT);
+            orbit.PatchEndTransition = PatchTransitionType.Maneuver;
+        }
+        else if (UT > Nodes[Nodes.Count - 1].Time) // requested time is after the last node
+        {
+            nodeData = new ManeuverNodeData(Utility.activeVessel.SimulationObject.GlobalId, true, UT);
+            orbit.PatchEndTransition = PatchTransitionType.Final;
+        }
+        else // request time is between existing nodes
+        {
+            nodeData = new ManeuverNodeData(Utility.activeVessel.SimulationObject.GlobalId, true, UT);
+            orbit.PatchEndTransition = PatchTransitionType.Maneuver;
+        }
+        orbit.PatchStartTransition = PatchTransitionType.EndThrust;
+
+        nodeData.SetManeuverState((PatchedConicsOrbit)orbit);
 
         nodeData.BurnVector = burnVector;
 
@@ -134,9 +168,7 @@ public static class NodeControl
 
         // Add the node to the vessel's orbit
         GameManager.Instance.Game.SpaceSimulation.Maneuvers.AddNodeToVessel(nodeData);
-        //ManeuverPlanComponent maneuverPlan;
-        //maneuverPlan = Utility.activeVessel.SimulationObject.ManeuverPlan;
-        //maneuverPlan.AddNode(nodeData, true);
+
         Utility.activeVessel.Orbiter.ManeuverPlanSolver.UpdateManeuverTrajectory();
 
         // For KSP2, We want the to start burns early to make them centered on the node
@@ -145,7 +177,6 @@ public static class NodeControl
         ManeuverNodeControllerMod.Logger.LogDebug($"AddManeuverNode: BurnDuration {nodeData.BurnDuration} s");
 
         // Refersh the Utility.currentNode with what we've produced here in prep for calling UpdateNode
-        // Utility.currentNode = getCurrentNode();
         Utility.RefreshActiveVesselAndCurrentManeuver();
 
         // FIX ME!!!
@@ -221,13 +252,16 @@ public static class NodeControl
         // Define empty node data
         double UT = GameManager.Instance.Game.UniverseModel.UniversalTime;
         double burnUT;
-        if (orbit.eccentricity < 1)
+        if (orbit.eccentricity < 1 && NodeControl.Nodes.Count == 0)
         {
             burnUT = UT + orbit.TimeToAp;
         }
         else
         {
-            burnUT = UT + 30;
+            if (NodeControl.Nodes.Count > 0)
+                burnUT = NodeControl.Nodes[NodeControl.Nodes.Count - 1].Time + Math.Min(orbit.period/10, 600);
+            else
+                burnUT = UT + 30;
         }
 
         Vector3d burnVector;
