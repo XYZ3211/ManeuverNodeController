@@ -2,8 +2,8 @@
 using KSP.Sim.impl;
 using KSP.Sim.Maneuver;
 using UnityEngine;
-using static KSP.Rendering.Planets.PQSData;
 using BepInEx.Logging;
+using KSP.Messages;
 using KSP.Sim.DeltaV;
 using BepInEx.Bootstrap;
 using SpaceWarp.API.Mods;
@@ -17,7 +17,7 @@ public static class Utility
     // public static string LayoutPath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "MicroLayout.json");
     private static ManualLogSource Logger = BepInEx.Logging.Logger.CreateLogSource("ManeuverNodeController.Utility");
     public static GameStateConfiguration gameState;
-    // public static MessageCenter MessageCenter;
+    public static MessageCenter MessageCenter;
     // public static VesselDeltaVComponent VesselDeltaVComponentOAB;
     public static string InputDisableWindowAbbreviation = "WindowAbbreviation";
     public static string InputDisableWindowName = "WindowName";
@@ -42,22 +42,22 @@ public static class Utility
     //    VesselDeltaVComponentOAB = GameManager.Instance?.Game?.OAB?.Current?.Stats?.MainAssembly?.VesselDeltaV;
     //}
 
-    public static string DegreesToDMS(double degreeD)
-    {
-        var ts = TimeSpan.FromHours(Math.Abs(degreeD));
-        int degrees = (int)Math.Floor(ts.TotalHours);
-        int minutes = ts.Minutes;
-        int seconds = ts.Seconds;
+    //public static string DegreesToDMS(double degreeD)
+    //{
+    //    var ts = TimeSpan.FromHours(Math.Abs(degreeD));
+    //    int degrees = (int)Math.Floor(ts.TotalHours);
+    //    int minutes = ts.Minutes;
+    //    int seconds = ts.Seconds;
 
-        string result = $"{degrees:N0}<color={Styles.UnitColorHex}>°</color> {minutes:00}<color={Styles.UnitColorHex}>'</color> {seconds:00}<color={Styles.UnitColorHex}>\"</color>";
+    //    string result = $"{degrees:N0}<color={Styles.UnitColorHex}>°</color> {minutes:00}<color={Styles.UnitColorHex}>'</color> {seconds:00}<color={Styles.UnitColorHex}>\"</color>";
 
-        return result;
-    }
+    //    return result;
+    //}
 
-    public static string MetersToDistanceString(double heightInMeters)
-    {
-        return $"{heightInMeters:N0}";
-    }
+    //public static string MetersToDistanceString(double heightInMeters)
+    //{
+    //    return $"{heightInMeters:N0}";
+    //}
 
     public static string SecondsToTimeString(double seconds, bool addSpacing = true, bool returnLastUnit = false)
     {
@@ -92,13 +92,13 @@ public static class Utility
 
         if (days > 0)
         {
-            result += $"{days}{spacing}<color=#{Styles.UnitColorHex}>d</color> ";
+            result += $"{days}{spacing}d ";
         }
 
         if (hours > 0 || days > 0)
         {
             {
-                result += $"{hours}{spacing}<color=#{Styles.UnitColorHex}>h</color> ";
+                result += $"{hours}{spacing}h ";
             }
         }
 
@@ -106,97 +106,58 @@ public static class Utility
         {
             if (hours > 0 || days > 0)
             {
-                result += $"{minutes:00.}{spacing}<color=#{Styles.UnitColorHex}>m</color> ";
+                result += $"{minutes:00.}{spacing}>m ";
             }
             else
             {
-                result += $"{minutes}{spacing}<color=#{Styles.UnitColorHex}>m</color> ";
+                result += $"{minutes}{spacing}m ";
             }
         }
 
         if (minutes > 0 || hours > 0 || days > 0)
         {
-            result += returnLastUnit ? $"{secs:00.}{spacing}<color=#{Styles.UnitColorHex}>s</color>" : $"{secs:00.}";
+            result += returnLastUnit ? $"{secs:00.}{spacing}s" : $"{secs:00.}";
         }
         else
         {
-            result += returnLastUnit ? $"{secs}{spacing}<color=#{Styles.UnitColorHex}>s</color>" : $"{secs}";
+            result += returnLastUnit ? $"{secs}{spacing}s" : $"{secs}";
         }
 
         return result;
     }
 
-    public static string SituationToString(VesselSituations situation)
-    {
-        return situation switch
-        {
-            VesselSituations.PreLaunch => "Pre-Launch",
-            VesselSituations.Landed => "Landed",
-            VesselSituations.Splashed => "Splashed down",
-            VesselSituations.Flying => "Flying",
-            VesselSituations.SubOrbital => "Suborbital",
-            VesselSituations.Orbiting => "Orbiting",
-            VesselSituations.Escaping => "Escaping",
-            _ => "UNKNOWN",
-        };
-    }
+    //public static string SituationToString(VesselSituations situation)
+    //{
+    //    return situation switch
+    //    {
+    //        VesselSituations.PreLaunch => "Pre-Launch",
+    //        VesselSituations.Landed => "Landed",
+    //        VesselSituations.Splashed => "Splashed down",
+    //        VesselSituations.Flying => "Flying",
+    //        VesselSituations.SubOrbital => "Suborbital",
+    //        VesselSituations.Orbiting => "Orbiting",
+    //        VesselSituations.Escaping => "Escaping",
+    //        _ => "UNKNOWN",
+    //    };
+    //}
 
-    public static string BiomeToString(BiomeSurfaceData biome)
-    {
-        string result = biome.type.ToString().ToLower().Replace('_', ' ');
-        return result.Substring(0, 1).ToUpper() + result.Substring(1);
-    }
+    //public static string BiomeToString(BiomeSurfaceData biome)
+    //{
+    //    string result = biome.type.ToString().ToLower().Replace('_', ' ');
+    //    return result.Substring(0, 1).ToUpper() + result.Substring(1);
+    //}
 
     /// <summary>
-		/// Validates if user entered a 3 character string
-		/// </summary>
-		/// <param name="abbreviation">String that will be shortened to 3 characters</param>
-		/// <returns>Uppercase string shortened to 3 characters. If abbreviation is empty returns "CUS"</returns>
-		public static string ValidateAbbreviation(string abbreviation)
-    {
-        if (String.IsNullOrEmpty(abbreviation))
-            return "CUS";
-
-        return abbreviation.Substring(0, Math.Min(abbreviation.Length, 3)).ToUpperInvariant();
-    }
-
-    //public static void SaveLayout(List<MicroWindow> windows)
-    //{
-    //    try
-    //    {
-    //        // Deactivate the Settings window before saving, because it doesn't make sense to save it in an active state since user cannot click the save button without having the Settings window active
-    //        windows.Find(w => w.MainWindow == MainWindow.Settings).IsFlightActive = false;
-
-    //        File.WriteAllText(LayoutPath, JsonConvert.SerializeObject(windows));
-    //        Logger.LogInfo("SaveLayout successful");
-    //    }
-    //    catch (Exception ex)
-    //    {
-    //        Logger.LogError("Error trying to SaveLayout. Error description: " + ex);
-    //    }
-    //}
-
-    //public static void LoadLayout(List<MicroWindow> windows)
-    //{
-    //    try
-    //    {
-    //        List<MicroWindow> deserializedWindows = JsonConvert.DeserializeObject<List<MicroWindow>>(File.ReadAllText(LayoutPath));
-
-    //        windows.Clear();
-    //        windows.AddRange(deserializedWindows);                
-            
-    //        Logger.LogInfo("LoadLayout successful");
-    //    }
-    //    catch (FileNotFoundException ex)
-    //    {
-    //        Logger.LogWarning($"Error loading layout. File was not found at the expected location. Full error description:\n" + ex);
-
-    //    }
-    //    catch (Exception ex)
-    //    {
-    //        Logger.LogError("Error trying to LoadLayout. Full error description:\n" + ex);
-    //    }
-    //}
+	/// Validates if user entered a 3 character string
+	/// </summary>
+	/// <param name="abbreviation">String that will be shortened to 3 characters</param>
+	/// <returns>Uppercase string shortened to 3 characters. If abbreviation is empty returns "CUS"</returns>
+	// public static string ValidateAbbreviation(string abbreviation)
+    // {
+    //     if (String.IsNullOrEmpty(abbreviation))
+    //         return "CUS";
+    //     return abbreviation.Substring(0, Math.Min(abbreviation.Length, 3)).ToUpperInvariant();
+    // }
 
     /// <summary>
     /// Check if current vessel has an active target (celestial body or vessel)
@@ -313,70 +274,3 @@ public static class Utility
             return false;
     }
 }
-
-//public static class AeroForces
-//{
-//    private static readonly List<Type> liftForces = new()
-//    {
-//        PhysicsForceDisplaySystem.MODULE_DRAG_BODY_LIFT_TYPE,
-//        PhysicsForceDisplaySystem.MODULE_LIFTINGSURFACE_LIFT_TYPE
-//    };
-
-//    private static readonly List<Type> dragForces = new()
-//    {
-//        PhysicsForceDisplaySystem.MODULE_DRAG_DRAG_TYPE,
-//        PhysicsForceDisplaySystem.MODULE_LIFTINGSURFACE_DRAG_TYPE
-//    };
-
-//    public static double TotalLift
-//    {
-//        get
-//        {
-//            double toReturn = 0.0;
-
-//            IEnumerable<PartComponent> parts = Utility.activeVessel?.SimulationObject?.PartOwner?.Parts;
-//            if (parts == null || !Utility.activeVessel.IsInAtmosphere)
-//            {
-//                return toReturn;
-//            }
-
-//            foreach (PartComponent part in parts)
-//            {
-//                foreach (IForce force in part.SimulationObject.Rigidbody.Forces)
-//                {
-//                    if (liftForces.Contains(force.GetType()))
-//                    {
-//                        toReturn += force.RelativeForce.magnitude;
-//                    }
-//                }
-//            }
-
-//            return toReturn;
-//        }
-//    }
-
-//    public static double TotalDrag
-//    {
-//        get
-//        {
-//            double toReturn = 0.0;
-
-//            IEnumerable<PartComponent> parts = Utility.activeVessel?.SimulationObject?.PartOwner?.Parts;
-//            if (parts == null || !Utility.activeVessel.IsInAtmosphere)
-//                return toReturn;
-
-//            foreach (PartComponent part in parts)
-//            {
-//                foreach (IForce force in part.SimulationObject.Rigidbody.Forces)
-//                {
-//                    if (dragForces.Contains(force.GetType()))
-//                    {
-//                        toReturn += force.RelativeForce.magnitude;
-//                    }
-//                }
-//            }
-
-//            return toReturn;
-//        }
-//    }
-//}
