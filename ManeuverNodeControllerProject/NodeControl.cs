@@ -48,8 +48,9 @@ public static class NodeControl
         {
             Nodes = activeVesselPlan.GetNodes();
         }
+        // else ManeuverNodeControllerMod.Logger.LogDebug("RefreshManeuverNodes: activeVesselPlan is null, Nodes list not updated.");
+
         return Nodes.Count;
-        // else ManeuverNodeControllerMod.Logger.LogDebug("RefreshManeuverNodes: activeVesselPlan is null, no nodes obtained.");
     }
 
     private static IPatchedOrbit GetLastOrbit(bool silent = true)
@@ -187,7 +188,8 @@ public static class NodeControl
         // ManeuverNodeControllerMod.Logger.LogDebug("AddManeuverNode");
 
         // Add the node to the vessel's orbit
-        GameManager.Instance.Game.SpaceSimulation.Maneuvers.AddNodeToVessel(nodeData);
+        Utility.activeVessel.SimulationObject.ManeuverPlan.AddNode(nodeData, true);
+        // GameManager.Instance.Game.SpaceSimulation.Maneuvers.AddNodeToVessel(nodeData);
 
         Utility.activeVessel.Orbiter.ManeuverPlanSolver.UpdateManeuverTrajectory();
 
