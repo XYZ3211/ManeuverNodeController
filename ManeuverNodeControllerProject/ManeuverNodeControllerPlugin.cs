@@ -270,33 +270,33 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         // Update the lsit of nodes to capture the effect of the node deletion
         NodeControl.RefreshManeuverNodes();
 
-        // If we got a valid selectedNodeTime
-        //if (selectedNodeTime != null)
-        //{
-        //    // Look for the node with the selectedNodeTime
-        //    int newSelectedNode = -1;
-        //    for (int i = 0; i < nodeCount; i++)
-        //    {
-        //        Logger.LogDebug($"OnManeuverRemovedMessage: Node[{i}].Time = {Nodes[i].Time}");
-        //        if (selectedNodeTime == Nodes[i].Time)
-        //        {
-        //            newSelectedNode = i;
-        //            Logger.LogDebug($"OnManeuverRemovedMessage: Found Node {i} with matching time");
-        //            SelectedNodeIndex = newSelectedNode;
-        //            Logger.LogDebug($"OnManeuverRemovedMessage: Setting SelectedNodeIndex to {newSelectedNode}");
-        //        }
-        //    }
-        //    if (newSelectedNode < 0)
-        //    {
-        //        SelectedNodeIndex = 0;
-        //        Logger.LogDebug($"OnManeuverRemovedMessage: No node with matching time found. Setting newSelectedNode to 0");
-        //    }
-        //}
-        //else
-        //{
-        //    SelectedNodeIndex = 0;
-        //    Logger.LogDebug($"OnManeuverRemovedMessage: selectedNodeTime was null. Setting newSelectedNode to 0");
-        //}
+        If we got a valid selectedNodeTime
+        if (selectedNodeTime != null)
+        {
+            // Look for the node with the selectedNodeTime
+            int newSelectedNode = -1;
+            for (int i = 0; i < nodeCount; i++)
+            {
+                Logger.LogDebug($"OnManeuverRemovedMessage: Node[{i}].Time = {Nodes[i].Time}");
+                if (selectedNodeTime == Nodes[i].Time)
+                {
+                    newSelectedNode = i;
+                    Logger.LogDebug($"OnManeuverRemovedMessage: Found Node {i} with matching time");
+                    SelectedNodeIndex = newSelectedNode;
+                    Logger.LogDebug($"OnManeuverRemovedMessage: Setting SelectedNodeIndex to {newSelectedNode}");
+                }
+            }
+            if (newSelectedNode < 0)
+            {
+                SelectedNodeIndex = 0;
+                Logger.LogDebug($"OnManeuverRemovedMessage: No node with matching time found. Setting newSelectedNode to 0");
+            }
+        }
+        else
+        {
+            SelectedNodeIndex = 0;
+            Logger.LogDebug($"OnManeuverRemovedMessage: selectedNodeTime was null. Setting newSelectedNode to 0");
+        }
 
         // SelectedNodeIndex = 0;
     }
@@ -334,18 +334,6 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         if (gameState == GameState.FlightView) GUIenabled = true;
 
         Utility.RefreshActiveVesselAndCurrentManeuver();
-        var nodeCount = NodeControl.RefreshManeuverNodes();
-        if (NodeControl.Nodes.Count > 0)
-        {
-            if (SelectedNodeIndex >= NodeControl.Nodes.Count)
-                SelectedNodeIndex = NodeControl.Nodes.Count - 1;
-            thisNode = NodeControl.Nodes[SelectedNodeIndex];
-        }
-        else
-        {
-            SelectedNodeIndex = 0;
-            thisNode = null;
-        }
 
         currentTarget = Utility.activeVessel?.TargetObject;
         if (Utility.activeVessel != null)
@@ -391,10 +379,30 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             CloseWindow();
         }
 
-        Utility.RefreshActiveVesselAndCurrentManeuver();
-
         double UT;
         double dvRemaining;
+        bool doButtons = true;
+
+        if (NodeControl.Nodes.Count == 0)
+            NodeControl.RefreshManeuverNodes();
+        if (NodeControl.Nodes.Count > 0)
+        {
+            //if (SelectedNodeIndex >= NodeControl.Nodes.Count)
+            //    SelectedNodeIndex = NodeControl.Nodes.Count - 1;
+            try { thisNode = NodeControl.Nodes[SelectedNodeIndex]; }
+            catch
+            {
+                Logger.LogWarning($"OnGUI: NodeControl.Nodes.Count = {NodeControl.Nodes.Count}");
+                Logger.LogWarning($"OnGUI: SelectedNodeIndex = {SelectedNodeIndex} > (Nodes.Count - 1)!");
+                thisNode = null;
+                doButtons = false;
+            }
+        }
+        else
+        {
+            SelectedNodeIndex = 0;
+            thisNode = null;
+        }
 
         GUILayout.BeginVertical();
         if (thisNode == null)
@@ -447,7 +455,8 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
 
             DrawGUIStatus();
 
-            handleButtons();
+            if (doButtons)
+                handleButtons();
         }
         GUILayout.EndVertical();
         GUI.DragWindow(new Rect(0, 0, 10000, 500));
@@ -794,25 +803,37 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         var m3d = mapCore.map3D;
         var maneuverManager = m3d.ManeuverManager;
 
-        // Get the ManeuverPlanComponent for the active vessel
-        var universeModel = game.UniverseModel;
-        var vesselComponent = universeModel.FindVesselComponent(thisNode.RelatedSimID);
-        var simObject = vesselComponent.SimulationObject;
-        var maneuverPlanComponent = simObject.FindComponent<ManeuverPlanComponent>();
-
         if (thisNode == null)
         {
             if (addNode)
             {
+                // Get the ManeuverPlanComponent for the active vessel
+                var universeModel = game.UniverseModel;
+                var vesselComponent = universeModel?.FindVesselComponent(thisNode.RelatedSimID);
+                var simObject = vesselComponent?.SimulationObject;
+                var maneuverPlanComponent = simObject?.FindComponent<ManeuverPlanComponent>();
+
+                //int nodeCount;
+                //var nodeCount = NodeControl.RefreshManeuverNodes();
+                //Logger.LogInfo($"addNode (button): Number of nodes before add:         {nodeCount}");
                 AddNode(orbit);
+                //nodeCount = NodeControl.RefreshManeuverNodes();
+                //Logger.LogInfo($"addNode (button): Number of nodes after add:          {nodeCount}");
                 StartCoroutine(RefreshNodes(maneuverPlanComponent));
-                var nCount = NodeControl.RefreshManeuverNodes();
+                //nodeCount = NodeControl.RefreshManeuverNodes();
+                //Logger.LogInfo($"addNode (button): Number of nodes after RefreshNodes: {nodeCount}");
                 SelectedNodeIndex = 0;
             }
             return;
         }
         else if (pAbs || pInc1 || pInc2 || pDec1 || pDec2 || nAbs || nInc1 || nInc2 || nDec1 || nDec2 || rAbs || rInc1 || rInc2 || rDec1 || rDec2)
         {
+            // Get the ManeuverPlanComponent for the active vessel
+            var universeModel = game.UniverseModel;
+            var vesselComponent = universeModel?.FindVesselComponent(thisNode.RelatedSimID);
+            var simObject = vesselComponent?.SimulationObject;
+            var maneuverPlanComponent = simObject?.FindComponent<ManeuverPlanComponent>();
+
             burnParams = Vector3d.zero;  // Burn update vector, this is added to the existing burn
 
             if (pAbs) // Set the prograde burn to the absoluteValue
@@ -914,6 +935,12 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         }
         else if (timeDec1 || timeDec2 || timeInc1 || timeInc2 || orbitDec || orbitInc || snapToAp || snapToPe || snapToANe || snapToDNe || snapToANt || snapToDNt)
         {
+            // Get the ManeuverPlanComponent for the active vessel
+            var universeModel = game.UniverseModel;
+            var vesselComponent = universeModel?.FindVesselComponent(thisNode.RelatedSimID);
+            var simObject = vesselComponent?.SimulationObject;
+            var maneuverPlanComponent = simObject?.FindComponent<ManeuverPlanComponent>();
+
             // Get some objects and info we need
             var vessel = game.UniverseModel.FindVesselComponent(thisNode.RelatedSimID);
             var target = vessel?.TargetObject;
@@ -1044,6 +1071,12 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         }
         else if (decNode || incNode || delNode || addNode)
         {
+            // Get the ManeuverPlanComponent for the active vessel
+            var universeModel = game.UniverseModel;
+            var vesselComponent = universeModel?.FindVesselComponent(thisNode.RelatedSimID);
+            var simObject = vesselComponent?.SimulationObject;
+            var maneuverPlanComponent = simObject?.FindComponent<ManeuverPlanComponent>();
+
             if (decNode && SelectedNodeIndex > 0)
             {
                 SelectedNodeIndex--;
@@ -1062,11 +1095,22 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             }
             else if (addNode)
             {
+                int nodeCount;
+                //nodeCount = NodeControl.RefreshManeuverNodes();
+                //Logger.LogInfo($"addNode (button): Number of nodes before add:         {nCount}");
                 AddNode(orbit);
+                //nodeCount = NodeControl.RefreshManeuverNodes();
+                //Logger.LogInfo($"addNode (button): Number of nodes after add:          {nodeCount}");
                 StartCoroutine(RefreshNodes(maneuverPlanComponent));
-                var nCount = NodeControl.RefreshManeuverNodes();
+                //nodeCount = NodeControl.RefreshManeuverNodes();
+                //Logger.LogInfo($"addNode (button): Number of nodes after RefreshNodes: {nodeCount}");
+
+                //StartCoroutine(RefreshNodes(maneuverPlanComponent));
+                //nodeCount = NodeControl.RefreshManeuverNodes();
+                //Logger.LogInfo($"addNode (button): Number of nodes after RefreshNodes: {nodeCount}");
+
                 SelectedNodeIndex = NodeControl.Nodes.Count - 1;
-                thisNode = NodeControl.Nodes[SelectedNodeIndex];
+                // thisNode = NodeControl.Nodes[SelectedNodeIndex];
             }
 
         }
