@@ -9,19 +9,24 @@ using SpaceWarp.API.Assets;
 using SpaceWarp.API.UI;
 using SpaceWarp.API.UI.Appbar;
 using KSP.UI.Binding;
-using KSP.Sim;
-using KSP.Map;
-using MuMech;
-using System.Collections;
 using BepInEx.Logging;
+using static ManeuverNodeController.NodeControl;
+using KSP.Map;
+using KSP.Messages;
+using System.Collections;
 
 namespace ManeuverNodeController;
 
 [BepInDependency(SpaceWarpPlugin.ModGuid, SpaceWarpPlugin.ModVer)]
-[BepInPlugin("com.github.xyz3211.maneuvernodecontroller", "Maneuver Node Controller", "0.7.0")]
+[BepInPlugin("com.github.xyz3211.maneuver_node_controller", "Maneuver Node Controller", "0.7.0")]
 public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
 {
-    private static ManeuverNodeControllerMod Instance { get; set; }
+    // These are useful in case some other mod wants to add a dependency to this one
+    public const string ModGuid = MyPluginInfo.PLUGIN_GUID;
+    public const string ModName = MyPluginInfo.PLUGIN_NAME;
+    public const string ModVer = MyPluginInfo.PLUGIN_VERSION;
+
+    public static ManeuverNodeControllerMod Instance { get; set; }
 
     static bool loaded = false;
     private bool interfaceEnabled = false;
@@ -40,36 +45,33 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     private string timeLargeStepString = "25";
     private double absoluteValue, smallStep, bigStep, timeSmallStep, timeLargeStep;
     private bool pAbs, pInc1, pInc2, pDec1, pDec2, nAbs, nInc1, nInc2, nDec1, nDec2, rAbs, rInc1, rInc2, rDec1, rDec2, timeInc1, timeInc2, timeDec1, timeDec2, orbitInc, orbitDec;
-    private bool snapToAp, snapToPe, snapToANe, snapToDNe, snapToANt, snapToDNt, addNode;
+    private bool snapToAp, snapToPe, snapToANe, snapToDNe, snapToANt, snapToDNt, addNode, delNode, decNode, incNode;
     private bool advancedMode;
 
     // Control game input state while user has clicked into a TextField.
     private bool gameInputState = true;
     public List<String> inputFields = new List<String>();
 
-    private VesselComponent activeVessel;
     private SimulationObjectModel currentTarget;
-    private ManeuverNodeData currentNode = null;
-    List<ManeuverNodeData> activeNodes;
+    private ManeuverNodeData thisNode = null;
     private Vector3d burnParams;
+    private PatchedConicsOrbit orbit;
 
     private GUIStyle errorStyle, warnStyle, progradeStyle, normalStyle, radialStyle, labelStyle;
     private GameInstance game;
     private GUIStyle horizontalDivider = new GUIStyle();
     private GUISkin _spaceWarpUISkin;
     private GUIStyle ctrlBtnStyle;
-    private GUIStyle mainWindowStyle;
+    private GUIStyle smallBtnStyle;
     private GUIStyle textInputStyle;
-    private GUIStyle sectionToggleStyle;
     private GUIStyle closeBtnStyle;
     private GUIStyle snapBtnStyle;
     private GUIStyle nameLabelStyle;
     private GUIStyle valueLabelStyle;
     private GUIStyle unitLabelStyle;
-    private string unitColorHex;
-    private int spacingAfterHeader = -12;
     private int spacingAfterEntry = -12;
-    private int spacingAfterSection = 5;
+
+    internal int SelectedNodeIndex = 0;
 
     //public ManualLogSource logger;
     public new static ManualLogSource Logger { get; set; }
@@ -77,8 +79,13 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     public override void OnInitialized()
     {
         base.OnInitialized();
+
+        Instance = this;
+
         game = GameManager.Instance.Game;
         Logger = base.Logger;
+
+        // SubscribeToMessages();
 
         // Subscribe to messages that indicate it's OK to raise the GUI
         // StateChanges.FlightViewEntered += message => GUIenabled = true;
@@ -98,6 +105,13 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         // StateChanges.ResearchAndDevelopmentEntered += message => GUIenabled = false;
         // StateChanges.LaunchpadEntered += message => GUIenabled = false;
         // StateChanges.RunwayEntered += message => GUIenabled = false;
+
+        GameManager.Instance.Game.Messages.Subscribe<ManeuverRemovedMessage>(msg =>
+        {
+            var message = (ManeuverRemovedMessage)msg;
+            OnManeuverRemovedMessage(message);
+        });
+
 
         // Setup the list of input field names associated with TextField GUI inputs
         inputFields.Add("Prograde ∆v");
@@ -120,13 +134,6 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         DontDestroyOnLoad(gameObject);
 
         _spaceWarpUISkin = Skins.ConsoleSkin;
-        
-        mainWindowStyle = new GUIStyle(_spaceWarpUISkin.window)
-        {
-            padding = new RectOffset(8, 8, 20, 8),
-            contentOffset = new Vector2(0, -22),
-            fixedWidth = windowWidth
-        };
 
         textInputStyle = new GUIStyle(_spaceWarpUISkin.textField)
         {
@@ -151,6 +158,18 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             margin = new RectOffset(0, 0, 10, 0)
         };
 
+        smallBtnStyle = new GUIStyle(_spaceWarpUISkin.button)
+        {
+            alignment = TextAnchor.MiddleCenter,
+            padding = new RectOffset(10, 10, 0, 3),
+            contentOffset = new Vector2(0, 2),
+            fixedHeight = 25, // 16,
+            // fixedWidth = 95,
+            fontSize = 16,
+            clipping = TextClipping.Overflow,
+            margin = new RectOffset(0, 0, 10, 0)
+        };
+
         snapBtnStyle = new GUIStyle(_spaceWarpUISkin.button)
         {
             alignment = TextAnchor.MiddleCenter,
@@ -162,11 +181,6 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             clipping = TextClipping.Overflow,
             margin = new RectOffset(0, 0, 10, 0)
         };
-        
-        sectionToggleStyle = new GUIStyle(_spaceWarpUISkin.toggle)
-        {
-            padding = new RectOffset(14, 0, 3, 3)
-        };
 
         nameLabelStyle = new GUIStyle(_spaceWarpUISkin.label);
         nameLabelStyle.normal.textColor = new Color(.7f, .75f, .75f, 1);
@@ -177,13 +191,24 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         };
         valueLabelStyle.normal.textColor = new Color(.6f, .7f, 1, 1);
 
+        errorStyle = new GUIStyle(_spaceWarpUISkin.label)
+        {
+            alignment = TextAnchor.MiddleRight
+        };
+        errorStyle.normal.textColor = Color.red;
+
+        warnStyle = new GUIStyle(_spaceWarpUISkin.label)
+        {
+            alignment = TextAnchor.MiddleRight
+        };
+        warnStyle.normal.textColor = Color.yellow;
+
         unitLabelStyle = new GUIStyle(valueLabelStyle)
         {
             fixedWidth = 24,
             alignment = TextAnchor.MiddleLeft
         };
         unitLabelStyle.normal.textColor = new Color(.7f, .75f, .75f, 1);
-        unitColorHex = ColorUtility.ToHtmlStringRGBA(unitLabelStyle.normal.textColor);
 
         closeBtnStyle = new GUIStyle(_spaceWarpUISkin.button)
         {
@@ -191,19 +216,100 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         };
 
         closeBtnRect = new Rect(windowWidth - 23, 6, 16, 16);
-        
+
+        labelStyle = warnStyle = new GUIStyle(_spaceWarpUISkin.label);
+        progradeStyle = new GUIStyle(_spaceWarpUISkin.label);
+        progradeStyle.normal.textColor = Color.green;
+        progradeStyle.fixedHeight = 24;
+        normalStyle = new GUIStyle(_spaceWarpUISkin.label);
+        normalStyle.normal.textColor = Color.magenta;
+        normalStyle.fixedHeight = 24;
+        radialStyle = new GUIStyle(_spaceWarpUISkin.label);
+        radialStyle.normal.textColor = Color.cyan;
+        radialStyle.fixedHeight = 24;
+        horizontalDivider.fixedHeight = 2;
+        horizontalDivider.margin = new RectOffset(0, 0, 4, 4);
+
         Appbar.RegisterAppButton(
             "Maneuver Node Cont.",
             "BTN-ManeuverNodeController",
             AssetManager.GetAsset<Texture2D>($"{SpaceWarpMetadata.ModID}/images/icon.png"),
             ToggleButton);
+    }
 
+    /// <summary>
+    /// Subscribe to Messages KSP2 is using
+    /// </summary>
+    private void SubscribeToMessages()
+    {
+        Utility.RefreshGameManager();
+
+        // While in OAB we use the VesselDeltaVCalculationMessage event to refresh data as it's triggered a lot less frequently than Update()
+        // Utility.MessageCenter.Subscribe<VesselDeltaVCalculationMessage>(new Action<MessageCenterMessage>(this.RefreshStagingDataOAB));
+
+        // We are loading layout state when entering Flight or OAB game state
+        // Utility.MessageCenter.Subscribe<GameStateEnteredMessage>(new Action<MessageCenterMessage>(this.GameStateEntered));
+
+        // We are saving layout state when exiting from Flight or OAB game state
+        // Utility.MessageCenter.Subscribe<GameStateLeftMessage>(new Action<MessageCenterMessage>(this.GameStateLeft));
+
+        // Resets node index
+        Utility.MessageCenter.Subscribe<ManeuverRemovedMessage>(new Action<MessageCenterMessage>(this.OnManeuverRemovedMessage));
+    }
+
+    private void OnManeuverRemovedMessage(MessageCenterMessage message)
+    {
+        //var maneuverWindow = MicroWindows.Find(w => w.GetType() == typeof(ManeuverWindow)) as ManeuverWindow;
+        //maneuverWindow.OnManeuverRemovedMessage(message);
+
+        // Grab the time of the currently selected node
+        double selectedNodeTime = NodeControl.Nodes[SelectedNodeIndex].Time;
+
+        Logger.LogDebug($"OnManeuverRemovedMessage: SelectedNodeIndex = {SelectedNodeIndex}");
+        Logger.LogDebug($"OnManeuverRemovedMessage: selectedNodeTime = {selectedNodeTime}");
+        // Update the lsit of nodes to capture the effect of the node deletion
+        var nodeCount = NodeControl.RefreshManeuverNodes();
+
+        // If we got a valid selectedNodeTime
+        if (selectedNodeTime != null)
+        {
+            // Look for the node with the selectedNodeTime
+            int newSelectedNode = -1;
+            for (int i = 0; i < nodeCount; i++)
+            {
+                Logger.LogDebug($"OnManeuverRemovedMessage: Node[{i}].Time = {Nodes[i].Time}");
+                if (selectedNodeTime == Nodes[i].Time)
+                {
+                    newSelectedNode = i;
+                    Logger.LogDebug($"OnManeuverRemovedMessage: Found Node {i} with matching time");
+                    SelectedNodeIndex = newSelectedNode;
+                    Logger.LogDebug($"OnManeuverRemovedMessage: Setting SelectedNodeIndex to {newSelectedNode}");
+                }
+            }
+            if (newSelectedNode < 0)
+            {
+                SelectedNodeIndex = 0;
+                Logger.LogDebug($"OnManeuverRemovedMessage: No node with matching time found. Setting newSelectedNode to 0");
+            }
+        }
+        else
+        {
+            SelectedNodeIndex = 0;
+            Logger.LogDebug($"OnManeuverRemovedMessage: selectedNodeTime was null. Setting newSelectedNode to 0");
+        }
+
+        // SelectedNodeIndex = 0;
     }
 
     private void ToggleButton(bool toggle)
     {
         interfaceEnabled = toggle;
-        GameObject.Find("BTN-ManeuverNodeController")?.GetComponent<UIValue_WriteBool_Toggle>()?.SetValue(toggle);
+        GameObject.Find("BTN-ManeuverNodeController")?.GetComponent<UIValue_WriteBool_Toggle>()?.SetValue(interfaceEnabled);
+    }
+
+    public void LaunchMNC()
+    {
+        ToggleButton(true);
     }
 
     void Awake()
@@ -223,13 +329,29 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     void OnGUI()
     {
         GUIenabled = false;
-        var gameState = Game.GlobalGameState?.GetState();
+        var gameState = Game?.GlobalGameState?.GetState();
         if (gameState == GameState.Map3DView) GUIenabled = true;
         if (gameState == GameState.FlightView) GUIenabled = true;
 
-        activeVessel = GameManager.Instance?.Game?.ViewController?.GetActiveVehicle(true)?.GetSimVessel(true);
-        currentTarget = activeVessel?.TargetObject;
-        if (interfaceEnabled && GUIenabled && activeVessel != null)
+        Utility.RefreshActiveVesselAndCurrentManeuver();
+        var nodeCount = NodeControl.RefreshManeuverNodes();
+        if (NodeControl.Nodes.Count > 0)
+        {
+            if (SelectedNodeIndex >= NodeControl.Nodes.Count)
+                SelectedNodeIndex = NodeControl.Nodes.Count - 1;
+            thisNode = NodeControl.Nodes[SelectedNodeIndex];
+        }
+        else
+        {
+            SelectedNodeIndex = 0;
+            thisNode = null;
+        }
+
+        currentTarget = Utility.activeVessel?.TargetObject;
+        if (Utility.activeVessel != null)
+            orbit = Utility.activeVessel.Orbit;
+
+        if (interfaceEnabled && GUIenabled && Utility.activeVessel != null)
         {
             GUI.skin = Skins.ConsoleSkin;
             windowRect = GUILayout.Window(
@@ -268,31 +390,14 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         {
             CloseWindow();
         }
-        
-        labelStyle = warnStyle = new GUIStyle(GUI.skin.GetStyle("Label"));
-        errorStyle = new GUIStyle(GUI.skin.GetStyle("Label"));
-        errorStyle.normal.textColor = Color.red;
-        warnStyle = new GUIStyle(GUI.skin.GetStyle("Label"));
-        warnStyle.normal.textColor = Color.yellow;
-        progradeStyle = new GUIStyle(GUI.skin.GetStyle("Label"));
-        progradeStyle.normal.textColor = Color.green;
-        progradeStyle.fixedHeight = 24;
-        normalStyle = new GUIStyle(GUI.skin.GetStyle("Label"));
-        normalStyle.normal.textColor = Color.magenta;
-        normalStyle.fixedHeight = 24;
-        radialStyle = new GUIStyle(GUI.skin.GetStyle("Label"));
-        radialStyle.normal.textColor = Color.cyan;
-        radialStyle.fixedHeight = 24;
-        horizontalDivider.fixedHeight = 2;
-        horizontalDivider.margin = new RectOffset(0, 0, 4, 4);
-        // game = GameManager.Instance.Game;
-        activeNodes = game.SpaceSimulation.Maneuvers.GetNodesForVessel(GameManager.Instance.Game.ViewController.GetActiveVehicle(true).Guid);
-        currentNode = (activeNodes.Count() > 0) ? activeNodes[0] : null;
+
+        Utility.RefreshActiveVesselAndCurrentManeuver();
+
         double UT;
         double dvRemaining;
 
         GUILayout.BeginVertical();
-        if (currentNode == null)
+        if (thisNode == null)
         {
             GUILayout.BeginHorizontal();
             GUILayout.Label("The active vessel has no maneuver nodes.", errorStyle);
@@ -306,13 +411,29 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         }
         else
         {
-            DrawEntry("Total Maneuver ∆v", currentNode.BurnRequiredDV.ToString("n2"), labelStyle, "m/s");
-            dvRemaining = (activeVessel.Orbiter.ManeuverPlanSolver.GetVelocityAfterFirstManeuver(out UT).vector - activeVessel.Orbit.GetOrbitalVelocityAtUTZup(UT)).magnitude;
-            DrawEntry("Total ∆v Remaining", dvRemaining.ToString("n2"), labelStyle, "m/s");
+            DrawEntry2Button("Node:", labelStyle, ref decNode, "<", ref incNode, ">", (SelectedNodeIndex + 1).ToString());
+            Draw2Button(ref delNode, "Del Node", ref addNode, "Add Node");
             GUILayout.Box("", horizontalDivider);
-            DrawEntry("Prograde ∆v", currentNode.BurnVector.z.ToString("n2"), progradeStyle, "m/s");
-            DrawEntry("Normal ∆v", currentNode.BurnVector.y.ToString("n2"), normalStyle, "m/s");
-            DrawEntry("Radial ∆v", currentNode.BurnVector.x.ToString("n2"), radialStyle, "m/s");
+
+            DrawEntry("Total Maneuver ∆v", thisNode.BurnRequiredDV.ToString("n2"), labelStyle, "m/s");
+            if (SelectedNodeIndex == 0)
+                dvRemaining = (Utility.activeVessel.Orbiter.ManeuverPlanSolver.GetVelocityAfterFirstManeuver(out UT).vector - orbit.GetOrbitalVelocityAtUTZup(UT)).magnitude;
+            else
+                dvRemaining = thisNode.BurnRequiredDV;
+            UT = game.UniverseModel.UniversalTime;
+            DrawEntry("∆v Remaining", dvRemaining.ToString("n2"), labelStyle, "m/s");
+            string start = Utility.SecondsToTimeString(thisNode.Time - UT);
+            string duration = Utility.SecondsToTimeString(thisNode.BurnDuration);
+            if (thisNode.Time < UT)
+                Draw2Entries("Start", "Duration", labelStyle, start, duration, "s", true, errorStyle);
+            else if (thisNode.Time < UT + 30)
+                Draw2Entries("Start", "Duration", labelStyle, start, duration, "s", true, warnStyle);
+            else
+                Draw2Entries("Start", "Duration", labelStyle, start, duration, "s");
+            GUILayout.Box("", horizontalDivider);
+            DrawEntry("Prograde ∆v", thisNode.BurnVector.z.ToString("n2"), progradeStyle, "m/s");
+            DrawEntry("Normal ∆v", thisNode.BurnVector.y.ToString("n2"), normalStyle, "m/s");
+            DrawEntry("Radial ∆v", thisNode.BurnVector.x.ToString("n2"), radialStyle, "m/s");
             GUILayout.Box("", horizontalDivider);
             if (advancedMode)
             {
@@ -324,10 +445,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
                 drawSimpleMode();
             }
 
-            GUILayout.BeginHorizontal();
-            string inputStateString = gameInputState ? "Enabled" : "Disabled";
-            GUILayout.Label($"Game Input: {inputStateString}", labelStyle);
-            GUILayout.EndHorizontal();
+            DrawGUIStatus();
 
             handleButtons();
         }
@@ -355,8 +473,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
 
     private void drawSimpleMode()
     {
-        string nextApA, nextPeA, nextInc, nextEcc, nextLAN;
-        var UT = game.UniverseModel.UniversalTime;
+        string nextApA, nextPeA, nextInc, nextEcc, nextLAN, previousApA, previousPeA, previousInc, previousEcc, previousLAN;
 
         DrawEntryTextField("Absolute ∆v", ref absoluteValueString, "m/s");
         double.TryParse(absoluteValueString, out absoluteValue);
@@ -372,56 +489,82 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         GUILayout.Box("", horizontalDivider);
         SnapSelectionGUI();
         GUILayout.Box("", horizontalDivider);
-        DrawEntryTextField("Small Time Step", ref timeSmallStepString, "seconds");
+        DrawEntryTextField("Small Time Step", ref timeSmallStepString, "s");
         double.TryParse(timeSmallStepString, out timeSmallStep);
-        DrawEntryTextField("Large Time Step", ref timeLargeStepString, "seconds");
+        DrawEntryTextField("Large Time Step", ref timeLargeStepString, "s");
         double.TryParse(timeLargeStepString, out timeLargeStep);
         GUILayout.Box("", horizontalDivider);
         DrawEntry4Button("Time", labelStyle, ref timeDec2, "<<", ref timeDec1, "<", ref timeInc1, ">", ref timeInc2, ">>");
         GUILayout.Box("", horizontalDivider);
-        var numOrbits = Math.Truncate((currentNode.Time - game.UniverseModel.UniversalTime) / game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID).Orbit.period).ToString("n0");
+        var numOrbits = Math.Truncate((thisNode.Time - game.UniverseModel.UniversalTime) / game.UniverseModel.FindVesselComponent(thisNode.RelatedSimID).Orbit.period).ToString("n0");
+        DrawEntry2Button("+/- Orbitial Period", labelStyle, ref orbitDec, "-", ref orbitInc, "+");
         DrawEntry("Maneuver Node in", $"{numOrbits} orbit(s)");
-        DrawEntry2Button("Orbit", labelStyle, ref orbitDec, "-", ref orbitInc, "+");
-        Draw2Entries("Start", "Duration", nameLabelStyle, (currentNode.Time - UT).ToString("n2"), currentNode.BurnDuration.ToString("n2"), "s");
         GUILayout.Box("", horizontalDivider);
-        Draw2Entries("Starting Orbit", "New Orbit", labelStyle);
-        var patch = currentNode?.ManeuverTrajectoryPatch;
-        if (patch != null)
+        Draw2Entries("Previous Orbit", "Next Orbit", labelStyle);
+
+        var Orbiter = Utility.activeVessel.Orbiter;
+        var ManeuverPlanSolver = Orbiter?.ManeuverPlanSolver;
+        var PatchedConicsList = ManeuverPlanSolver?.PatchedConicsList;
+        // ManeuverPlanComponent activeVesselPlan = Utility.activeVessel?.SimulationObject?.FindComponent<ManeuverPlanComponent>();
+        // var nodes = activeVesselPlan?.GetNodes();
+
+        if (NodeControl.Nodes.Count == 0) // No nodes: Just show current orbit - shouldn't ever get here...
         {
-            try
-            {
-                if (patch.eccentricity < 1)
-                    nextApA = (patch.ApoapsisArl / 1000).ToString("n3");
-                else
-                    nextApA = "Inf";
-                nextPeA = (patch.PeriapsisArl / 1000).ToString("n3");
-                nextInc = patch.inclination.ToString("n3");
-                nextEcc = patch.eccentricity.ToString("n3");
-                nextLAN = patch.longitudeOfAscendingNode.ToString("n3");
-            }
-            catch (Exception e)
-            {
-                Logger.LogError($"drawSimpleMode: Caught Exception getting orbit info for maneuver patch: {e}");
-                nextApA = "Err";
-                nextPeA = "Err";
-                nextInc = "Err";
-                nextEcc = "Err";
-                nextLAN = "Err";
-            }
+            if (orbit.eccentricity < 1)
+                previousApA = (orbit.ApoapsisArl / 1000).ToString("n3");
+            else
+                previousApA = "Inf";
+            previousPeA = (orbit.PeriapsisArl / 1000).ToString("n3");
+            previousInc = orbit.inclination.ToString("n3");
+            previousEcc = orbit.eccentricity.ToString("n3");
+            previousLAN = orbit.longitudeOfAscendingNode.ToString("n3");
+            nextApA = previousApA;
+            nextPeA = previousPeA;
+            nextInc = previousInc;
+            nextEcc = previousEcc;
+            nextLAN = previousLAN;
         }
-        else
+        else if (SelectedNodeIndex == 0) // One or more nodes, and the selected node is the first
         {
-            nextApA = "NaN";
-            nextPeA = "NaN";
-            nextInc = "NaN";
-            nextEcc = "NaN";
-            nextLAN = "NaN";
+            // The previous orbit info will be from our current orbit
+            if (orbit.eccentricity < 1)
+                previousApA = (orbit.ApoapsisArl / 1000).ToString("n3");
+            else
+                previousApA = "Inf";
+            previousPeA = (orbit.PeriapsisArl / 1000).ToString("n3");
+            previousInc = orbit.inclination.ToString("n3");
+            previousEcc = orbit.eccentricity.ToString("n3");
+            previousLAN = orbit.longitudeOfAscendingNode.ToString("n3");
+
+            // The next orbit info will be from PatchedConicsList[0]
+            nextApA = (PatchedConicsList[SelectedNodeIndex].ApoapsisArl / 1000).ToString("n3");
+            nextPeA = (PatchedConicsList[SelectedNodeIndex].PeriapsisArl / 1000).ToString("n3");
+            nextInc = PatchedConicsList[SelectedNodeIndex].inclination.ToString("n3");
+            nextEcc = PatchedConicsList[SelectedNodeIndex].eccentricity.ToString("n3");
+            nextLAN = PatchedConicsList[SelectedNodeIndex].longitudeOfAscendingNode.ToString("n3");
         }
-        Draw2Entries("Ap", "Ap", nameLabelStyle, (activeVessel.Orbit.ApoapsisArl / 1000).ToString("n3"), nextApA, "km");
-        Draw2Entries("Pe", "Pe", nameLabelStyle, (activeVessel.Orbit.PeriapsisArl / 1000).ToString("n3"), nextPeA, "km");
-        Draw2Entries("Inc", "Inc", nameLabelStyle, activeVessel.Orbit.inclination.ToString("n3"), nextInc, "°");
-        Draw2Entries("Ecc", "Ecc", nameLabelStyle, activeVessel.Orbit.eccentricity.ToString("n3"), nextEcc);
-        Draw2Entries("LAN", "LAN", nameLabelStyle, activeVessel.Orbit.longitudeOfAscendingNode.ToString("n3"), nextLAN, "°");
+        else // One or more nodes, and the selected node is not the first
+        {
+            // The previous orbit info will be from PatchedConicsList[SelectedNodeIndex - 1]
+            previousApA = (PatchedConicsList[SelectedNodeIndex - 1].ApoapsisArl / 1000).ToString("n3");
+            previousPeA = (PatchedConicsList[SelectedNodeIndex - 1].PeriapsisArl / 1000).ToString("n3");
+            previousInc = PatchedConicsList[SelectedNodeIndex - 1].inclination.ToString("n3");
+            previousEcc = PatchedConicsList[SelectedNodeIndex - 1].eccentricity.ToString("n3");
+            previousLAN = PatchedConicsList[SelectedNodeIndex - 1].longitudeOfAscendingNode.ToString("n3");
+
+            // The next orbit info will be from PatchedConicsList[SelectedNodeIndex]
+            nextApA = (PatchedConicsList[SelectedNodeIndex].ApoapsisArl / 1000).ToString("n3");
+            nextPeA = (PatchedConicsList[SelectedNodeIndex].PeriapsisArl / 1000).ToString("n3");
+            nextInc = PatchedConicsList[SelectedNodeIndex].inclination.ToString("n3");
+            nextEcc = PatchedConicsList[SelectedNodeIndex].eccentricity.ToString("n3");
+            nextLAN = PatchedConicsList[SelectedNodeIndex].longitudeOfAscendingNode.ToString("n3");
+        }
+
+        Draw2Entries("Ap", "Ap", nameLabelStyle, previousApA, nextApA, "km");
+        Draw2Entries("Pe", "Pe", nameLabelStyle, previousPeA, nextPeA, "km");
+        Draw2Entries("Inc", "Inc", nameLabelStyle, previousInc, nextInc, "°", false);
+        Draw2Entries("Ecc", "Ecc", nameLabelStyle, previousEcc, nextEcc);
+        Draw2Entries("LAN", "LAN", nameLabelStyle, previousLAN, nextLAN, "°", false);
         GUILayout.Box("", horizontalDivider);
     }
 
@@ -446,52 +589,44 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     //    GUILayout.Space(-5);
     //}
 
-    //private void DrawSectionHeader(string sectionName, string value = "") // was (string sectionName, ref bool isPopout, string value = "")
-    //{
-    //    GUILayout.BeginHorizontal();
-    //    // Don't need popout buttons for ROC
-    //    // isPopout = isPopout ? !CloseButton() : GUILayout.Button("⇖", popoutBtnStyle);
-
-    //    GUILayout.Label($"<b>{sectionName}</b>");
-    //    GUILayout.FlexibleSpace();
-    //    GUILayout.Label(value, valueLabelStyle);
-    //    GUILayout.Space(5);
-    //    GUILayout.Label("", unitLabelStyle);
-    //    GUILayout.EndHorizontal();
-    //    GUILayout.Space(spacingAfterHeader);
-    //}
-
-    private void DrawEntry(string entryName, string value, GUIStyle entryStyle = null, string unit = "")
+    private void DrawEntry(string entryName, string value, GUIStyle entryStyle = null, string unit = "", bool unitSpace = true)
     {
         if (entryStyle == null)
             entryStyle = nameLabelStyle;
         GUILayout.BeginHorizontal();
-        if (unit.Length > 0)
-            GUILayout.Label($"{entryName} ({unit}): ", entryStyle);
-        else
-            GUILayout.Label($"{entryName}: ", entryStyle);
+        GUILayout.Label($"{entryName}:", entryStyle);
         GUILayout.FlexibleSpace();
         GUILayout.Label(value, valueLabelStyle);
-        GUILayout.Space(5);
+        if (unitSpace)
+            GUILayout.Space(5);
         GUILayout.Label(unit, unitLabelStyle);
         GUILayout.EndHorizontal();
         GUILayout.Space(spacingAfterEntry);
     }
 
-    private void Draw2Entries(string entryName1, string entryName2, GUIStyle entryStyle = null, string value1 = "", string value2 = "", string unit = "")
+    private void Draw2Entries(string entryName1, string entryName2, GUIStyle entryStyle = null, string value1 = "", string value2 = "", string unit = "", bool unitSpace = true, GUIStyle value1Style = null, GUIStyle value2Style = null)
     {
         if (entryStyle == null)
         {
             entryStyle = nameLabelStyle;
             entryStyle.fixedHeight = valueLabelStyle.fixedHeight;
         }
+        if (value1Style == null)
+        {
+            value1Style = valueLabelStyle;
+        }
+        if (value2Style == null)
+        {
+            value2Style = valueLabelStyle;
+        }
         GUILayout.BeginHorizontal();
-        GUILayout.Label($"{entryName1} : ", entryStyle);
+        GUILayout.Label($"{entryName1}: ", entryStyle);
         if (value1.Length > 0)
         {
             GUILayout.Space(5);
-            GUILayout.Label(value1, valueLabelStyle);
-            GUILayout.Space(5);
+            GUILayout.Label(value1, value1Style);
+            if (unitSpace)
+                GUILayout.Space(5);
             GUILayout.Label(unit, unitLabelStyle);
         }
         GUILayout.FlexibleSpace();
@@ -499,35 +634,61 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         if (value2.Length > 0)
         {
             GUILayout.Space(5);
-            GUILayout.Label(value2, valueLabelStyle);
-            GUILayout.Space(5);
+            GUILayout.Label(value2, value2Style);
+            if (unitSpace)
+                GUILayout.Space(5);
             GUILayout.Label(unit, unitLabelStyle);
         }
         GUILayout.EndHorizontal();
         GUILayout.Space(spacingAfterEntry);
     }
-    
-    //private void DrawEntryButton(string entryName, ref bool button, string buttonStr, string value, string unit = "")
-    //{
-    //    GUILayout.BeginHorizontal();
-    //    GUILayout.Label(entryName, nameLabelStyle);
-    //    GUILayout.FlexibleSpace();
-    //    button = GUILayout.Button(buttonStr, ctrlBtnStyle);
-    //    GUILayout.Label(value, valueLabelStyle);
-    //    GUILayout.Space(5);
-    //    GUILayout.Label(unit, unitLabelStyle);
-    //    GUILayout.EndHorizontal();
-    //    GUILayout.Space(spacingAfterEntry);
-    //}
 
-    private void DrawEntry2Button(string entryName, GUIStyle entryStyle, ref bool button1, string button1Str, ref bool button2, string button2Str)
+    private void DrawButton(ref bool button, string buttonStr)
     {
         GUILayout.BeginHorizontal();
-        button1 = GUILayout.Button(button1Str, ctrlBtnStyle); // GUILayout.Width(windowWidth / 9));
+        GUILayout.FlexibleSpace();
+        button = GUILayout.Button(buttonStr, smallBtnStyle);
+        GUILayout.FlexibleSpace();
+        GUILayout.EndHorizontal();
+        GUILayout.Space(spacingAfterEntry);
+    }
+
+    private void Draw2Button(ref bool button1, string buttonStr1, ref bool button2, string buttonStr2)
+    {
+        GUILayout.BeginHorizontal();
+        GUILayout.FlexibleSpace();
+        button1 = GUILayout.Button(buttonStr1, smallBtnStyle);
+        GUILayout.FlexibleSpace();
+        button2 = GUILayout.Button(buttonStr2, smallBtnStyle);
+        GUILayout.FlexibleSpace();
+        GUILayout.EndHorizontal();
+        GUILayout.Space(spacingAfterEntry);
+    }
+    private void DrawEntry2Button(string entryName, GUIStyle entryStyle, ref bool button1, string button1Str, ref bool button2, string button2Str, string value = "")
+    {
+        GUILayout.BeginHorizontal();
+        button1 = GUILayout.Button(button1Str, ctrlBtnStyle);
         GUILayout.FlexibleSpace();
         GUILayout.Label(entryName, entryStyle);
+        if (value.Length > 0)
+        {
+            GUILayout.Space(5);
+            GUILayout.Label(value, entryStyle);
+        }
         GUILayout.FlexibleSpace();
-        button2 = GUILayout.Button(button2Str, ctrlBtnStyle); // GUILayout.Width(windowWidth / 9));
+        button2 = GUILayout.Button(button2Str, ctrlBtnStyle);
+        GUILayout.EndHorizontal();
+        GUILayout.Space(spacingAfterEntry);
+    }
+
+    private void Draw3Button(ref bool button1, string button1Str, ref bool button2, string button2Str, ref bool button3, string button3Str)
+    {
+        GUILayout.BeginHorizontal();
+        button1 = GUILayout.Button(button1Str, ctrlBtnStyle);
+        GUILayout.FlexibleSpace();
+        button2 = GUILayout.Button(button2Str, ctrlBtnStyle);
+        GUILayout.FlexibleSpace();
+        button3 = GUILayout.Button(button3Str, ctrlBtnStyle);
         GUILayout.EndHorizontal();
         GUILayout.Space(spacingAfterEntry);
     }
@@ -535,15 +696,15 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     private void DrawEntry4Button(string entryName, GUIStyle entryStyle, ref bool button1, string button1Str, ref bool button2, string button2Str, ref bool button3, string button3Str, ref bool button4, string button4Str)
     {
         GUILayout.BeginHorizontal();
-        button1 = GUILayout.Button(button1Str, ctrlBtnStyle); // GUILayout.Width(windowWidth / 9));
+        button1 = GUILayout.Button(button1Str, ctrlBtnStyle);
         GUILayout.Space(5);
-        button2 = GUILayout.Button(button2Str, ctrlBtnStyle); // GUILayout.Width(windowWidth / 9));
+        button2 = GUILayout.Button(button2Str, ctrlBtnStyle);
         GUILayout.FlexibleSpace();
         GUILayout.Label(entryName, entryStyle);
         GUILayout.FlexibleSpace();
-        button3 = GUILayout.Button(button3Str, ctrlBtnStyle); // GUILayout.Width(windowWidth / 9));
+        button3 = GUILayout.Button(button3Str, ctrlBtnStyle);
         GUILayout.Space(5);
-        button4 = GUILayout.Button(button4Str, ctrlBtnStyle); // GUILayout.Width(windowWidth / 9));
+        button4 = GUILayout.Button(button4Str, ctrlBtnStyle);
         GUILayout.EndHorizontal();
         GUILayout.Space(spacingAfterEntry);
     }
@@ -551,52 +712,57 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     private void DrawEntry5Button(string entryName, GUIStyle entryStyle, ref bool button1, string button1Str, ref bool button2, string button2Str, ref bool button3, string button3Str, ref bool button4, string button4Str, ref bool button5, string button5Str)
     {
         GUILayout.BeginHorizontal();
-        button1 = GUILayout.Button(button1Str, ctrlBtnStyle); // GUILayout.Width(windowWidth / 9));
+        button1 = GUILayout.Button(button1Str, ctrlBtnStyle);
         GUILayout.Space(5);
-        button2 = GUILayout.Button(button2Str, ctrlBtnStyle); // GUILayout.Width(windowWidth / 9));
+        button2 = GUILayout.Button(button2Str, ctrlBtnStyle);
         GUILayout.FlexibleSpace();
         GUILayout.Label(entryName, entryStyle);
         GUILayout.FlexibleSpace();
-        button3 = GUILayout.Button(button3Str, ctrlBtnStyle); // GUILayout.Width(windowWidth / 9));
+        button3 = GUILayout.Button(button3Str, ctrlBtnStyle);
         GUILayout.Space(5);
-        button4 = GUILayout.Button(button4Str, ctrlBtnStyle); // GUILayout.Width(windowWidth / 9));
+        button4 = GUILayout.Button(button4Str, ctrlBtnStyle);
         GUILayout.Space(5);
-        button5 = GUILayout.Button(button5Str, ctrlBtnStyle); // GUILayout.Width(windowWidth / 9));
+        button5 = GUILayout.Button(button5Str, ctrlBtnStyle);
         GUILayout.EndHorizontal();
         GUILayout.Space(spacingAfterEntry);
     }
 
-    private void DrawEntryTextField(string entryName, ref string textEntry, string unit = "")
+    private void DrawEntryTextField(string entryName, ref string textEntry, string unit = "", bool unitSpace = true)
     {
+        double num;
+        Color normal;
         GUILayout.BeginHorizontal();
-        if (unit.Length > 0)
-            GUILayout.Label($"{entryName} ({unit}): ", nameLabelStyle);
-        else
-            GUILayout.Label($"{entryName}: ", nameLabelStyle);
-        // GUILayout.FlexibleSpace();
+        GUILayout.Label($"{entryName}: ", nameLabelStyle);
+        normal = GUI.color;
+        bool parsed = double.TryParse(textEntry, out num);
+        if (!parsed) GUI.color = Color.red;
         GUI.SetNextControlName(entryName);
         textEntry = GUILayout.TextField(textEntry, textInputStyle);
-        // GUILayout.Space(5);
-        // GUILayout.Label(unit, unitLabelStyle);
+        GUI.color = normal;
+        if (unitSpace)
+            GUILayout.Space(5);
+        GUILayout.Label(unit, unitLabelStyle);
         GUILayout.EndHorizontal();
         GUILayout.Space(spacingAfterEntry);
     }
 
-    //private void DrawSectionEnd() // was (ref bool isPopout)
-    //{
-    //    //if (isPopout)
-    //    //{
-    //    //    GUI.DragWindow(new Rect(0, 0, windowWidth, windowHeight));
-    //    //    GUILayout.Space(spacingBelowPopout);
-    //    //}
-    //    //else
-    //    //{
-    //    GUILayout.Space(spacingAfterSection);
-    //    //}
-    //}
+    private void DrawGUIStatus()
+    {
+        // Indication to User that its safe to type, or why vessel controls aren't working
+        GUILayout.BeginHorizontal();
+        string inputStateString = gameInputState ? "<b>Enabled</b>" : "<b>Disabled</b>";
+        GUILayout.Label("Game Input: ", labelStyle);
+        if (gameInputState)
+            GUILayout.Label(inputStateString, labelStyle);
+        else
+            GUILayout.Label(inputStateString, warnStyle);
+        GUILayout.FlexibleSpace();
+        GUILayout.EndHorizontal();
+        GUILayout.Space(spacingAfterEntry);
+    }
 
-        // Draws the snap selection GUI.
-        private void SnapSelectionGUI()
+    // Draws the snap selection GUI.
+    private void SnapSelectionGUI()
     {
         GUILayout.BeginHorizontal();
         GUILayout.Label("SnapTo: ", nameLabelStyle); //  GUILayout.Width(windowWidth / 5));
@@ -619,336 +785,344 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         GUILayout.Space(spacingAfterEntry);
     }
 
-    private IPatchedOrbit GetLastOrbit()
+    private void handleButtons()
     {
-        Logger.LogInfo("GetLastOrbit");
-        List<ManeuverNodeData> patchList =
-            Game.SpaceSimulation.Maneuvers.GetNodesForVessel(activeVessel.SimulationObject.GlobalId);
+        // var orbit = GetLastOrbit() as PatchedConicsOrbit;
 
-        Logger.LogMessage($"GetLastOrbit: patchList.Count = {patchList.Count}");
-
-        if (patchList.Count == 0)
-        {
-            // Logger.LogMessage($"GetLastOrbit: activeVessel.Orbit = {activeVessel.Orbit}");
-            return activeVessel.Orbit;
-        }
-        Logger.LogMessage($"GetLastOrbit: ManeuverTrajectoryPatch = {patchList[patchList.Count - 1].ManeuverTrajectoryPatch}");
-        IPatchedOrbit orbit = patchList[patchList.Count - 1].ManeuverTrajectoryPatch;
-
-        return orbit;
-    }
-
-    private void CreateManeuverNodeAtTA(Vector3d burnVector, double TrueAnomalyRad)
-    {
-        // Logger.LogInfo("CreateManeuverNodeAtTA");
-        PatchedConicsOrbit referencedOrbit = GetLastOrbit() as PatchedConicsOrbit;
-        if (referencedOrbit == null)
-        {
-            Logger.LogError("CreateManeuverNodeAtTA: referencedOrbit is null!");
-            return;
-        }
-
-        double UT = referencedOrbit.GetUTforTrueAnomaly(TrueAnomalyRad, 0);
-
-        CreateManeuverNodeAtUT(burnVector, UT);
-    }
-
-    private void CreateManeuverNodeAtUT(Vector3d burnVector, double UT)
-    {
-        // Logger.LogInfo("CreateManeuverNodeAtUT");
-        //PatchedConicsOrbit referencedOrbit = GetLastOrbit() as PatchedConicsOrbit;
-        //if (referencedOrbit == null)
-        //{
-        //    Logger.LogError("CreateManeuverNodeAtUT: referencedOrbit is null!");
-        //    return;
-        //}
-
-        if (UT < game.UniverseModel.UniversalTime + 1) // Don't set node to now or in the past
-            UT = game.UniverseModel.UniversalTime + 1;
-
-        ManeuverNodeData nodeData = new ManeuverNodeData(activeVessel.SimulationObject.GlobalId, false, UT);
-
-        //IPatchedOrbit orbit = referencedOrbit;
-        //orbit.PatchStartTransition = PatchTransitionType.Maneuver;
-        //orbit.PatchEndTransition = PatchTransitionType.Final;
-
-        //nodeData.SetManeuverState((PatchedConicsOrbit)orbit);
-
-        nodeData.BurnVector = burnVector;
-
-        //Logger.LogInfo($"CreateManeuverNodeAtUT: BurnVector [{burnVector.x}, {burnVector.y}, {burnVector.z}] m/s");
-        //Logger.LogInfo($"CreateManeuverNodeAtUT: BurnDuration {nodeData.BurnDuration} s");
-        //Logger.LogInfo($"CreateManeuverNodeAtUT: Burn Time {nodeData.Time} s");
-
-        AddManeuverNode(nodeData);
-    }
-
-    private void AddManeuverNode(ManeuverNodeData nodeData)
-    {
-        //Logger.LogInfo("AddManeuverNode");
-
-        // Add the node to the vessel's orbit
-        GameManager.Instance.Game.SpaceSimulation.Maneuvers.AddNodeToVessel(nodeData);
-
-        // For KSP2, We want the to start burns early to make them centered on the node
-        nodeData.Time -= nodeData.BurnDuration / 2;
-
-        //Logger.LogInfo($"AddManeuverNode: BurnVector   [{nodeData.BurnVector.x}, {nodeData.BurnVector.y}, {nodeData.BurnVector.z}] m/s");
-        Logger.LogInfo($"AddManeuverNode: BurnDuration {nodeData.BurnDuration} s");
-        //Logger.LogInfo($"AddManeuverNode: Burn Time    {nodeData.Time}");
-
-        // Set the currentNode  to the node we just created and added to the vessel
-        currentNode = nodeData;
-
-        StartCoroutine(UpdateNode(nodeData));
-
-        //Logger.LogInfo("AddManeuverNode Done");
-    }
-
-    private IEnumerator UpdateNode(ManeuverNodeData nodeData)
-    {
         MapCore mapCore = null;
-        Game.Map.TryGetMapCore(out mapCore);
+        GameManager.Instance.Game.Map.TryGetMapCore(out mapCore);
         var m3d = mapCore.map3D;
         var maneuverManager = m3d.ManeuverManager;
 
+        // Get the ManeuverPlanComponent for the active vessel
         var universeModel = game.UniverseModel;
-        VesselComponent vesselComponent;
-        if (currentNode != null)
-        {
-            vesselComponent = universeModel.FindVesselComponent(currentNode.RelatedSimID);
-        }
-        else
-        {
-            vesselComponent = activeVessel;
-        }
+        var vesselComponent = universeModel.FindVesselComponent(thisNode.RelatedSimID);
         var simObject = vesselComponent.SimulationObject;
         var maneuverPlanComponent = simObject.FindComponent<ManeuverPlanComponent>();
 
-        var UT = game.UniverseModel.UniversalTime;
-        if (nodeData.Time < UT + 1)
-        {
-            Logger.LogWarning($"UpdateNode: Attempted to set nodeData.Time to {nodeData.Time - UT} s from now.");
-            nodeData.Time = UT + 1;
-            Logger.LogWarning($"UpdateNode: Forcing nodeData.Time to {nodeData.Time} to prevent setting a node in the past.");
-            maneuverPlanComponent.UpdateTimeOnNode(nodeData, nodeData.Time); // May not need this?
-        }
-
-        // Wait a tick for things to get created
-        yield return new WaitForFixedUpdate();
-
-        // Manage the maneuver on the map
-        maneuverManager.RemoveAll();
-        try { maneuverManager?.GetNodeDataForVessels(); }
-        catch { Logger.LogError("UpdateNode: caught exception on call to mapCore.map3D.ManeuverManager.GetNodeDataForVessels()"); }
-        try { maneuverManager.UpdateAll(); }
-        catch { Logger.LogError("UpdateNode: caught exception on call to mapCore.map3D.ManeuverManager.UpdateAll()"); }
-        try { maneuverManager.UpdatePositionForGizmo(nodeData.NodeID); }
-        catch { Logger.LogError("UpdateNode: caught exception on call to mapCore.map3D.ManeuverManager.UpdatePositionForGizmo()"); }
-
-        // Wait a tick for things to get created
-        yield return new WaitForFixedUpdate();
-
-        try { maneuverPlanComponent.RefreshManeuverNodeState(0); } // Occasionally getting NREs here...
-        catch (NullReferenceException e) { Logger.LogError($"UpdateNode: caught NRE on call to maneuverPlanComponent.RefreshManeuverNodeState(0): {e}"); }
-    }
-
-    private void handleButtons()
-    {
-        if (currentNode == null)
+        if (thisNode == null)
         {
             if (addNode)
             {
-                // Add an empty maneuver node
-                // Logger.LogInfo("handleButtons: Adding New Node");
-
-                // Define empty node data
-                burnParams = Vector3d.zero;
-                double UT = game.UniverseModel.UniversalTime;
-                double burnUT;
-                if (activeVessel.Orbit.eccentricity < 1)
-                {
-                    burnUT = UT + activeVessel.Orbit.TimeToAp;
-                }
-                else
-                {
-                    burnUT = UT + 30;
-                }
-
-                Vector3d burnVector;
-                burnVector.x = 0;
-                burnVector.y = 0;
-                burnVector.z = 0;
-
-                CreateManeuverNodeAtUT(burnVector, burnUT);
-
+                AddNode(orbit);
+                StartCoroutine(RefreshNodes(maneuverPlanComponent));
+                var nCount = NodeControl.RefreshManeuverNodes();
+                SelectedNodeIndex = 0;
             }
-            
             return;
         }
         else if (pAbs || pInc1 || pInc2 || pDec1 || pDec2 || nAbs || nInc1 || nInc2 || nDec1 || nDec2 || rAbs || rInc1 || rInc2 || rDec1 || rDec2)
         {
             burnParams = Vector3d.zero;  // Burn update vector, this is added to the existing burn
 
-            // Get the ManeuverPlanComponent for the active vessel
-            var universeModel = game.UniverseModel;
-            var vesselComponent = universeModel.FindVesselComponent(currentNode.RelatedSimID);
-            var simObject = vesselComponent.SimulationObject;
-            var maneuverPlanComponent = simObject.FindComponent<ManeuverPlanComponent>();
-
             if (pAbs) // Set the prograde burn to the absoluteValue
             {
-                burnParams.z = absoluteValue - currentNode.BurnVector.z;
-                // currentNode.BurnVector.z = absoluteValue;
+                burnParams.z = absoluteValue - thisNode.BurnVector.z;
+                // thisNode.BurnVector.z = absoluteValue;
             }
             else if (pInc1) // Add smallStep to the prograde burn
             {
                 burnParams.z += smallStep;
+                // thisNode.BurnVector.z += smallStep;
             }
             else if (pInc2) // Add bigStep to the prograde burn
             {
                 burnParams.z += bigStep;
-            }
-            else if (nAbs) // Set the normal burn to the absoluteValue
-            {
-                burnParams.y = absoluteValue - currentNode.BurnVector.y;
-                // currentNode.BurnVector.y = absoluteValue;
-            }
-            else if (nInc1) // Add smallStep to the normal burn
-            {
-                burnParams.y += smallStep;
-            }
-            else if (nInc2) // Add bigStep to the normal burn
-            {
-                burnParams.y += bigStep;
-            }
-            else if (rAbs) // Set the radial burn to the absoluteValue
-            {
-                burnParams.x = absoluteValue - currentNode.BurnVector.x;
-                // currentNode.BurnVector.x = absoluteValue;
-            }
-            else if (rInc1) // Add smallStep to the radial burn
-            {
-                burnParams.x += smallStep;
-            }
-            else if (rInc2) // Add bigStep to the radial burn
-            {
-                burnParams.x += bigStep;
+                // thisNode.BurnVector.z += bigStep;
             }
             else if (pDec1) // Subtract smallStep from the prograde burn
             {
                 burnParams.z -= smallStep;
+                // thisNode.BurnVector.z -= smallStep;
             }
             else if (pDec2) // Subtract bigStep from the prograde burn
             {
                 burnParams.z -= bigStep;
+                // thisNode.BurnVector.z -= bigStep;
+            }
+            else if (nAbs) // Set the normal burn to the absoluteValue
+            {
+                burnParams.y = absoluteValue - thisNode.BurnVector.y;
+                // thisNode.BurnVector.y = absoluteValue;
+            }
+            else if (nInc1) // Add smallStep to the normal burn
+            {
+                burnParams.y += smallStep;
+                // thisNode.BurnVector.y += smallStep;
+            }
+            else if (nInc2) // Add bigStep to the normal burn
+            {
+                burnParams.y += bigStep;
+                // thisNode.BurnVector.y += bigStep;
             }
             else if (nDec1) // Subtract smallStep from the normal burn
             {
                 burnParams.y -= smallStep;
+                // thisNode.BurnVector.y -= smallStep;
             }
             else if (nDec2) // Subtract bigStep from the normal burn
             {
                 burnParams.y -= bigStep;
+                // thisNode.BurnVector.y -= bigStep;
+            }
+            else if (rAbs) // Set the radial burn to the absoluteValue
+            {
+                burnParams.x = absoluteValue - thisNode.BurnVector.x;
+                // thisNode.BurnVector.x = absoluteValue;
+            }
+            else if (rInc1) // Add smallStep to the radial burn
+            {
+                burnParams.x += smallStep;
+                // thisNode.BurnVector.x += smallStep;
+            }
+            else if (rInc2) // Add bigStep to the radial burn
+            {
+                burnParams.x += bigStep;
+                // thisNode.BurnVector.x += bigStep;
             }
             else if (rDec1) // Subtract smallStep from the radial burn
             {
                 burnParams.x -= smallStep;
+                // thisNode.BurnVector.x -= smallStep;
             }
             else if (rDec2) // Subtract bigStep from the radial burn
             {
                 burnParams.x -= bigStep;
+                // thisNode.BurnVector.x -= bigStep;
             }
 
             // Push the update to the node
-            //Logger.LogInfo("handleButtons: Pushing new burn info to node");
-            //Logger.LogInfo($"handleButtons: burnParams         [{burnParams.x}, {burnParams.y}, {burnParams.z}] m/s");
-            maneuverPlanComponent.UpdateChangeOnNode(currentNode, burnParams);
-            Logger.LogInfo($"handleButtons: Updated BurnVector    [{currentNode.BurnVector.x}, {currentNode.BurnVector.y}, {currentNode.BurnVector.z}] m/s");
-            //Logger.LogInfo($"handleButtons: BurnVector.normalized [{currentNode.BurnVector.normalized.x}, {currentNode.BurnVector.normalized.y}, {currentNode.BurnVector.normalized.z}] m/s");
-            // IPatchedOrbit patchedOrbit = !currentNode.IsOnManeuverTrajectory ? (IPatchedOrbit)simObject.Orbiter.PatchedConicSolver.FindPatchContainingUT(currentNode.Time) : (IPatchedOrbit)currentNode.ManeuverTrajectoryPatch;
+            //Logger.LogDebug("handleButtons: Pushing new burn info to node");
+            //Logger.LogDebug($"handleButtons: burnParams         [{burnParams.x}, {burnParams.y}, {burnParams.z}] m/s");
+            maneuverPlanComponent.UpdateChangeOnNode(thisNode, burnParams);
 
-            StartCoroutine(UpdateNode(currentNode));
+            // Call RefreshNodes to update the nodes in a way that allows the game to catch up with the updates
+            StartCoroutine(RefreshNodes(maneuverPlanComponent));
 
+            Logger.LogDebug($"handleButtons: Updated BurnVector    [{thisNode.BurnVector.x}, {thisNode.BurnVector.y}, {thisNode.BurnVector.z}] m/s");
+            //Logger.LogDebug($"handleButtons: BurnVector.normalized [{thisNode.BurnVector.normalized.x}, {thisNode.BurnVector.normalized.y}, {thisNode.BurnVector.normalized.z}] m/s");
+
+            // If we touched a later node, go touch the first node or the patch after the later node
+            // may (will?) be messed up. This solves that
+            //if (SelectedNodeIndex > 0)
+            //{
+            //    maneuverPlanComponent.UpdateTimeOnNode(NodeControl.Nodes[0], NodeControl.Nodes[0].Time);
+            //    StartCoroutine(RefreshNodes(maneuverPlanComponent));
+            //}
+
+            //StartCoroutine(RefreshNodes(maneuverPlanComponent));
         }
         else if (timeDec1 || timeDec2 || timeInc1 || timeInc2 || orbitDec || orbitInc || snapToAp || snapToPe || snapToANe || snapToDNe || snapToANt || snapToDNt)
         {
-            // Get the ManeuverPlanComponent for the active vessel
-            var universeModel = game.UniverseModel;
-            var vesselComponent = universeModel.FindVesselComponent(currentNode.RelatedSimID);
-            var simObject = vesselComponent.SimulationObject;
-            var maneuverPlanComponent = simObject.FindComponent<ManeuverPlanComponent>();
-
             // Get some objects and info we need
-            var vessel = game.UniverseModel.FindVesselComponent(currentNode.RelatedSimID);
+            var vessel = game.UniverseModel.FindVesselComponent(thisNode.RelatedSimID);
             var target = vessel?.TargetObject;
             var UT = game.UniverseModel.UniversalTime;
-            var oldBurnTime = currentNode.Time;
+            var oldBurnTime = thisNode.Time;
             var timeOfNodeFromNow = oldBurnTime - UT;
+
+            double nodeTime = thisNode.Time;
+            double minTime = UT + Math.Max(timeSmallStep, 5);
+            double maxTime = UT - 1;
+            if (SelectedNodeIndex > 0)
+                minTime = Nodes[SelectedNodeIndex - 1].Time + Math.Max(timeSmallStep, 5);
+            if (SelectedNodeIndex < NodeControl.Nodes.Count - 1)
+                maxTime = NodeControl.Nodes[SelectedNodeIndex + 1].Time - Math.Max(timeSmallStep, 5);
+            Logger.LogDebug($"SelectedNodeIndex      : {SelectedNodeIndex}");
+            for (int i= 0; i < NodeControl.Nodes.Count; i++)
+            {
+                var thisNodeTime = NodeControl.Nodes[i].Time;
+                if (i == SelectedNodeIndex)
+                    Logger.LogDebug($"nodeTime[{i}]*         : {thisNodeTime - UT} from now.");
+                else
+                    Logger.LogDebug($"nodeTime[{i}]          : {thisNodeTime - UT} from now.");
+            }
+            Logger.LogDebug($"minTime for node adjust: {minTime - UT} from now.");
+            Logger.LogDebug($"maxTime for node adjust: {maxTime - UT} from now.");
+            Logger.LogDebug($"nodeTime               : {nodeTime - UT} from now.");
 
             if (timeDec1) // Subtract timeSmallStep
             {
                 if (timeSmallStep < timeOfNodeFromNow) // If there is enough time
                 {
-                    currentNode.Time -= timeSmallStep;
+                    nodeTime -= timeSmallStep;
+                    // thisNode.Time -= timeSmallStep;
                 }
             }
             else if (timeDec2) // Subtract timeLargeStep
             {
                 if (timeLargeStep < timeOfNodeFromNow) // If there is enough time
                 {
-                    currentNode.Time -= timeLargeStep;
+                    nodeTime -= timeLargeStep;
+                    // thisNode.Time -= timeLargeStep;
                 }
             }
             else if (timeInc1) // Add timeSmallStep
             {
-                currentNode.Time += timeSmallStep;
+                nodeTime += timeSmallStep;
+                // thisNode.Time += timeSmallStep;
             }
             else if (timeInc2) // Add timeLargeStep
             {
-                currentNode.Time += timeLargeStep;
+                nodeTime += timeLargeStep;
+                // thisNode.Time += timeLargeStep;
             }
             else if (orbitDec) // Subtract one orbital period
             {
                 if (vessel.Orbit.period < timeOfNodeFromNow) // If there is enough time
                 {
-                    currentNode.Time -= vessel.Orbit.period;
+                    nodeTime -= vessel.Orbit.period;
+                    // thisNode.Time -= vessel.Orbit.period;
                 }
             }
             else if (orbitInc) // Add one orbital period
             {
-                currentNode.Time += vessel.Orbit.period;
+                nodeTime += vessel.Orbit.period;
+                // thisNode.Time += vessel.Orbit.period;
             }
             else if (snapToAp) // Snap the maneuver time to the next Ap
             {
-                currentNode.Time = UT + vessel.Orbit.TimeToAp;
+                nodeTime = UT + vessel.Orbit.TimeToAp;
+                // thisNode.Time = UT + vessel.Orbit.TimeToAp;
             }
             else if (snapToPe) // Snap the maneuver time to the next Pe
             {
-                currentNode.Time = UT + vessel.Orbit.TimeToPe;
+                nodeTime = UT + vessel.Orbit.TimeToPe;
+                // thisNode.Time = UT + vessel.Orbit.TimeToPe;
             }
             else if (snapToANe) // Snap the maneuver time to the AN relative to the equatorial plane
             {
-                currentNode.Time = vessel.Orbit.TimeOfAscendingNodeEquatorial(UT);
+                nodeTime = vessel.Orbit.TimeOfANEquatorial(UT);
+                // thisNode.Time = vessel.Orbit.TimeOfANEquatorial(UT);
             }
             else if (snapToDNe) // Snap the maneuver time to the DN relative to the equatorial plane
             {
-                currentNode.Time = vessel.Orbit.TimeOfDescendingNodeEquatorial(UT);
+                nodeTime = vessel.Orbit.TimeOfDNEquatorial(UT);
+                // thisNode.Time = vessel.Orbit.TimeOfDNEquatorial(UT);
             }
             else if (snapToANt) // Snap the maneuver time to the AN relative to selected target's orbit
             {
-                currentNode.Time = vessel.Orbit.TimeOfAscendingNode(target.Orbit, UT);
+                nodeTime = vessel.Orbit.TimeOfAN(target.Orbit, UT);
+                // thisNode.Time = vessel.Orbit.TimeOfAN(target.Orbit, UT);
             }
             else if (snapToDNt) // Snap the maneuver time to the DN relative to selected target's orbit
             {
-                currentNode.Time = vessel.Orbit.TimeOfDescendingNode(target.Orbit, UT);
+                nodeTime = vessel.Orbit.TimeOfDN(target.Orbit, UT);
+                // thisNode.Time = vessel.Orbit.TimeOfDN(target.Orbit, UT);
             }
 
-            //Logger.LogInfo($"handleButtons: Burn time was {oldBurnTime}, is {currentNode.Time}");
-            maneuverPlanComponent.UpdateTimeOnNode(currentNode, currentNode.Time); // This may not be necessary?
-            
-            StartCoroutine(UpdateNode(currentNode));
+            Logger.LogDebug($"nodeTime after adjsut  : {nodeTime - UT} from now.");
+            if (nodeTime < minTime) // Not allowed to move the node prior to anopther node
+            {
+                nodeTime = minTime;
+                Logger.LogDebug($"Limiting nodeTime to no less than {nodeTime - UT} from now.");
+            }
+            if (maxTime > minTime && nodeTime > maxTime) // Not allowed to move the node ahead of a later node
+            {
+                nodeTime = maxTime;
+                Logger.LogDebug($"Limiting nodeTime to no more than {nodeTime - UT} from now.");
+            }
+
+            // Push the update to the node
+            // thisNode.Time = nodeTime;
+            maneuverPlanComponent.UpdateTimeOnNode(thisNode, nodeTime);
+
+            // Call RefreshNodes to update the nodes in a way that allows the game to catch up with the updates
+            StartCoroutine(RefreshNodes(maneuverPlanComponent));
+
+            // Logger.LogDebug($"handleButtons: Burn time was {oldBurnTime}, is {thisNode.Time}");
+
+            // If we touched a later node's time, go touch the first node or the patch after the later node
+            // may (will?) be messed up. This solves that
+            //if (SelectedNodeIndex > 0)
+            //{
+            //    maneuverPlanComponent.UpdateTimeOnNode(NodeControl.Nodes[0], NodeControl.Nodes[0].Time);
+            //    StartCoroutine(RefreshNodes(maneuverPlanComponent));
+            //}
+
+            //StartCoroutine(RefreshNodes(maneuverPlanComponent));
+        }
+        else if (decNode || incNode || delNode || addNode)
+        {
+            if (decNode && SelectedNodeIndex > 0)
+            {
+                SelectedNodeIndex--;
+            }
+            else if (incNode && SelectedNodeIndex + 1 < NodeControl.Nodes.Count)
+            {
+                SelectedNodeIndex++;
+            }
+            else if (delNode)
+            {
+                DeleteNodes(SelectedNodeIndex);
+                if (SelectedNodeIndex > 0)
+                    SelectedNodeIndex--;
+                else
+                    SelectedNodeIndex = 0;
+            }
+            else if (addNode)
+            {
+                AddNode(orbit);
+                StartCoroutine(RefreshNodes(maneuverPlanComponent));
+                var nCount = NodeControl.RefreshManeuverNodes();
+                SelectedNodeIndex = NodeControl.Nodes.Count - 1;
+                thisNode = NodeControl.Nodes[SelectedNodeIndex];
+            }
 
         }
+    }
+    private IEnumerator RefreshNodes(ManeuverPlanComponent maneuverPlanComponent)
+    {
+        // yield return (object)new WaitForFixedUpdate();
+
+        for (int i = 0; i < NodeControl.Nodes.Count; i++) // was i = SelectedNodeIndex
+        {
+            // Logger.LogDebug($"RefreshNodes: Updateing Node {i}");
+            var node = NodeControl.Nodes[i];
+            // maneuverPlanComponent.UpdateTimeOnNode(node, node.Time);
+            maneuverPlanComponent.UpdateNodeDetails(node);
+            //yield return (object)new WaitForFixedUpdate();
+            //maneuverPlanComponent.RefreshManeuverNodeState(i);
+        }
+
+        for (int i = 0; i < NodeControl.Nodes.Count; i++) // was i = SelectedNodeIndex
+        {
+            // Logger.LogDebug($"RefreshNodes: Refreshing Node {i}");
+            try { maneuverPlanComponent.RefreshManeuverNodeState(i); }
+            catch (NullReferenceException e)
+            {
+                Logger.LogError($"RefreshNodes: Suppressed NRE for Node {i}: {e}");
+                Logger.LogError($"RefreshNodes: Node {i}: {NodeControl.Nodes[i]}");
+            }
+        }
+
+        yield return (object)new WaitForFixedUpdate();
+        // NodeControl.RefreshManeuverNodes();
+        // yield return (object)new WaitForFixedUpdate();
+
+        for (int i = 0; i < NodeControl.Nodes.Count; i++) // was i = SelectedNodeIndex
+        {
+            // Logger.LogDebug($"RefreshNodes: Updateing Node {i}");
+            var node = NodeControl.Nodes[i];
+            // maneuverPlanComponent.UpdateTimeOnNode(node, node.Time);
+            maneuverPlanComponent.UpdateNodeDetails(node);
+            //yield return (object)new WaitForFixedUpdate();
+            //maneuverPlanComponent.RefreshManeuverNodeState(i);
+        }
+
+        for (int i = 0; i < NodeControl.Nodes.Count; i++) // was i = SelectedNodeIndex
+        {
+            // Logger.LogDebug($"RefreshNodes: Refreshing Node {i}");
+            try { maneuverPlanComponent.RefreshManeuverNodeState(i); }
+            catch (NullReferenceException e)
+            {
+                Logger.LogError($"RefreshNodes: Suppressed NRE for Node {i}: {e}");
+                Logger.LogError($"RefreshNodes: Node {i}: {NodeControl.Nodes[i]}");
+            }
+        }
+
+        // yield return (object)new WaitForFixedUpdate();
+
+        NodeControl.RefreshManeuverNodes();
     }
 }   
