@@ -419,7 +419,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         }
         else
         {
-            DrawEntry2Button("Node:", labelStyle, ref decNode, "<", ref incNode, ">", (SelectedNodeIndex + 1).ToString());
+            DrawEntry2Button($"Node: {(SelectedNodeIndex + 1)} of {NodeControl.Nodes.Count}", labelStyle, ref decNode, "<", ref incNode, ">");
             Draw2Button(ref delNode, "Del Node", ref addNode, "Add Node");
             GUILayout.Box("", horizontalDivider);
 
@@ -1102,6 +1102,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
 
         }
     }
+    
     private IEnumerator RefreshNodes(ManeuverPlanComponent maneuverPlanComponent)
     {
         // yield return (object)new WaitForFixedUpdate();
