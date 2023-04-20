@@ -8,9 +8,9 @@ using KSP.Sim.DeltaV;
 using BepInEx.Bootstrap;
 using SpaceWarp.API.Mods;
 
-namespace ManeuverNodeController;
+namespace MNCUtilities;
 
-public static class Utility
+public static class MNCUtility
 {
     public static VesselComponent activeVessel;
     public static ManeuverNodeData currentNode;
@@ -165,7 +165,7 @@ public static class Utility
     /// <returns></returns>
     public static bool TargetExists()
     {
-        try { return (Utility.activeVessel.TargetObject != null); }
+        try { return (MNCUtility.activeVessel.TargetObject != null); }
         catch { return false; }
     }
 
@@ -175,7 +175,7 @@ public static class Utility
     /// <returns></returns>
     public static bool ManeuverExists()
     {
-        try { return (GameManager.Instance?.Game?.SpaceSimulation.Maneuvers.GetNodesForVessel(Utility.activeVessel.GlobalId).FirstOrDefault() != null); }
+        try { return (GameManager.Instance?.Game?.SpaceSimulation.Maneuvers.GetNodesForVessel(MNCUtility.activeVessel.GlobalId).FirstOrDefault() != null); }
         catch { return false; }
     }
 
@@ -196,7 +196,7 @@ public static class Utility
     {
         if (gameInputState)
         {
-            if (Utility.InputDisableWindowAbbreviation == GUI.GetNameOfFocusedControl() || Utility.InputDisableWindowName == GUI.GetNameOfFocusedControl())
+            if (MNCUtility.InputDisableWindowAbbreviation == GUI.GetNameOfFocusedControl() || MNCUtility.InputDisableWindowName == GUI.GetNameOfFocusedControl())
             {
                 GameManager.Instance.Game.Input.Disable();
                 return false;
@@ -206,7 +206,7 @@ public static class Utility
         }
         else
         {
-            if ((Utility.InputDisableWindowAbbreviation != GUI.GetNameOfFocusedControl() && Utility.InputDisableWindowName != GUI.GetNameOfFocusedControl()) || !showGuiFlight)
+            if ((MNCUtility.InputDisableWindowAbbreviation != GUI.GetNameOfFocusedControl() && MNCUtility.InputDisableWindowName != GUI.GetNameOfFocusedControl()) || !showGuiFlight)
             {
                 GameManager.Instance.Game.Input.Enable();
                 return true;
@@ -253,7 +253,7 @@ public static class Utility
     /// <returns>True = installed mod is older. False = installed mod has the same version or it's newer or version isn't declared or version declared is gibberish that cannot be parsed</returns>
     internal static bool IsModOlderThan (string modId, int major, int minor, int patch)
     {
-        var modVersion = Utility.GetModVersion(modId);
+        var modVersion = MNCUtility.GetModVersion(modId);
 
         if (!modVersion.HasValue || modVersion.Value == (0, 0, 0))
             return false;
