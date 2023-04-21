@@ -115,7 +115,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
 
         GameManager.Instance.Game.Messages.Subscribe<ManeuverCreatedMessage>(msg =>
         {
-            var message = (ManeuverRemovedMessage)msg;
+            var message = (ManeuverCreatedMessage)msg;
             OnManeuverCreatedMessage(message);
         });
 
