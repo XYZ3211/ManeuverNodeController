@@ -18,8 +18,8 @@ using System.Collections;
 
 namespace ManeuverNodeController;
 
+[BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
 [BepInDependency(SpaceWarpPlugin.ModGuid, SpaceWarpPlugin.ModVer)]
-[BepInPlugin("com.github.xyz3211.maneuver_node_controller", "Maneuver Node Controller", "0.7.0")]
 public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
 {
     // These are useful in case some other mod wants to add a dependency to this one
