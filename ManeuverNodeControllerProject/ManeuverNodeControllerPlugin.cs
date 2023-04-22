@@ -1113,31 +1113,26 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             else if (addNode)
             {
                 int nodeCount;
+                bool pass;
                 nodeCount =  NodeManagerPlugin.Instance.RefreshManeuverNodes();
-                if (nodeCount > 5)
-                {
-                    Logger.LogWarning($"addNode (button): Maximum nodes reached: {nodeCount}. Unable to cerate mode.");
-                }
-                else
-                {
-                    StartCoroutine(NodeManagerPlugin.Instance.RefreshNodes());
-                    Logger.LogDebug($"addNode (button): Number of nodes before add:         {nodeCount}");
-                    NodeManagerPlugin.Instance.AddNode(orbit);
-                    SelectedNodeIndex = NodeManagerPlugin.Instance.Nodes.Count - 1;
-                    NodeManagerPlugin.Instance.SpitNode(SelectedNodeIndex);
-                    nodeCount = NodeManagerPlugin.Instance.RefreshManeuverNodes();
-                    Logger.LogDebug($"addNode (button): Number of nodes after add:          {nodeCount}");
-                    // StartCoroutine(NodeManagerPlugin.Instance.RefreshNodes());
-                    //nodeCount = NodeControl.RefreshManeuverNodes();
-                    //Logger.LogInfo($"addNode (button): Number of nodes after RefreshNodes: {nodeCount}");
-                    // NodeManagerPlugin.Instance.SpitNode(SelectedNodeIndex);
 
-                    //StartCoroutine(NodeManagerPlugin.Instance.RefreshNodes());
-                    //nodeCount = NodeControl.RefreshManeuverNodes();
-                    //Logger.LogInfo($"addNode (button): Number of nodes after RefreshNodes: {nodeCount}");
+                StartCoroutine(NodeManagerPlugin.Instance.RefreshNodes());
+                Logger.LogDebug($"addNode (button): Number of nodes before add:         {nodeCount}");
+                pass = NodeManagerPlugin.Instance.AddNode(orbit);
+                SelectedNodeIndex = NodeManagerPlugin.Instance.Nodes.Count - 1;
+                NodeManagerPlugin.Instance.SpitNode(SelectedNodeIndex);
+                nodeCount = NodeManagerPlugin.Instance.RefreshManeuverNodes();
+                Logger.LogDebug($"addNode (button): Number of nodes after add:          {nodeCount}");
+                // StartCoroutine(NodeManagerPlugin.Instance.RefreshNodes());
+                //nodeCount = NodeControl.RefreshManeuverNodes();
+                //Logger.LogInfo($"addNode (button): Number of nodes after RefreshNodes: {nodeCount}");
+                // NodeManagerPlugin.Instance.SpitNode(SelectedNodeIndex);
 
-                    // thisNode = NodeControl.Nodes[SelectedNodeIndex];
-                }
+                //StartCoroutine(NodeManagerPlugin.Instance.RefreshNodes());
+                //nodeCount = NodeControl.RefreshManeuverNodes();
+                //Logger.LogInfo($"addNode (button): Number of nodes after RefreshNodes: {nodeCount}");
+
+                // thisNode = NodeControl.Nodes[SelectedNodeIndex];
 
             }
             else if (addNode2) // FOR TESTING - ONLY AVAILABLE IN DEBUG BUILD
