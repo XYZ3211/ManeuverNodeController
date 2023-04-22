@@ -10,8 +10,7 @@
         <Description>Provides an interface to finely tune maneuver nodes</Description>
         <Version>0.9.2</Version>
         <RestoreAdditionalProjectSources>
-			https://nuget.spacewarp.org/v3/index.json;
-			../../NodeManager/nuget/
+			https://nuget.spacewarp.org/v3/index.json
 		</RestoreAdditionalProjectSources>
         <RootNamespace>ManeuverNodeController</RootNamespace>
         <ModId Condition="'$(ModId)'==''">maneuver_node_controller</ModId>
