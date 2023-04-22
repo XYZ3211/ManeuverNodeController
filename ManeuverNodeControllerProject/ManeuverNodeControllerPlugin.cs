@@ -15,9 +15,6 @@ using KSP.Map;
 using KSP.Messages;
 using System.Collections;
 using NodeManager;
-//#if DEBUG
-//using MNCNodeControls;
-//#endif
 
 namespace ManeuverNodeController;
 
