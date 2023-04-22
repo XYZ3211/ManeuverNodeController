@@ -10,16 +10,17 @@ using SpaceWarp.API.UI;
 using SpaceWarp.API.UI.Appbar;
 using KSP.UI.Binding;
 using BepInEx.Logging;
-using MNCNodeControls;
 using MNCUtilities;
 using KSP.Map;
 using KSP.Messages;
 using System.Collections;
+using NodeManager;
 
 namespace ManeuverNodeController;
 
 [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
 [BepInDependency(SpaceWarpPlugin.ModGuid, SpaceWarpPlugin.ModVer)]
+[BepInDependency(NodeManagerPlugin.ModGuid, NodeManagerPlugin.ModVer)]
 public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
 {
     // These are useful in case some other mod wants to add a dependency to this one
@@ -113,11 +114,11 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             OnManeuverRemovedMessage(message);
         });
 
-        GameManager.Instance.Game.Messages.Subscribe<ManeuverCreatedMessage>(msg =>
-        {
-            var message = (ManeuverCreatedMessage)msg;
-            OnManeuverCreatedMessage(message);
-        });
+        //GameManager.Instance.Game.Messages.Subscribe<ManeuverCreatedMessage>(msg =>
+        //{
+        //    var message = (ManeuverCreatedMessage)msg;
+        //    OnManeuverCreatedMessage(message);
+        //});
 
         // Setup the list of input field names associated with TextField GUI inputs
         inputFields.Add("Prograde ∆v");
@@ -269,12 +270,12 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         //maneuverWindow.OnManeuverRemovedMessage(message);
 
         // Grab the time of the currently selected node
-        // double selectedNodeTime = MNCNodeControl.Nodes[SelectedNodeIndex].Time;
+        // double selectedNodeTime = NodeManagerPlugin.Instance.Nodes[SelectedNodeIndex].Time;
 
         //Logger.LogDebug($"OnManeuverRemovedMessage: SelectedNodeIndex = {SelectedNodeIndex}");
         //Logger.LogDebug($"OnManeuverRemovedMessage: selectedNodeTime = {selectedNodeTime}");
         // Update the lsit of nodes to capture the effect of the node deletion
-        var nodeCount = MNCNodeControl.RefreshManeuverNodes();
+        var nodeCount = NodeManagerPlugin.Instance.RefreshManeuverNodes();
         if (nodeCount == 0)
             SelectedNodeIndex = 0;
         if (SelectedNodeIndex + 1 > nodeCount && nodeCount > 0)
@@ -287,8 +288,8 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         //    int newSelectedNode = -1;
         //    for (int i = 0; i < nodeCount; i++)
         //    {
-        //        Logger.LogDebug($"OnManeuverRemovedMessage: Node[{i}].Time = {MNCNodeControl.Nodes[i].Time}");
-        //        if (selectedNodeTime == MNCNodeControl.Nodes[i].Time)
+        //        Logger.LogDebug($"OnManeuverRemovedMessage: Node[{i}].Time = {NodeManagerPlugin.Instance.Nodes[i].Time}");
+        //        if (selectedNodeTime == NodeManagerPlugin.Instance.Nodes[i].Time)
         //        {
         //            newSelectedNode = i;
         //            Logger.LogDebug($"OnManeuverRemovedMessage: Found Node {i} with matching time");
@@ -311,11 +312,11 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         // SelectedNodeIndex = 0;
     }
 
-    private void OnManeuverCreatedMessage(MessageCenterMessage message)
-    {
-        var nodeCount = MNCNodeControl.RefreshManeuverNodes();
-        // SelectedNodeIndex = 0;
-    }
+    //private void OnManeuverCreatedMessage(MessageCenterMessage message)
+    //{
+    //    var nodeCount = NodeManagerPlugin.Instance.RefreshManeuverNodes();
+    //    // SelectedNodeIndex = 0;
+    //}
 
     private void ToggleButton(bool toggle)
     {
@@ -399,16 +400,16 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         double dvRemaining;
         bool doButtons = true;
 
-        if (MNCNodeControl.Nodes.Count == 0)
-            MNCNodeControl.RefreshManeuverNodes();
-        if (MNCNodeControl.Nodes.Count > 0)
+        if (NodeManagerPlugin.Instance.Nodes.Count == 0)
+            NodeManagerPlugin.Instance.RefreshManeuverNodes();
+        if (NodeManagerPlugin.Instance.Nodes.Count > 0)
         {
             //if (SelectedNodeIndex >= NodeControl.Nodes.Count)
             //    SelectedNodeIndex = NodeControl.Nodes.Count - 1;
-            try { thisNode = MNCNodeControl.Nodes[SelectedNodeIndex]; }
+            try { thisNode = NodeManagerPlugin.Instance.Nodes[SelectedNodeIndex]; }
             catch
             {
-                Logger.LogWarning($"OnGUI: NodeControl.Nodes.Count = {MNCNodeControl.Nodes.Count}");
+                Logger.LogWarning($"OnGUI: NodeControl.Nodes.Count = {NodeManagerPlugin.Instance.Nodes.Count}");
                 Logger.LogWarning($"OnGUI: SelectedNodeIndex = {SelectedNodeIndex} > (Nodes.Count - 1)!");
                 thisNode = null;
                 doButtons = false;
@@ -435,7 +436,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         }
         else
         {
-            DrawEntry2Button($"Node: {(SelectedNodeIndex + 1)} of {MNCNodeControl.Nodes.Count}", labelStyle, ref decNode, "<", ref incNode, ">");
+            DrawEntry2Button($"Node: {(SelectedNodeIndex + 1)} of {NodeManagerPlugin.Instance.Nodes.Count}", labelStyle, ref decNode, "<", ref incNode, ">");
             // Draw2Button(ref delNode, "Del Node", ref addNode, "Add Node");
             Draw3Button(ref delNode, "Del Node", ref spitNode, "Check Node", ref addNode, "Add Node");
             GUILayout.Box("", horizontalDivider);
@@ -534,7 +535,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         // ManeuverPlanComponent activeVesselPlan = Utility.activeVessel?.SimulationObject?.FindComponent<ManeuverPlanComponent>();
         // var nodes = activeVesselPlan?.GetNodes();
 
-        if (MNCNodeControl.Nodes.Count == 0) // No nodes: Just show current orbit - shouldn't ever get here...
+        if (NodeManagerPlugin.Instance.Nodes.Count == 0) // No nodes: Just show current orbit - shouldn't ever get here...
         {
             if (orbit.eccentricity < 1)
                 previousApA = (orbit.ApoapsisArl / 1000).ToString("n3");
@@ -838,12 +839,12 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
                 //int nodeCount;
                 //var nodeCount = NodeControl.RefreshManeuverNodes();
                 //Logger.LogInfo($"addNode (button): Number of nodes before add:         {nodeCount}");
-                MNCNodeControl.AddNode(orbit);
+                NodeManagerPlugin.Instance.AddNode(orbit);
                 SelectedNodeIndex = 0;
-                MNCNodeControl.SpitNode(SelectedNodeIndex);
+                NodeManagerPlugin.Instance.SpitNode(SelectedNodeIndex);
                 //nodeCount = NodeControl.RefreshManeuverNodes();
                 //Logger.LogInfo($"addNode (button): Number of nodes after add:          {nodeCount}");
-                StartCoroutine(RefreshNodes(maneuverPlanComponent));
+                StartCoroutine(NodeManagerPlugin.Instance.RefreshNodes());
                 //nodeCount = NodeControl.RefreshManeuverNodes();
                 //Logger.LogInfo($"addNode (button): Number of nodes after RefreshNodes: {nodeCount}");
                 SelectedNodeIndex = 0;
@@ -852,7 +853,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         }
         else if (spitNode && MNCUtility.activeVessel != null)
         {
-            MNCNodeControl.SpitNode(SelectedNodeIndex);
+            NodeManagerPlugin.Instance.SpitNode(SelectedNodeIndex);
         }
         else if ((pAbs || pInc1 || pInc2 || pDec1 || pDec2 || nAbs || nInc1 || nInc2 || nDec1 || nDec2 || rAbs || rInc1 || rInc2 || rDec1 || rDec2) && MNCUtility.activeVessel != null)
         {
@@ -940,7 +941,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             maneuverPlanComponent.UpdateChangeOnNode(thisNode, burnParams);
 
             // Call RefreshNodes to update the nodes in a way that allows the game to catch up with the updates
-            StartCoroutine(RefreshNodes(maneuverPlanComponent));
+            StartCoroutine(NodeManagerPlugin.Instance.RefreshNodes());
 
             Logger.LogDebug($"handleButtons: Updated BurnVector    [{thisNode.BurnVector.x}, {thisNode.BurnVector.y}, {thisNode.BurnVector.z}] m/s");
             //Logger.LogDebug($"handleButtons: BurnVector.normalized [{thisNode.BurnVector.normalized.x}, {thisNode.BurnVector.normalized.y}, {thisNode.BurnVector.normalized.z}] m/s");
@@ -950,10 +951,10 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             //if (SelectedNodeIndex > 0)
             //{
             //    maneuverPlanComponent.UpdateTimeOnNode(NodeControl.Nodes[0], NodeControl.Nodes[0].Time);
-            //    StartCoroutine(RefreshNodes(maneuverPlanComponent));
+            //    StartCoroutine(NodeManagerPlugin.Instance.RefreshNodes());
             //}
 
-            //StartCoroutine(RefreshNodes(maneuverPlanComponent));
+            //StartCoroutine(NodeManagerPlugin.Instance.RefreshNodes());
         }
         else if ((timeDec1 || timeDec2 || timeInc1 || timeInc2 || orbitDec || orbitInc || snapToAp || snapToPe || snapToANe || snapToDNe || snapToANt || snapToDNt) && MNCUtility.activeVessel != null)
         {
@@ -968,13 +969,13 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             double minTime = UT + Math.Max(timeSmallStep, 5);
             double maxTime = UT - 1;
             if (SelectedNodeIndex > 0)
-                minTime = MNCNodeControl.Nodes[SelectedNodeIndex - 1].Time + Math.Max(timeSmallStep, 5);
-            if (SelectedNodeIndex < MNCNodeControl.Nodes.Count - 1)
-                maxTime = MNCNodeControl.Nodes[SelectedNodeIndex + 1].Time - Math.Max(timeSmallStep, 5);
+                minTime = NodeManagerPlugin.Instance.Nodes[SelectedNodeIndex - 1].Time + Math.Max(timeSmallStep, 5);
+            if (SelectedNodeIndex < NodeManagerPlugin.Instance.Nodes.Count - 1)
+                maxTime = NodeManagerPlugin.Instance.Nodes[SelectedNodeIndex + 1].Time - Math.Max(timeSmallStep, 5);
             Logger.LogDebug($"SelectedNodeIndex      : {SelectedNodeIndex}");
-            for (int i= 0; i < MNCNodeControl.Nodes.Count; i++)
+            for (int i= 0; i < NodeManagerPlugin.Instance.Nodes.Count; i++)
             {
-                var thisNodeTime = MNCNodeControl.Nodes[i].Time;
+                var thisNodeTime = NodeManagerPlugin.Instance.Nodes[i].Time;
                 if (i == SelectedNodeIndex)
                     Logger.LogDebug($"nodeTime[{i}]*         : {thisNodeTime - UT} from now.");
                 else
@@ -1071,7 +1072,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             maneuverPlanComponent.UpdateTimeOnNode(thisNode, nodeTime);
 
             // Call RefreshNodes to update the nodes in a way that allows the game to catch up with the updates
-            StartCoroutine(RefreshNodes(maneuverPlanComponent));
+            StartCoroutine(NodeManagerPlugin.Instance.RefreshNodes());
 
             // Logger.LogDebug($"handleButtons: Burn time was {oldBurnTime}, is {thisNode.Time}");
 
@@ -1080,10 +1081,10 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             //if (SelectedNodeIndex > 0)
             //{
             //    maneuverPlanComponent.UpdateTimeOnNode(NodeControl.Nodes[0], NodeControl.Nodes[0].Time);
-            //    StartCoroutine(RefreshNodes(maneuverPlanComponent));
+            //    StartCoroutine(NodeManagerPlugin.Instance.RefreshNodes());
             //}
 
-            //StartCoroutine(RefreshNodes(maneuverPlanComponent));
+            //StartCoroutine(NodeManagerPlugin.Instance.RefreshNodes());
         }
         else if ((decNode || incNode || delNode || addNode) && MNCUtility.activeVessel != null)
         {
@@ -1091,13 +1092,13 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             {
                 SelectedNodeIndex--;
             }
-            else if (incNode && SelectedNodeIndex + 1 < MNCNodeControl.Nodes.Count)
+            else if (incNode && SelectedNodeIndex + 1 < NodeManagerPlugin.Instance.Nodes.Count)
             {
                 SelectedNodeIndex++;
             }
             else if (delNode)
             {
-                MNCNodeControl.DeleteNodes(SelectedNodeIndex);
+                NodeManagerPlugin.Instance.DeleteNodes(SelectedNodeIndex);
                 if (SelectedNodeIndex > 0)
                     SelectedNodeIndex--;
                 else
@@ -1108,17 +1109,17 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
                 int nodeCount;
                 //nodeCount = NodeControl.RefreshManeuverNodes();
                 //Logger.LogInfo($"addNode (button): Number of nodes before add:         {nCount}");
-                MNCNodeControl.AddNode(orbit);
-                SelectedNodeIndex = MNCNodeControl.Nodes.Count - 1;
-                MNCNodeControl.SpitNode(SelectedNodeIndex);
+                NodeManagerPlugin.Instance.AddNode(orbit);
+                SelectedNodeIndex = NodeManagerPlugin.Instance.Nodes.Count - 1;
+                NodeManagerPlugin.Instance.SpitNode(SelectedNodeIndex);
                 //nodeCount = NodeControl.RefreshManeuverNodes();
                 //Logger.LogInfo($"addNode (button): Number of nodes after add:          {nodeCount}");
-                StartCoroutine(RefreshNodes(maneuverPlanComponent));
+                StartCoroutine(NodeManagerPlugin.Instance.RefreshNodes());
                 //nodeCount = NodeControl.RefreshManeuverNodes();
                 //Logger.LogInfo($"addNode (button): Number of nodes after RefreshNodes: {nodeCount}");
-                // MNCNodeControl.SpitNode(SelectedNodeIndex);
+                // NodeManagerPlugin.Instance.SpitNode(SelectedNodeIndex);
 
-                //StartCoroutine(RefreshNodes(maneuverPlanComponent));
+                //StartCoroutine(NodeManagerPlugin.Instance.RefreshNodes());
                 //nodeCount = NodeControl.RefreshManeuverNodes();
                 //Logger.LogInfo($"addNode (button): Number of nodes after RefreshNodes: {nodeCount}");
 
@@ -1132,24 +1133,24 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     {
         // yield return (object)new WaitForFixedUpdate();
 
-        for (int i = 0; i < MNCNodeControl.Nodes.Count; i++) // was i = SelectedNodeIndex
+        for (int i = 0; i < NodeManagerPlugin.Instance.Nodes.Count; i++) // was i = SelectedNodeIndex
         {
             // Logger.LogDebug($"RefreshNodes: Updateing Node {i}");
-            var node = MNCNodeControl.Nodes[i];
+            var node = NodeManagerPlugin.Instance.Nodes[i];
             // maneuverPlanComponent.UpdateTimeOnNode(node, node.Time);
             maneuverPlanComponent.UpdateNodeDetails(node);
             //yield return (object)new WaitForFixedUpdate();
             //maneuverPlanComponent.RefreshManeuverNodeState(i);
         }
 
-        for (int i = 0; i < MNCNodeControl.Nodes.Count; i++) // was i = SelectedNodeIndex
+        for (int i = 0; i < NodeManagerPlugin.Instance.Nodes.Count; i++) // was i = SelectedNodeIndex
         {
             // Logger.LogDebug($"RefreshNodes: Refreshing Node {i}");
             try { maneuverPlanComponent.RefreshManeuverNodeState(i); }
             catch (NullReferenceException e)
             {
                 Logger.LogError($"RefreshNodes: Suppressed NRE for Node {i}: {e}");
-                Logger.LogError($"RefreshNodes: Node {i}: {MNCNodeControl.Nodes[i]}");
+                Logger.LogError($"RefreshNodes: Node {i}: {NodeManagerPlugin.Instance.Nodes[i]}");
             }
         }
 
@@ -1157,29 +1158,29 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         // NodeControl.RefreshManeuverNodes();
         // yield return (object)new WaitForFixedUpdate();
 
-        for (int i = 0; i < MNCNodeControl.Nodes.Count; i++) // was i = SelectedNodeIndex
+        for (int i = 0; i < NodeManagerPlugin.Instance.Nodes.Count; i++) // was i = SelectedNodeIndex
         {
             // Logger.LogDebug($"RefreshNodes: Updateing Node {i}");
-            var node = MNCNodeControl.Nodes[i];
+            var node = NodeManagerPlugin.Instance.Nodes[i];
             // maneuverPlanComponent.UpdateTimeOnNode(node, node.Time);
             maneuverPlanComponent.UpdateNodeDetails(node);
             //yield return (object)new WaitForFixedUpdate();
             //maneuverPlanComponent.RefreshManeuverNodeState(i);
         }
 
-        for (int i = 0; i < MNCNodeControl.Nodes.Count; i++) // was i = SelectedNodeIndex
+        for (int i = 0; i < NodeManagerPlugin.Instance.Nodes.Count; i++) // was i = SelectedNodeIndex
         {
             // Logger.LogDebug($"RefreshNodes: Refreshing Node {i}");
             try { maneuverPlanComponent.RefreshManeuverNodeState(i); }
             catch (NullReferenceException e)
             {
                 Logger.LogError($"RefreshNodes: Suppressed NRE for Node {i}: {e}");
-                Logger.LogError($"RefreshNodes: Node {i}: {MNCNodeControl.Nodes[i]}");
+                Logger.LogError($"RefreshNodes: Node {i}: {NodeManagerPlugin.Instance.Nodes[i]}");
             }
         }
 
         // yield return (object)new WaitForFixedUpdate();
 
-        MNCNodeControl.RefreshManeuverNodes();
+        NodeManagerPlugin.Instance.RefreshManeuverNodes();
     }
 }   

@@ -8,21 +8,12 @@
         <AssemblyName>com.github.xyz3211.maneuver_node_controller</AssemblyName>
         <Product>Maneuver Node Controller</Product>
         <Description>Provides an interface to finely tune maneuver nodes</Description>
-        <Version>0.9.1</Version>
+        <Version>0.9.2</Version>
         <RestoreAdditionalProjectSources>
 			https://nuget.spacewarp.org/v3/index.json
 		</RestoreAdditionalProjectSources>
         <RootNamespace>ManeuverNodeController</RootNamespace>
         <ModId Condition="'$(ModId)'==''">maneuver_node_controller</ModId>
-    </PropertyGroup>
-    	<PropertyGroup Condition=" '$(KSP2_BASE_DIR)' == ''">
-        <KSP2_BASE_DIR>C:\Kerbal Space Program 2 Debug</KSP2_BASE_DIR>
-    </PropertyGroup>
-	<PropertyGroup Condition=" '$(FP_MOD_DIR)' == ''">
-		<KSP2_BASE_DIR>C:\KSP2 Mods\FlightPlan\external_dlls</KSP2_BASE_DIR>
-	</PropertyGroup>
-	<PropertyGroup Condition=" '$(MNC_MOD_DIR)' == ''">
-		<KSP2_BASE_DIR>C:\KSP2 Mods\ManeuverNodeController\external_dlls</KSP2_BASE_DIR>
 	</PropertyGroup>
     <ItemGroup>
         <Reference Include="Assembly-CSharp">
@@ -30,6 +21,10 @@
             <Publicize>true</Publicize>
             <Private>false</Private>
         </Reference>
+		<Reference Include="node_manager">
+			<HintPath>..\external_dlls\node_manager.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
     </ItemGroup>
     <ItemGroup>
         <PackageReference Include="BepInEx.Analyzers" Version="1.*" PrivateAssets="all" />
