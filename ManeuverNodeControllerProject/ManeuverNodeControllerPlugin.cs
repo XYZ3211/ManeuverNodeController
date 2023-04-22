@@ -15,10 +15,9 @@ using KSP.Map;
 using KSP.Messages;
 using System.Collections;
 using NodeManager;
-using MoonSharp.VsCodeDebugger.SDK;
-#if DEBUG
-using MNCNodeControls;
-#endif
+//#if DEBUG
+//using MNCNodeControls;
+//#endif
 
 namespace ManeuverNodeController;
 
@@ -51,7 +50,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     private string timeLargeStepString = "25";
     private double absoluteValue, smallStep, bigStep, timeSmallStep, timeLargeStep;
     private bool pAbs, pInc1, pInc2, pDec1, pDec2, nAbs, nInc1, nInc2, nDec1, nDec2, rAbs, rInc1, rInc2, rDec1, rDec2, timeInc1, timeInc2, timeDec1, timeDec2, orbitInc, orbitDec;
-    private bool snapToAp, snapToPe, snapToANe, snapToDNe, snapToANt, snapToDNt, addNode, delNode, decNode, incNode, addNode2;
+    private bool snapToAp, snapToPe, snapToANe, snapToDNe, snapToANt, snapToDNt, addNode, delNode, decNode, incNode;
     private bool advancedMode, spitNode;
 
     // Control game input state while user has clicked into a TextField.
@@ -443,7 +442,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             DrawEntry2Button($"Node: {(SelectedNodeIndex + 1)} of {NodeManagerPlugin.Instance.Nodes.Count}", labelStyle, ref decNode, "<", ref incNode, ">");
             Draw2Button(ref delNode, "Del Node", ref addNode, "Add Node");
 #if DEBUG
-            Draw2Button(ref spitNode, "Check Node", ref addNode2, "Make Node");
+            DrawButton(ref spitNode, "Check Node");
 #endif
             GUILayout.Box("", horizontalDivider);
 
@@ -845,7 +844,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
                 //int nodeCount;
                 //var nodeCount = NodeControl.RefreshManeuverNodes();
                 //Logger.LogInfo($"addNode (button): Number of nodes before add:         {nodeCount}");
-                NodeManagerPlugin.Instance.AddNode(orbit);
+                NodeManagerPlugin.Instance.AddNode();
                 SelectedNodeIndex = 0;
                 NodeManagerPlugin.Instance.SpitNode(SelectedNodeIndex);
                 //nodeCount = NodeControl.RefreshManeuverNodes();
@@ -1092,7 +1091,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
 
             //StartCoroutine(NodeManagerPlugin.Instance.RefreshNodes());
         }
-        else if ((decNode || incNode || delNode || addNode || addNode2) && MNCUtility.activeVessel != null)
+        else if ((decNode || incNode || delNode || addNode) && MNCUtility.activeVessel != null)
         {
             if (decNode && SelectedNodeIndex > 0)
             {
@@ -1118,7 +1117,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
 
                 StartCoroutine(NodeManagerPlugin.Instance.RefreshNodes());
                 Logger.LogDebug($"addNode (button): Number of nodes before add:         {nodeCount}");
-                pass = NodeManagerPlugin.Instance.AddNode(orbit);
+                pass = NodeManagerPlugin.Instance.AddNode();
                 SelectedNodeIndex = NodeManagerPlugin.Instance.Nodes.Count - 1;
                 NodeManagerPlugin.Instance.SpitNode(SelectedNodeIndex);
                 nodeCount = NodeManagerPlugin.Instance.RefreshManeuverNodes();
@@ -1135,27 +1134,27 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
                 // thisNode = NodeControl.Nodes[SelectedNodeIndex];
 
             }
-            else if (addNode2) // FOR TESTING - ONLY AVAILABLE IN DEBUG BUILD
-            {
-                int nodeCount;
-                //nodeCount = NodeControl.RefreshManeuverNodes();
-                //Logger.LogInfo($"addNode (button): Number of nodes before add:         {nCount}");
-                MNCNodeControl.AddNode(orbit);
-                SelectedNodeIndex = MNCNodeControl.Nodes.Count - 1;
-                MNCNodeControl.SpitNode(SelectedNodeIndex);
-                //nodeCount = NodeControl.RefreshManeuverNodes();
-                //Logger.LogInfo($"addNode (button): Number of nodes after add:          {nodeCount}");
-                StartCoroutine(NodeManagerPlugin.Instance.RefreshNodes());
-                //nodeCount = NodeControl.RefreshManeuverNodes();
-                //Logger.LogInfo($"addNode (button): Number of nodes after RefreshNodes: {nodeCount}");
-                // NodeManagerPlugin.Instance.SpitNode(SelectedNodeIndex);
+            //else if (addNode2) // FOR TESTING - ONLY AVAILABLE IN DEBUG BUILD
+            //{
+            //    int nodeCount;
+            //    //nodeCount = NodeControl.RefreshManeuverNodes();
+            //    //Logger.LogInfo($"addNode (button): Number of nodes before add:         {nCount}");
+            //    MNCNodeControl.AddNode(orbit);
+            //    SelectedNodeIndex = MNCNodeControl.Nodes.Count - 1;
+            //    MNCNodeControl.SpitNode(SelectedNodeIndex);
+            //    //nodeCount = NodeControl.RefreshManeuverNodes();
+            //    //Logger.LogInfo($"addNode (button): Number of nodes after add:          {nodeCount}");
+            //    StartCoroutine(NodeManagerPlugin.Instance.RefreshNodes());
+            //    //nodeCount = NodeControl.RefreshManeuverNodes();
+            //    //Logger.LogInfo($"addNode (button): Number of nodes after RefreshNodes: {nodeCount}");
+            //    // NodeManagerPlugin.Instance.SpitNode(SelectedNodeIndex);
 
-                //StartCoroutine(NodeManagerPlugin.Instance.RefreshNodes());
-                //nodeCount = NodeControl.RefreshManeuverNodes();
-                //Logger.LogInfo($"addNode (button): Number of nodes after RefreshNodes: {nodeCount}");
+            //    //StartCoroutine(NodeManagerPlugin.Instance.RefreshNodes());
+            //    //nodeCount = NodeControl.RefreshManeuverNodes();
+            //    //Logger.LogInfo($"addNode (button): Number of nodes after RefreshNodes: {nodeCount}");
 
-                // thisNode = NodeControl.Nodes[SelectedNodeIndex];
-            }
+            //    // thisNode = NodeControl.Nodes[SelectedNodeIndex];
+            //}
 
         }
     }
