@@ -9,9 +9,9 @@
 * Requires [Node Manager 0.5.3+](https://spacedock.info/mod/3366/Node%20Manager)
 
 # Installation Instructions
- 1. Install BepInEx mod loader with Space Warp 1.0.1 or later (see link above) and run the game, then close it. If you've done this before, you can skip this step.
- 2. Install Node Manager 0.5.3 or later (see link above). From the NodeManager-x.x.x.zip file copy the 1BepInEx1 folder on top of your game's install folder. For those who've installed via Steam this may be found at `...\SteamLibrary\steamapps\common\Kerbal Space Program 2\`. The final path will look like: `...\Kerbal Space Program 2\BepInEx\plugins\node_manager`.
- 3. Copy the `BepInEx` folder from this mod's ZIP file to your KSP root directory. The final path will look like: `...\Kerbal Space Program 2\BepInEx\plugins\maneuver_node_controller`.
+1. Download and extract BepInEx mod loader with SpaceWarp 1.0.1 or later (see link above) into your game folder and run the game, then close it. If you've done this before, you can skip this step. If you've installed the game via Steam, then this is probably here: `C:\Program Files (x86)\Steam\steamapps\common\Kerbal Space Program 2`. If you complete this step correctly you'll have a **BepInEx** subfolder in that directory along with the following files (in addition to what was there before): **changelog.txt, doorstop_config.ini, winhttp.dll**
+1. Install Node Manager 0.5.2 or later (see link above). From the NodeManager-x.x.x.zip file copy the `BepInEx` folder on top of your game's install folder. If done correctly, you should have the following folder structure within your KSP2 game folder: `...\Kerbal Space Program 2\BepInEx\plugins\node_manager`.
+1. Download and extract this mod into the game folder. From the FlightPlan-x.x.x.zip file copy the `BepInEx` folder on top of your game's install folder. If done correctly, you should have the following folder structure within your KSP2 game folder: `...\Kerbal Space Program 2\BepInEx\plugins\maneuver_node_controller`.
 
 # License
 Maneuver Node Controller and its originally authored code is distributed under the CC BY-SA 4.0 license.
