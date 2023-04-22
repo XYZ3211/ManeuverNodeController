@@ -5,12 +5,15 @@ using KSP.Sim.Maneuver;
 using KSP.Sim;
 using MNCUtilities;
 using ManeuverNodeController;
+using KSP.Messages.PropertyWatchers;
 
 namespace MNCNodeControls;
 
 public static class MNCNodeControl
 {
     public static List<ManeuverNodeData> Nodes = new();
+    public static VesselComponent activeVessel;
+    public static ManeuverNodeData currentNode;
 
     //public static ManeuverNodeData getCurrentNode(ref List<ManeuverNodeData> activeNodes)
     //{
@@ -20,21 +23,19 @@ public static class MNCNodeControl
 
     public static void DeleteNodes(int SelectedNodeIndex)
     {
-        //var activeVesselPlan = Utility.activeVessel.SimulationObject.FindComponent<ManeuverPlanComponent>();
-        //List<ManeuverNodeData> nodeData = new List<ManeuverNodeData>();
-        var nodes = MNCUtility.activeVessel.SimulationObject?.FindComponent<ManeuverPlanComponent>()?.GetNodes();
+        RefreshManeuverNodes();
         List<ManeuverNodeData> nodesToDelete = new List<ManeuverNodeData>();
 
         //var nodeToDelete = activeVesselPlan.GetNodes()[SelectedNodeIndex];
         //nodeData.Add(nodeToDelete);
         // This should never happen, but better be safe
-        if (SelectedNodeIndex + 1 > nodes.Count)
-            SelectedNodeIndex = Math.Max(0, nodes.Count - 1);
+        if (SelectedNodeIndex + 1 > Nodes.Count)
+            SelectedNodeIndex = Math.Max(0, Nodes.Count - 1);
 
-        var nodeToDelete = nodes[SelectedNodeIndex];
+        var nodeToDelete = Nodes[SelectedNodeIndex];
         nodesToDelete.Add(nodeToDelete);
 
-        foreach (ManeuverNodeData node in nodes)
+        foreach (ManeuverNodeData node in Nodes)
         {
             if (!nodesToDelete.Contains(node) && (!nodeToDelete.IsOnManeuverTrajectory || nodeToDelete.Time < node.Time))
                 nodesToDelete.Add(node);
@@ -73,8 +74,15 @@ public static class MNCNodeControl
         ManeuverNodeControllerMod.Logger.LogInfo($"RelatedSimID:             {node.RelatedSimID}");
         ManeuverNodeControllerMod.Logger.LogInfo($"SimTransform:             {node.SimTransform}");
     }
+
+    public static void RefreshActiveVesselAndCurrentManeuver()
+    {
+        activeVessel = GameManager.Instance?.Game?.ViewController?.GetActiveVehicle(true)?.GetSimVessel(true);
+        currentNode = activeVessel != null ? GameManager.Instance?.Game?.SpaceSimulation.Maneuvers.GetNodesForVessel(activeVessel.GlobalId).FirstOrDefault() : null;
+    }
     public static int RefreshManeuverNodes()
     {
+        RefreshActiveVesselAndCurrentManeuver();
         ManeuverPlanComponent activeVesselPlan = MNCUtility.activeVessel?.SimulationObject?.FindComponent<ManeuverPlanComponent>();
         if (activeVesselPlan != null)
         {
@@ -87,9 +95,7 @@ public static class MNCNodeControl
 
     private static IPatchedOrbit GetLastOrbit(bool silent = true)
     {
-        // ManeuverNodeControllerMod.Logger.LogDebug("GetLastOrbit");
-        //List<ManeuverNodeData> patchList =
-        //    GameManager.Instance.Game.SpaceSimulation.Maneuvers.GetNodesForVessel(Utility.activeVessel.SimulationObject.GlobalId);
+        RefreshManeuverNodes();
 
         if (!silent)
             ManeuverNodeControllerMod.Logger.LogDebug($"GetLastOrbit: Nodes.Count = {Nodes.Count}");
@@ -128,7 +134,7 @@ public static class MNCNodeControl
 
     public static void CreateManeuverNodeAtUT(Vector3d burnVector, double UT, double burnDurationOffsetFactor = -0.5)
     {
-        // ManeuverNodeControllerMod.Logger.LogDebug("CreateManeuverNodeAtUT");
+        RefreshManeuverNodes();
         PatchedConicsOrbit referencedOrbit = MNCNodeControl.GetLastOrbit(true) as PatchedConicsOrbit;
         if (referencedOrbit == null)
         {
@@ -240,12 +246,12 @@ public static class MNCNodeControl
         MNCUtility.RefreshActiveVesselAndCurrentManeuver();
 
         // Update the node to put a gizmo on it
-        MNCNodeControl.UpdateNode(nodeData, nodeTimeAdj);
+        MNCNodeControl.UpdateNode(nodeData);
 
         // ManeuverNodeControllerMod.Logger.LogDebug("AddManeuverNode Done");
     }
 
-    public static void UpdateNode(ManeuverNodeData nodeData, double nodeTimeAdj = 0)
+    public static void UpdateNode(ManeuverNodeData nodeData)
     {
         MapCore mapCore = null;
         GameManager.Instance.Game.Map.TryGetMapCore(out mapCore);
@@ -291,7 +297,7 @@ public static class MNCNodeControl
 
         // Utility.RefreshActiveVesselAndCurrentManeuver(); // do we need this?
 
-        if (MNCUtility.currentNode != null)
+        if (mapCore)
         {
             // Manage the maneuver on the map
             maneuverManager.RemoveAll();
@@ -299,7 +305,7 @@ public static class MNCNodeControl
             catch (Exception e) { ManeuverNodeControllerMod.Logger.LogError($"UpdateNode: caught exception on call to mapCore.map3D.ManeuverManager.GetNodeDataForVessels(): {e}"); }
             try { maneuverManager.UpdateAll(); }
             catch (Exception e) { ManeuverNodeControllerMod.Logger.LogError($"UpdateNode: caught exception on call to mapCore.map3D.ManeuverManager.UpdateAll(): {e}"); }
-            try { maneuverManager.UpdatePositionForGizmo(MNCUtility.currentNode.NodeID); }
+            try { maneuverManager.UpdatePositionForGizmo(nodeData.NodeID); }
             catch (Exception e) { ManeuverNodeControllerMod.Logger.LogError($"UpdateNode: caught exception on call to mapCore.map3D.ManeuverManager.UpdatePositionForGizmo(): {e}"); }
         }
     }
