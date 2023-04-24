@@ -974,18 +974,19 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
                 minTime = NodeManagerPlugin.Instance.Nodes[SelectedNodeIndex - 1].Time + Math.Max(timeSmallStep, 5);
             if (SelectedNodeIndex < NodeManagerPlugin.Instance.Nodes.Count - 1)
                 maxTime = NodeManagerPlugin.Instance.Nodes[SelectedNodeIndex + 1].Time - Math.Max(timeSmallStep, 5);
-            Logger.LogDebug($"SelectedNodeIndex      : {SelectedNodeIndex}");
-            for (int i= 0; i < NodeManagerPlugin.Instance.Nodes.Count; i++)
-            {
-                var thisNodeTime = NodeManagerPlugin.Instance.Nodes[i].Time;
-                if (i == SelectedNodeIndex)
-                    Logger.LogDebug($"nodeTime[{i}]*         : {thisNodeTime - UT} from now.");
-                else
-                    Logger.LogDebug($"nodeTime[{i}]          : {thisNodeTime - UT} from now.");
-            }
-            Logger.LogDebug($"minTime for node adjust: {minTime - UT} from now.");
-            Logger.LogDebug($"maxTime for node adjust: {maxTime - UT} from now.");
-            Logger.LogDebug($"nodeTime               : {nodeTime - UT} from now.");
+
+            // Logger.LogDebug($"SelectedNodeIndex      : {SelectedNodeIndex}");
+            // for (int i= 0; i < NodeManagerPlugin.Instance.Nodes.Count; i++)
+            // {
+            //     var thisNodeTime = NodeManagerPlugin.Instance.Nodes[i].Time;
+            //     if (i == SelectedNodeIndex)
+            //         Logger.LogDebug($"nodeTime[{i}]*         : {thisNodeTime - UT} from now.");
+            //     else
+            //         Logger.LogDebug($"nodeTime[{i}]          : {thisNodeTime - UT} from now.");
+            // }
+            // Logger.LogDebug($"minTime for node adjust: {minTime - UT} from now.");
+            // Logger.LogDebug($"maxTime for node adjust: {maxTime - UT} from now.");
+            // Logger.LogDebug($"nodeTime               : {nodeTime - UT} from now.");
 
             if (timeDec1) // Subtract timeSmallStep
             {
@@ -1057,7 +1058,6 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
                 // thisNode.Time = vessel.Orbit.TimeOfDN(target.Orbit, UT);
             }
 
-            Logger.LogDebug($"nodeTime after adjsut  : {nodeTime - UT} from now.");
             if (nodeTime < minTime) // Not allowed to move the node prior to anopther node
             {
                 nodeTime = minTime;
@@ -1068,6 +1068,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
                 nodeTime = maxTime;
                 Logger.LogDebug($"Limiting nodeTime to no more than {nodeTime - UT} from now.");
             }
+            Logger.LogDebug($"nodeTime after adjsut  : {nodeTime - UT} from now.");
 
             // Push the update to the node
             // thisNode.Time = nodeTime;
@@ -1108,17 +1109,18 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             }
             else if (addNode)
             {
-                int nodeCount;
+                // int nodeCount;
                 bool pass;
-                nodeCount =  NodeManagerPlugin.Instance.RefreshManeuverNodes();
+                // nodeCount =  NodeManagerPlugin.Instance.RefreshManeuverNodes();
 
                 StartCoroutine(NodeManagerPlugin.Instance.RefreshNodes());
-                Logger.LogDebug($"addNode (button): Number of nodes before add:         {nodeCount}");
+
+                // Logger.LogDebug($"addNode (button): Number of nodes before add:         {nodeCount}");
                 pass = NodeManagerPlugin.Instance.AddNode();
                 SelectedNodeIndex = NodeManagerPlugin.Instance.Nodes.Count - 1;
                 NodeManagerPlugin.Instance.SpitNode(SelectedNodeIndex);
-                nodeCount = NodeManagerPlugin.Instance.RefreshManeuverNodes();
-                Logger.LogDebug($"addNode (button): Number of nodes after add:          {nodeCount}");
+                // nodeCount = NodeManagerPlugin.Instance.RefreshManeuverNodes();
+                // Logger.LogDebug($"addNode (button): Number of nodes after add:          {nodeCount}");
                 // StartCoroutine(NodeManagerPlugin.Instance.RefreshNodes());
                 //nodeCount = NodeControl.RefreshManeuverNodes();
                 //Logger.LogInfo($"addNode (button): Number of nodes after RefreshNodes: {nodeCount}");
