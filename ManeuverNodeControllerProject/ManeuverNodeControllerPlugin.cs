@@ -833,7 +833,6 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             maneuverPlanComponent = simObject?.FindComponent<ManeuverPlanComponent>();
         }
 
-
         if (thisNode == null && MNCUtility.activeVessel != null)
         {
             if (addNode)
@@ -945,7 +944,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             // Call RefreshNodes to update the nodes in a way that allows the game to catch up with the updates
             StartCoroutine(NodeManagerPlugin.Instance.RefreshNodes());
 
-            Logger.LogDebug($"handleButtons: Updated BurnVector    [{thisNode.BurnVector.x}, {thisNode.BurnVector.y}, {thisNode.BurnVector.z}] m/s");
+            Logger.LogDebug($"handleButtons: Updated BurnVector    [{thisNode.BurnVector.x:F3}, {thisNode.BurnVector.y:F3}, {thisNode.BurnVector.z:F3}] m/s");
             //Logger.LogDebug($"handleButtons: BurnVector.normalized [{thisNode.BurnVector.normalized.x}, {thisNode.BurnVector.normalized.y}, {thisNode.BurnVector.normalized.z}] m/s");
 
             // If we touched a later node, go touch the first node or the patch after the later node
@@ -1061,14 +1060,14 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             if (nodeTime < minTime) // Not allowed to move the node prior to anopther node
             {
                 nodeTime = minTime;
-                Logger.LogDebug($"Limiting nodeTime to no less than {nodeTime - UT} from now.");
+                Logger.LogDebug($"Limiting nodeTime to no less than {(nodeTime - UT):F3} from now.");
             }
             if (maxTime > minTime && nodeTime > maxTime) // Not allowed to move the node ahead of a later node
             {
                 nodeTime = maxTime;
-                Logger.LogDebug($"Limiting nodeTime to no more than {nodeTime - UT} from now.");
+                Logger.LogDebug($"Limiting nodeTime to no more than {(nodeTime - UT):F3} from now.");
             }
-            Logger.LogDebug($"nodeTime after adjsut  : {nodeTime - UT} from now.");
+            Logger.LogDebug($"nodeTime after adjsut  : {(nodeTime - UT):F3} from now.");
 
             // Push the update to the node
             // thisNode.Time = nodeTime;
