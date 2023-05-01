@@ -18,6 +18,7 @@ using SpaceWarp.API.UI.Appbar;
 using System.Collections;
 using System.Reflection;
 using UnityEngine;
+using static UnityEngine.UIElements.StyleSheets.Dimension;
 
 namespace ManeuverNodeController;
 
@@ -44,7 +45,6 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     private Rect windowRect;
     private int windowWidth = Screen.width / 5; //384px on 1920x1080
     private int windowHeight = Screen.height / 3; //360px on 1920x1080
-    // private Rect closeBtnRect;
     private string progradeString = "0";
     private string normalString = "0";
     private string radialString = "0";
@@ -64,14 +64,13 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     private Vector3d burnParams;
     private PatchedConicsOrbit orbit;
 
-    private GUIStyle errorStyle, warnStyle, progradeStyle, normalStyle, radialStyle, labelStyle;
+    //private GUIStyle progradeStyle, normalStyle, radialStyle;
     private GameInstance game;
     private GUIStyle horizontalDivider = new GUIStyle();
     private GUISkin _spaceWarpUISkin;
     private GUIStyle ctrlBtnStyle;
     private GUIStyle smallBtnStyle;
     private GUIStyle textInputStyle;
-    // private GUIStyle closeBtnStyle;
     private GUIStyle snapBtnStyle;
     private GUIStyle nameLabelStyle;
     private GUIStyle valueLabelStyle;
@@ -164,101 +163,10 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
 
         _spaceWarpUISkin = Skins.ConsoleSkin;
 
-        textInputStyle = new GUIStyle(_spaceWarpUISkin.textField)
-        {
-            alignment = TextAnchor.LowerCenter,
-            padding = new RectOffset(10, 10, 0, 0),
-            contentOffset = new Vector2(0, 2),
-            fixedHeight = 18,
-            fixedWidth = (float)(windowWidth / 4),
-            clipping = TextClipping.Overflow,
-            margin = new RectOffset(0, 0, 10, 0)
-        };
-
-        ctrlBtnStyle = new GUIStyle(_spaceWarpUISkin.button)
-        {
-            alignment = TextAnchor.MiddleCenter,
-            padding = new RectOffset(0, 0, 0, 3),
-            contentOffset = new Vector2(0, 2),
-            fixedHeight = 16,
-            fixedWidth = (float)(windowWidth / 9) - 5,
-            // fontSize = 16,
-            clipping = TextClipping.Overflow,
-            margin = new RectOffset(0, 0, 10, 0)
-        };
-
-        smallBtnStyle = new GUIStyle(_spaceWarpUISkin.button)
-        {
-            alignment = TextAnchor.MiddleCenter,
-            padding = new RectOffset(10, 10, 0, 3),
-            contentOffset = new Vector2(0, 2),
-            fixedHeight = 25, // 16,
-            // fixedWidth = 95,
-            fontSize = 16,
-            clipping = TextClipping.Overflow,
-            margin = new RectOffset(0, 0, 10, 0)
-        };
-
-        snapBtnStyle = new GUIStyle(_spaceWarpUISkin.button)
-        {
-            alignment = TextAnchor.MiddleCenter,
-            padding = new RectOffset(0, 0, 0, 3),
-            contentOffset = new Vector2(0, 2),
-            fixedHeight = 20,
-            fixedWidth = (float)(windowWidth / 8) - 5,
-            // fontSize = 16,
-            clipping = TextClipping.Overflow,
-            margin = new RectOffset(0, 0, 10, 0)
-        };
-
-        nameLabelStyle = new GUIStyle(_spaceWarpUISkin.label);
-        nameLabelStyle.normal.textColor = new Color(.7f, .75f, .75f, 1);
-
-        valueLabelStyle = new GUIStyle(_spaceWarpUISkin.label)
-        {
-            alignment = TextAnchor.MiddleRight
-        };
-        valueLabelStyle.normal.textColor = new Color(.6f, .7f, 1, 1);
-
-        errorStyle = new GUIStyle(_spaceWarpUISkin.label)
-        {
-            alignment = TextAnchor.MiddleRight
-        };
-        errorStyle.normal.textColor = Color.red;
-
-        warnStyle = new GUIStyle(_spaceWarpUISkin.label)
-        {
-            alignment = TextAnchor.MiddleRight
-        };
-        warnStyle.normal.textColor = Color.yellow;
-
-        unitLabelStyle = new GUIStyle(valueLabelStyle)
-        {
-            fixedWidth = 24,
-            alignment = TextAnchor.MiddleLeft
-        };
-        unitLabelStyle.normal.textColor = new Color(.7f, .75f, .75f, 1);
-
-        //closeBtnStyle = new GUIStyle(_spaceWarpUISkin.button)
-        //{
-        //    fontSize = 12
-        //};
-
-        // closeBtnRect = new Rect(windowWidth - 23, 6, 16, 16);
-
-        labelStyle = warnStyle = new GUIStyle(_spaceWarpUISkin.label);
-        progradeStyle = new GUIStyle(_spaceWarpUISkin.label);
-        progradeStyle.normal.textColor = Color.green;
-        progradeStyle.fixedHeight = 24;
-        normalStyle = new GUIStyle(_spaceWarpUISkin.label);
-        normalStyle.normal.textColor = Color.magenta;
-        normalStyle.fixedHeight = 24;
-        radialStyle = new GUIStyle(_spaceWarpUISkin.label);
-        radialStyle.normal.textColor = Color.cyan;
-        radialStyle.fixedHeight = 24;
         horizontalDivider.fixedHeight = 2;
         horizontalDivider.margin = new RectOffset(0, 0, 4, 4);
 
+        // Register Flight AppBar button
         Appbar.RegisterAppButton(
             "Maneuver Node Cont.",
             ToolbarFlightButtonID,
@@ -272,69 +180,31 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     /// <summary>
     /// Subscribe to Messages KSP2 is using
     /// </summary>
-    private void SubscribeToMessages()
-    {
-        MNCUtility.RefreshGameManager();
+    //private void SubscribeToMessages()
+    //{
+    //    MNCUtility.RefreshGameManager();
 
-        // While in OAB we use the VesselDeltaVCalculationMessage event to refresh data as it's triggered a lot less frequently than Update()
-        // Utility.MessageCenter.Subscribe<VesselDeltaVCalculationMessage>(new Action<MessageCenterMessage>(this.RefreshStagingDataOAB));
+    //    // While in OAB we use the VesselDeltaVCalculationMessage event to refresh data as it's triggered a lot less frequently than Update()
+    //    // Utility.MessageCenter.Subscribe<VesselDeltaVCalculationMessage>(new Action<MessageCenterMessage>(this.RefreshStagingDataOAB));
 
-        // We are loading layout state when entering Flight or OAB game state
-        // Utility.MessageCenter.Subscribe<GameStateEnteredMessage>(new Action<MessageCenterMessage>(this.GameStateEntered));
+    //    // We are loading layout state when entering Flight or OAB game state
+    //    // Utility.MessageCenter.Subscribe<GameStateEnteredMessage>(new Action<MessageCenterMessage>(this.GameStateEntered));
 
-        // We are saving layout state when exiting from Flight or OAB game state
-        // Utility.MessageCenter.Subscribe<GameStateLeftMessage>(new Action<MessageCenterMessage>(this.GameStateLeft));
+    //    // We are saving layout state when exiting from Flight or OAB game state
+    //    // Utility.MessageCenter.Subscribe<GameStateLeftMessage>(new Action<MessageCenterMessage>(this.GameStateLeft));
 
-        // Resets node index
-        MNCUtility.MessageCenter.Subscribe<ManeuverRemovedMessage>(new Action<MessageCenterMessage>(this.OnManeuverRemovedMessage));
-    }
+    //    // Resets node index
+    //    MNCUtility.MessageCenter.Subscribe<ManeuverRemovedMessage>(new Action<MessageCenterMessage>(this.OnManeuverRemovedMessage));
+    //}
 
     private void OnManeuverRemovedMessage(MessageCenterMessage message)
     {
-        //var maneuverWindow = MicroWindows.Find(w => w.GetType() == typeof(ManeuverWindow)) as ManeuverWindow;
-        //maneuverWindow.OnManeuverRemovedMessage(message);
-
-        // Grab the time of the currently selected node
-        // double selectedNodeTime = NodeManagerPlugin.Instance.Nodes[SelectedNodeIndex].Time;
-
-        //Logger.LogDebug($"OnManeuverRemovedMessage: SelectedNodeIndex = {SelectedNodeIndex}");
-        //Logger.LogDebug($"OnManeuverRemovedMessage: selectedNodeTime = {selectedNodeTime}");
         // Update the lsit of nodes to capture the effect of the node deletion
         var nodeCount = NodeManagerPlugin.Instance.RefreshManeuverNodes();
         if (nodeCount == 0)
             SelectedNodeIndex = 0;
         if (SelectedNodeIndex + 1 > nodeCount && nodeCount > 0)
             SelectedNodeIndex = nodeCount - 1;
-
-        //// If we got a valid selectedNodeTime
-        //if (selectedNodeTime != null)
-        //{
-        //    // Look for the node with the selectedNodeTime
-        //    int newSelectedNode = -1;
-        //    for (int i = 0; i < nodeCount; i++)
-        //    {
-        //        Logger.LogDebug($"OnManeuverRemovedMessage: Node[{i}].Time = {NodeManagerPlugin.Instance.Nodes[i].Time}");
-        //        if (selectedNodeTime == NodeManagerPlugin.Instance.Nodes[i].Time)
-        //        {
-        //            newSelectedNode = i;
-        //            Logger.LogDebug($"OnManeuverRemovedMessage: Found Node {i} with matching time");
-        //            SelectedNodeIndex = newSelectedNode;
-        //            Logger.LogDebug($"OnManeuverRemovedMessage: Setting SelectedNodeIndex to {newSelectedNode}");
-        //        }
-        //    }
-        //    if (newSelectedNode < 0)
-        //    {
-        //        SelectedNodeIndex = 0;
-        //        Logger.LogDebug($"OnManeuverRemovedMessage: No node with matching time found. Setting newSelectedNode to 0");
-        //    }
-        //}
-        //else
-        //{
-        //    SelectedNodeIndex = 0;
-        //    Logger.LogDebug($"OnManeuverRemovedMessage: selectedNodeTime was null. Setting newSelectedNode to 0");
-        //}
-
-        // SelectedNodeIndex = 0;
     }
 
     //private void OnManeuverCreatedMessage(MessageCenterMessage message)
@@ -409,27 +279,27 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             ToolTipsManager.DrawToolTips();
             
             // check editor focus and unset Input if needed
-            // UI_Fields.CheckEditor();
-            if (gameInputState && inputFields.Contains(GUI.GetNameOfFocusedControl()))
-            {
-                gameInputState = false;
-                GameManager.Instance.Game.Input.Disable();
-            }
+            UI_Fields.CheckEditor();
+            //if (gameInputState && inputFields.Contains(GUI.GetNameOfFocusedControl()))
+            //{
+            //    gameInputState = false;
+            //    GameManager.Instance.Game.Input.Disable();
+            //}
 
-            if (!gameInputState && !inputFields.Contains(GUI.GetNameOfFocusedControl()))
-            {
-                gameInputState = true;
-                GameManager.Instance.Game.Input.Enable();
-            }
+            //if (!gameInputState && !inputFields.Contains(GUI.GetNameOfFocusedControl()))
+            //{
+            //    gameInputState = true;
+            //    GameManager.Instance.Game.Input.Enable();
+            //}
         }
-        else
-        {
-            if (!gameInputState)
-            {
-                gameInputState = true;
-                GameManager.Instance.Game.Input.Enable();
-            }
-        }
+        //else
+        //{
+        //    if (!gameInputState)
+        //    {
+        //        gameInputState = true;
+        //        GameManager.Instance.Game.Input.Enable();
+        //    }
+        //}
     }
 
     private void FillWindow(int windowID)
@@ -440,11 +310,6 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             
         // Add a MNC icon to the upper left corner of the GUI
         GUI.Label(new Rect(9, 2, 29, 29), MNCStyles.icon, MNCStyles.icons_label);
-
-        //if (CloseButton())
-        //{
-        //    CloseWindow();
-        //}
 
         double UT;
         double dvRemaining;
@@ -475,7 +340,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         if (thisNode == null)
         {
             GUILayout.BeginHorizontal();
-            GUILayout.Label("The active vessel has no maneuver nodes.", errorStyle);
+            GUILayout.Label("The active vessel has no maneuver nodes.", MNCStyles.error);
             GUILayout.EndHorizontal();
             GUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
@@ -486,32 +351,32 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         }
         else
         {
-            DrawEntry2Button($"Node: {(SelectedNodeIndex + 1)} of {NodeManagerPlugin.Instance.Nodes.Count}", labelStyle, ref decNode, "<", ref incNode, ">");
+            DrawEntry2Button($"Node: {(SelectedNodeIndex + 1)} of {NodeManagerPlugin.Instance.Nodes.Count}", MNCStyles.label, ref decNode, "<", ref incNode, ">");
             Draw2Button(ref delNode, "Del Node", ref addNode, "Add Node");
 #if DEBUG
             DrawButton(ref spitNode, "Check Node");
 #endif
             GUILayout.Box("", horizontalDivider);
 
-            DrawEntry("Total Maneuver ∆v", thisNode.BurnRequiredDV.ToString("n2"), labelStyle, "m/s");
+            DrawEntry("Total Maneuver ∆v", thisNode.BurnRequiredDV.ToString("n2"), MNCStyles.label, "m/s");
             if (SelectedNodeIndex == 0)
                 dvRemaining = (MNCUtility.activeVessel.Orbiter.ManeuverPlanSolver.GetVelocityAfterFirstManeuver(out UT).vector - orbit.GetOrbitalVelocityAtUTZup(UT)).magnitude;
             else
                 dvRemaining = thisNode.BurnRequiredDV;
             UT = game.UniverseModel.UniversalTime;
-            DrawEntry("∆v Remaining", dvRemaining.ToString("n2"), labelStyle, "m/s");
+            DrawEntry("∆v Remaining", dvRemaining.ToString("n2"), MNCStyles.label, "m/s");
             string start = MNCUtility.SecondsToTimeString(thisNode.Time - UT);
             string duration = MNCUtility.SecondsToTimeString(thisNode.BurnDuration);
             if (thisNode.Time < UT)
-                Draw2Entries("Start", "Duration", labelStyle, start, duration, "s", true, errorStyle);
+                Draw2LEntries("Start", "Duration", MNCStyles.label, start, duration, "s", true, MNCStyles.error);
             else if (thisNode.Time < UT + 30)
-                Draw2Entries("Start", "Duration", labelStyle, start, duration, "s", true, warnStyle);
+                Draw2LEntries("Start", "Duration", MNCStyles.label, start, duration, "s", true, MNCStyles.warning);
             else
-                Draw2Entries("Start", "Duration", labelStyle, start, duration, "s");
+                Draw2LEntries("Start", "Duration", MNCStyles.label, start, duration, "s");
             GUILayout.Box("", horizontalDivider);
-            DrawEntry("Prograde ∆v", thisNode.BurnVector.z.ToString("n2"), progradeStyle, "m/s");
-            DrawEntry("Normal ∆v", thisNode.BurnVector.y.ToString("n2"), normalStyle, "m/s");
-            DrawEntry("Radial ∆v", thisNode.BurnVector.x.ToString("n2"), radialStyle, "m/s");
+            DrawEntry("Prograde ∆v", thisNode.BurnVector.z.ToString("n2"), MNCStyles.progradeStyle, "m/s");
+            DrawEntry("Normal ∆v", thisNode.BurnVector.y.ToString("n2"), MNCStyles.normalStyle, "m/s");
+            DrawEntry("Radial ∆v", thisNode.BurnVector.x.ToString("n2"), MNCStyles.radialStyle, "m/s");
             GUILayout.Box("", horizontalDivider);
             if (advancedMode)
             {
@@ -534,16 +399,15 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
 
     private void drawAdvancedMode()
     {
-        DrawEntryTextField("Prograde ∆v", ref progradeString, "m/s");
-        double.TryParse(progradeString, out burnParams.z);
-        DrawEntryTextField("Normal ∆v", ref normalString, "m/s");
-        double.TryParse(normalString, out burnParams.y);
-        DrawEntryTextField("Radial ∆v", ref radialString, "m/s");
-        double.TryParse(radialString, out burnParams.x);
+        burnParams.z = DrawEntryTextField("Prograde ∆v", ref burnParams.z, "m/s");
+        // double.TryParse(progradeString, out burnParams.z);
+        burnParams.y = DrawEntryTextField("Normal ∆v", ref burnParams.y, "m/s");
+        // double.TryParse(normalString, out burnParams.y);
+        burnParams.x = DrawEntryTextField("Radial ∆v", ref burnParams.x, "m/s");
+        // double.TryParse(radialString, out burnParams.x);
         if (GUILayout.Button("Apply Changes to Node"))
         {
             ManeuverNodeData nodeData = GameManager.Instance.Game.SpaceSimulation.Maneuvers.GetNodesForVessel(GameManager.Instance.Game.ViewController.GetActiveVehicle(true).Guid)[0];
-            //nodeData.BurnVector = burnParams;
             game.UniverseModel.FindVesselComponent(nodeData.RelatedSimID)?.SimulationObject.FindComponent<ManeuverPlanComponent>().UpdateChangeOnNode(nodeData, burnParams);
             game.UniverseModel.FindVesselComponent(nodeData.RelatedSimID)?.SimulationObject.FindComponent<ManeuverPlanComponent>().RefreshManeuverNodeState(0);
             Logger.LogInfo($"drawAdvancedMode: {nodeData.ToString()}");
@@ -554,32 +418,32 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     {
         string nextApA, nextPeA, nextInc, nextEcc, nextLAN, previousApA, previousPeA, previousInc, previousEcc, previousLAN;
 
-        DrawEntryTextField("Absolute ∆v", ref absoluteValueString, "m/s");
-        double.TryParse(absoluteValueString, out absoluteValue);
-        DrawEntryTextField("Small Step ∆v", ref smallStepString, "m/s");
-        double.TryParse(smallStepString, out smallStep);
-        DrawEntryTextField("Large Step ∆v", ref bigStepString, "m/s");
-        double.TryParse(bigStepString, out bigStep);
+        absoluteValue = DrawEntryTextField("Absolute ∆v", ref absoluteValue, "m/s");
+        // double.TryParse(absoluteValueString, out absoluteValue);
+        smallStep = DrawEntryTextField("Small Step ∆v", ref smallStep, "m/s");
+        // double.TryParse(smallStepString, out smallStep);
+        bigStep = DrawEntryTextField("Large Step ∆v", ref bigStep, "m/s");
+        // double.TryParse(bigStepString, out bigStep);
         GUILayout.Box("", horizontalDivider);
-        DrawEntry5Button("Prograde", progradeStyle, ref pDec2, "<<", ref pDec1, "<", ref pInc1, ">", ref pInc2, ">>", ref pAbs, "Abs");
-        DrawEntry5Button("Normal", normalStyle, ref nDec2, "<<", ref nDec1, "<", ref nInc1, ">", ref nInc2, ">>", ref nAbs, "Abs");
-        DrawEntry5Button("Radial", radialStyle, ref rDec2, "<<", ref rDec1, "<", ref rInc1, ">", ref rInc2, ">>", ref rAbs, "Abs");
+        DrawEntry5Button("Prograde", MNCStyles.progradeStyle, ref pDec2, "<<", ref pDec1, "<", ref pInc1, ">", ref pInc2, ">>", ref pAbs, "Abs");
+        DrawEntry5Button("Normal", MNCStyles.normalStyle, ref nDec2, "<<", ref nDec1, "<", ref nInc1, ">", ref nInc2, ">>", ref nAbs, "Abs");
+        DrawEntry5Button("Radial", MNCStyles.radialStyle, ref rDec2, "<<", ref rDec1, "<", ref rInc1, ">", ref rInc2, ">>", ref rAbs, "Abs");
         GUILayout.Box("", horizontalDivider);
         GUILayout.Box("", horizontalDivider);
         SnapSelectionGUI();
         GUILayout.Box("", horizontalDivider);
-        DrawEntryTextField("Small Time Step", ref timeSmallStepString, "s");
-        double.TryParse(timeSmallStepString, out timeSmallStep);
-        DrawEntryTextField("Large Time Step", ref timeLargeStepString, "s");
-        double.TryParse(timeLargeStepString, out timeLargeStep);
+        timeSmallStep = DrawEntryTextField("Small Time Step", ref timeSmallStep, "s");
+        // double.TryParse(timeSmallStepString, out timeSmallStep);
+        timeLargeStep = DrawEntryTextField("Large Time Step", ref timeLargeStep, "s");
+        // double.TryParse(timeLargeStepString, out timeLargeStep);
         GUILayout.Box("", horizontalDivider);
-        DrawEntry4Button("Time", labelStyle, ref timeDec2, "<<", ref timeDec1, "<", ref timeInc1, ">", ref timeInc2, ">>");
+        DrawEntry4Button("Time", MNCStyles.label, ref timeDec2, "<<", ref timeDec1, "<", ref timeInc1, ">", ref timeInc2, ">>");
         GUILayout.Box("", horizontalDivider);
         var numOrbits = Math.Truncate((thisNode.Time - game.UniverseModel.UniversalTime) / game.UniverseModel.FindVesselComponent(thisNode.RelatedSimID).Orbit.period).ToString("n0");
-        DrawEntry2Button("+/- Orbitial Period", labelStyle, ref orbitDec, "-", ref orbitInc, "+");
+        DrawEntry2Button("+/- Orbitial Period", MNCStyles.label, ref orbitDec, "-", ref orbitInc, "+");
         DrawEntry("Maneuver Node in", $"{numOrbits} orbit(s)");
         GUILayout.Box("", horizontalDivider);
-        Draw2Entries("Previous Orbit", "Next Orbit", labelStyle);
+        Draw2Entries("Previous Orbit", "Next Orbit", MNCStyles.label, "", false);
 
         var Orbiter = MNCUtility.activeVessel.Orbiter;
         var ManeuverPlanSolver = Orbiter?.ManeuverPlanSolver;
@@ -639,18 +503,13 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             nextLAN = PatchedConicsList[SelectedNodeIndex].longitudeOfAscendingNode.ToString("n3");
         }
 
-        Draw2Entries("Ap", "Ap", nameLabelStyle, previousApA, nextApA, "km");
-        Draw2Entries("Pe", "Pe", nameLabelStyle, previousPeA, nextPeA, "km");
-        Draw2Entries("Inc", "Inc", nameLabelStyle, previousInc, nextInc, "°", false);
-        Draw2Entries("Ecc", "Ecc", nameLabelStyle, previousEcc, nextEcc);
-        Draw2Entries("LAN", "LAN", nameLabelStyle, previousLAN, nextLAN, "°", false);
+        Draw2Entries("Ap", "Ap", MNCStyles.name_label_r, previousApA, nextApA, "km", true, MNCStyles.value_label_l, MNCStyles.value_label_l);
+        Draw2Entries("Pe", "Pe", MNCStyles.name_label_r, previousPeA, nextPeA, "km", true, MNCStyles.value_label_l, MNCStyles.value_label_l);
+        Draw2Entries("Inc", "Inc", MNCStyles.name_label_r, previousInc, nextInc, "°", false, MNCStyles.value_label_l, MNCStyles.value_label_l);
+        Draw2Entries("Ecc", "Ecc", MNCStyles.name_label_r, previousEcc, nextEcc, "", false, MNCStyles.value_label_l, MNCStyles.value_label_l);
+        Draw2Entries("LAN", "LAN", MNCStyles.name_label_r, previousLAN, nextLAN, "°", false, MNCStyles.value_label_l, MNCStyles.value_label_l);
         GUILayout.Box("", horizontalDivider);
     }
-
-    //private bool CloseButton()
-    //{
-    //    return GUI.Button(closeBtnRect, "x", closeBtnStyle);
-    //}
 
     private void CloseWindow()
     {
@@ -674,14 +533,41 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     private void DrawEntry(string entryName, string value, GUIStyle entryStyle = null, string unit = "", bool unitSpace = true)
     {
         if (entryStyle == null)
-            entryStyle = nameLabelStyle;
+            entryStyle = MNCStyles.name_label;
         GUILayout.BeginHorizontal();
         GUILayout.Label($"{entryName}:", entryStyle);
         GUILayout.FlexibleSpace();
-        GUILayout.Label(value, valueLabelStyle);
+        GUILayout.Label(value, MNCStyles.value_label);
         if (unitSpace)
             GUILayout.Space(5);
-        GUILayout.Label(unit, unitLabelStyle);
+        GUILayout.Label(unit, MNCStyles.unit_label);
+        GUILayout.EndHorizontal();
+        GUILayout.Space(spacingAfterEntry);
+    }
+
+    private void Draw2Entries(string entryName1, string entryName2, GUIStyle entryStyle = null, string unit = "", bool unitSpace = true)
+    {
+        if (entryStyle == null)
+        {
+            entryStyle = MNCStyles.name_label;
+            entryStyle.fixedHeight = MNCStyles.value_label.fixedHeight;
+        }
+        GUILayout.BeginHorizontal();
+        GUILayout.Label($"{entryName1}: ", entryStyle);
+        if (unit.Length > 0)
+        {
+            if (unitSpace)
+                GUILayout.Space(5);
+            GUILayout.Label(unit, MNCStyles.unit_label);
+        }
+        GUILayout.FlexibleSpace();
+        GUILayout.Label($"{entryName2}: ", entryStyle);
+        if (unit.Length > 0)
+        {
+            if (unitSpace)
+                GUILayout.Space(5);
+            GUILayout.Label(unit, MNCStyles.unit_label);
+        }
         GUILayout.EndHorizontal();
         GUILayout.Space(spacingAfterEntry);
     }
@@ -690,16 +576,47 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     {
         if (entryStyle == null)
         {
-            entryStyle = nameLabelStyle;
-            entryStyle.fixedHeight = valueLabelStyle.fixedHeight;
+            entryStyle = MNCStyles.name_label;
+            entryStyle.fixedHeight = MNCStyles.value_label.fixedHeight;
         }
         if (value1Style == null)
         {
-            value1Style = valueLabelStyle;
+            value1Style = MNCStyles.value_label;
         }
         if (value2Style == null)
         {
-            value2Style = valueLabelStyle;
+            value2Style = MNCStyles.value_label;
+        }
+        GUILayout.BeginHorizontal();
+        GUILayout.Label($"{entryName1}:", entryStyle, GUILayout.Width(40));
+        if (value1.Length > 0 && !unitSpace)
+            GUILayout.Label($"{value1}{unit}", value1Style, GUILayout.Width(90));
+        if (value1.Length > 0 && unitSpace)
+            GUILayout.Label($"{value1} {unit}", value1Style, GUILayout.Width(90));
+        GUILayout.FlexibleSpace();
+        GUILayout.Label($"{entryName2}: ", entryStyle, GUILayout.Width(40));
+        if (value2.Length > 0 && !unitSpace)
+            GUILayout.Label($"{value2}{unit}", value2Style, GUILayout.Width(90));
+        if (value2.Length > 0 && unitSpace)
+            GUILayout.Label($"{value2} {unit}", value2Style, GUILayout.Width(90));
+        GUILayout.EndHorizontal();
+        GUILayout.Space(spacingAfterEntry);
+    }
+
+    private void Draw2LEntries(string entryName1, string entryName2, GUIStyle entryStyle = null, string value1 = "", string value2 = "", string unit = "", bool unitSpace = true, GUIStyle value1Style = null, GUIStyle value2Style = null)
+    {
+        if (entryStyle == null)
+        {
+            entryStyle = MNCStyles.name_label;
+            entryStyle.fixedHeight = MNCStyles.value_label.fixedHeight;
+        }
+        if (value1Style == null)
+        {
+            value1Style = MNCStyles.value_label;
+        }
+        if (value2Style == null)
+        {
+            value2Style = MNCStyles.value_label;
         }
         GUILayout.BeginHorizontal();
         GUILayout.Label($"{entryName1}: ", entryStyle);
@@ -709,7 +626,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             GUILayout.Label(value1, value1Style);
             if (unitSpace)
                 GUILayout.Space(5);
-            GUILayout.Label(unit, unitLabelStyle);
+            GUILayout.Label(unit, MNCStyles.unit_label);
         }
         GUILayout.FlexibleSpace();
         GUILayout.Label($"{entryName2}: ", entryStyle);
@@ -719,7 +636,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             GUILayout.Label(value2, value2Style);
             if (unitSpace)
                 GUILayout.Space(5);
-            GUILayout.Label(unit, unitLabelStyle);
+            GUILayout.Label(unit, MNCStyles.unit_label);
         }
         GUILayout.EndHorizontal();
         GUILayout.Space(spacingAfterEntry);
@@ -729,7 +646,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     {
         GUILayout.BeginHorizontal();
         GUILayout.FlexibleSpace();
-        button = GUILayout.Button(buttonStr, smallBtnStyle);
+        button = GUILayout.Button(buttonStr, MNCStyles.small_btn);
         GUILayout.FlexibleSpace();
         GUILayout.EndHorizontal();
         GUILayout.Space(spacingAfterEntry);
@@ -739,9 +656,9 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     {
         GUILayout.BeginHorizontal();
         GUILayout.FlexibleSpace();
-        button1 = GUILayout.Button(buttonStr1, smallBtnStyle);
+        button1 = GUILayout.Button(buttonStr1, MNCStyles.small_btn);
         GUILayout.FlexibleSpace();
-        button2 = GUILayout.Button(buttonStr2, smallBtnStyle);
+        button2 = GUILayout.Button(buttonStr2, MNCStyles.small_btn);
         GUILayout.FlexibleSpace();
         GUILayout.EndHorizontal();
         GUILayout.Space(spacingAfterEntry);
@@ -749,7 +666,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     private void DrawEntry2Button(string entryName, GUIStyle entryStyle, ref bool button1, string button1Str, ref bool button2, string button2Str, string value = "")
     {
         GUILayout.BeginHorizontal();
-        button1 = GUILayout.Button(button1Str, ctrlBtnStyle);
+        button1 = GUILayout.Button(button1Str, MNCStyles.ctrl_button);
         GUILayout.FlexibleSpace();
         GUILayout.Label(entryName, entryStyle);
         if (value.Length > 0)
@@ -758,7 +675,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             GUILayout.Label(value, entryStyle);
         }
         GUILayout.FlexibleSpace();
-        button2 = GUILayout.Button(button2Str, ctrlBtnStyle);
+        button2 = GUILayout.Button(button2Str, MNCStyles.ctrl_button);
         GUILayout.EndHorizontal();
         GUILayout.Space(spacingAfterEntry);
     }
@@ -766,11 +683,11 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     private void Draw3Button(ref bool button1, string button1Str, ref bool button2, string button2Str, ref bool button3, string button3Str)
     {
         GUILayout.BeginHorizontal();
-        button1 = GUILayout.Button(button1Str, ctrlBtnStyle);
+        button1 = GUILayout.Button(button1Str, MNCStyles.ctrl_button);
         GUILayout.FlexibleSpace();
-        button2 = GUILayout.Button(button2Str, ctrlBtnStyle);
+        button2 = GUILayout.Button(button2Str, MNCStyles.ctrl_button);
         GUILayout.FlexibleSpace();
-        button3 = GUILayout.Button(button3Str, ctrlBtnStyle);
+        button3 = GUILayout.Button(button3Str, MNCStyles.ctrl_button);
         GUILayout.EndHorizontal();
         GUILayout.Space(spacingAfterEntry);
     }
@@ -778,15 +695,15 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     private void DrawEntry4Button(string entryName, GUIStyle entryStyle, ref bool button1, string button1Str, ref bool button2, string button2Str, ref bool button3, string button3Str, ref bool button4, string button4Str)
     {
         GUILayout.BeginHorizontal();
-        button1 = GUILayout.Button(button1Str, ctrlBtnStyle);
+        button1 = GUILayout.Button(button1Str, MNCStyles.ctrl_button);
         GUILayout.Space(5);
-        button2 = GUILayout.Button(button2Str, ctrlBtnStyle);
+        button2 = GUILayout.Button(button2Str, MNCStyles.ctrl_button);
         GUILayout.FlexibleSpace();
         GUILayout.Label(entryName, entryStyle);
         GUILayout.FlexibleSpace();
-        button3 = GUILayout.Button(button3Str, ctrlBtnStyle);
+        button3 = GUILayout.Button(button3Str, MNCStyles.ctrl_button);
         GUILayout.Space(5);
-        button4 = GUILayout.Button(button4Str, ctrlBtnStyle);
+        button4 = GUILayout.Button(button4Str, MNCStyles.ctrl_button);
         GUILayout.EndHorizontal();
         GUILayout.Space(spacingAfterEntry);
     }
@@ -794,17 +711,17 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     private void DrawEntry5Button(string entryName, GUIStyle entryStyle, ref bool button1, string button1Str, ref bool button2, string button2Str, ref bool button3, string button3Str, ref bool button4, string button4Str, ref bool button5, string button5Str)
     {
         GUILayout.BeginHorizontal();
-        button1 = GUILayout.Button(button1Str, ctrlBtnStyle);
+        button1 = GUILayout.Button(button1Str, MNCStyles.ctrl_button);
         GUILayout.Space(5);
-        button2 = GUILayout.Button(button2Str, ctrlBtnStyle);
+        button2 = GUILayout.Button(button2Str, MNCStyles.ctrl_button);
         GUILayout.FlexibleSpace();
         GUILayout.Label(entryName, entryStyle);
         GUILayout.FlexibleSpace();
-        button3 = GUILayout.Button(button3Str, ctrlBtnStyle);
+        button3 = GUILayout.Button(button3Str, MNCStyles.ctrl_button);
         GUILayout.Space(5);
-        button4 = GUILayout.Button(button4Str, ctrlBtnStyle);
+        button4 = GUILayout.Button(button4Str, MNCStyles.ctrl_button);
         GUILayout.Space(5);
-        button5 = GUILayout.Button(button5Str, ctrlBtnStyle);
+        button5 = GUILayout.Button(button5Str, MNCStyles.ctrl_button);
         GUILayout.EndHorizontal();
         GUILayout.Space(spacingAfterEntry);
     }
@@ -814,30 +731,52 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         double num;
         Color normal;
         GUILayout.BeginHorizontal();
-        GUILayout.Label($"{entryName}: ", nameLabelStyle);
+        GUILayout.Label($"{entryName}: ", MNCStyles.name_label);
         normal = GUI.color;
         bool parsed = double.TryParse(textEntry, out num);
         if (!parsed) GUI.color = Color.red;
         GUI.SetNextControlName(entryName);
-        textEntry = GUILayout.TextField(textEntry, textInputStyle);
+        textEntry = GUILayout.TextField(textEntry, MNCStyles.text_input);
+        // value = UI_Fields.DoubleField(entryName, value);
         GUI.color = normal;
         if (unitSpace)
             GUILayout.Space(5);
-        GUILayout.Label(unit, unitLabelStyle);
+        GUILayout.Label(unit, MNCStyles.unit_label);
         GUILayout.EndHorizontal();
         GUILayout.Space(spacingAfterEntry);
+    }
+
+    private double DrawEntryTextField(string entryName, ref double value, string unit = "", bool unitSpace = true)
+    {
+        // double num;
+        // Color normal;
+        GUILayout.BeginHorizontal();
+        GUILayout.Label($"{entryName}: ", MNCStyles.name_label);
+        // normal = GUI.color;
+        // bool parsed = double.TryParse(textEntry, out num);
+        // if (!parsed) GUI.color = Color.red;
+        // GUI.SetNextControlName(entryName);
+        // textEntry = GUILayout.TextField(textEntry, MNCStyles.text_input);
+        value = UI_Fields.DoubleField(entryName, value);
+        // GUI.color = normal;
+        if (unitSpace)
+            GUILayout.Space(5);
+        GUILayout.Label(unit, MNCStyles.unit_label);
+        GUILayout.EndHorizontal();
+        GUILayout.Space(spacingAfterEntry);
+        return value;
     }
 
     private void DrawGUIStatus()
     {
         // Indication to User that its safe to type, or why vessel controls aren't working
         GUILayout.BeginHorizontal();
-        string inputStateString = gameInputState ? "<b>Enabled</b>" : "<b>Disabled</b>";
-        GUILayout.Label("Game Input: ", labelStyle);
-        if (gameInputState)
-            GUILayout.Label(inputStateString, labelStyle);
+        string inputStateString = UI_Fields.GameInputState ? "<b>Enabled</b>" : "<b>Disabled</b>";
+        GUILayout.Label("Game Input: ", MNCStyles.label);
+        if (UI_Fields.GameInputState)
+            GUILayout.Label(inputStateString, MNCStyles.label);
         else
-            GUILayout.Label(inputStateString, warnStyle);
+            GUILayout.Label(inputStateString, MNCStyles.warning);
         GUILayout.FlexibleSpace();
         GUILayout.EndHorizontal();
         GUILayout.Space(spacingAfterEntry);
@@ -847,20 +786,20 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     private void SnapSelectionGUI()
     {
         GUILayout.BeginHorizontal();
-        GUILayout.Label("SnapTo: ", nameLabelStyle); //  GUILayout.Width(windowWidth / 5));
-        snapToAp = GUILayout.Button("Ap", snapBtnStyle);
+        GUILayout.Label("SnapTo: ", MNCStyles.name_label); //  GUILayout.Width(windowWidth / 5));
+        snapToAp = GUILayout.Button("Ap", MNCStyles.snap_button);
         GUILayout.Space(5);
-        snapToPe = GUILayout.Button("Pe", snapBtnStyle);
+        snapToPe = GUILayout.Button("Pe", MNCStyles.snap_button);
         GUILayout.Space(5);
-        snapToANe = GUILayout.Button("ANe", snapBtnStyle);
+        snapToANe = GUILayout.Button("ANe", MNCStyles.snap_button);
         GUILayout.Space(5);
-        snapToDNe = GUILayout.Button("DNe", snapBtnStyle);
+        snapToDNe = GUILayout.Button("DNe", MNCStyles.snap_button);
         if (currentTarget != null)
         {
             GUILayout.Space(5);
-            snapToANt = GUILayout.Button("ANt", snapBtnStyle);
+            snapToANt = GUILayout.Button("ANt", MNCStyles.snap_button);
             GUILayout.Space(5);
-            snapToDNt = GUILayout.Button("DNt", snapBtnStyle);
+            snapToDNt = GUILayout.Button("DNt", MNCStyles.snap_button);
         }
         GUILayout.FlexibleSpace();
         GUILayout.EndHorizontal();
