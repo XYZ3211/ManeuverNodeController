@@ -18,7 +18,6 @@ using SpaceWarp.API.UI.Appbar;
 using System.Collections;
 using System.Reflection;
 using UnityEngine;
-using static UnityEngine.UIElements.StyleSheets.Dimension;
 
 namespace ManeuverNodeController;
 
@@ -45,14 +44,14 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     private Rect windowRect;
     private int windowWidth = Screen.width / 5; //384px on 1920x1080
     private int windowHeight = Screen.height / 3; //360px on 1920x1080
-    private string progradeString = "0";
-    private string normalString = "0";
-    private string radialString = "0";
-    private string absoluteValueString = "0";
-    private string smallStepString = "5";
-    private string bigStepString = "25";
-    private string timeSmallStepString = "5";
-    private string timeLargeStepString = "25";
+    //private string progradeString = "0";
+    //private string normalString = "0";
+    //private string radialString = "0";
+    //private string absoluteValueString = "0";
+    //private string smallStepString = "5";
+    //private string bigStepString = "25";
+    //private string timeSmallStepString = "5";
+    //private string timeLargeStepString = "25";
     private double absoluteValue, smallStep, bigStep, timeSmallStep, timeLargeStep;
     private bool pAbs, pInc1, pInc2, pDec1, pDec2, nAbs, nInc1, nInc2, nDec1, nDec2, rAbs, rInc1, rInc2, rDec1, rDec2, timeInc1, timeInc2, timeDec1, timeDec2, orbitInc, orbitDec;
     private bool snapToAp, snapToPe, snapToANe, snapToDNe, snapToANt, snapToDNt, addNode, delNode, decNode, incNode;
@@ -67,14 +66,14 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     //private GUIStyle progradeStyle, normalStyle, radialStyle;
     private GameInstance game;
     private GUIStyle horizontalDivider = new GUIStyle();
-    private GUISkin _spaceWarpUISkin;
-    private GUIStyle ctrlBtnStyle;
-    private GUIStyle smallBtnStyle;
-    private GUIStyle textInputStyle;
-    private GUIStyle snapBtnStyle;
-    private GUIStyle nameLabelStyle;
-    private GUIStyle valueLabelStyle;
-    private GUIStyle unitLabelStyle;
+    //private GUISkin _spaceWarpUISkin;
+    //private GUIStyle ctrlBtnStyle;
+    //private GUIStyle smallBtnStyle;
+    //private GUIStyle textInputStyle;
+    //private GUIStyle snapBtnStyle;
+    //private GUIStyle nameLabelStyle;
+    //private GUIStyle valueLabelStyle;
+    //private GUIStyle unitLabelStyle;
     private int spacingAfterEntry = -12;
 
     internal int SelectedNodeIndex = 0;
@@ -264,7 +263,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         if (interfaceEnabled && GUIenabled && MNCUtility.activeVessel != null)
         {
         	MNCStyles.Init();
-        	ManeuverNodeController.UI.UIWindow.check_main_window_pos(ref windowRect);
+        	UI.UIWindow.check_main_window_pos(ref windowRect);
             GUI.skin = MNCStyles.skin;
             windowRect = GUILayout.Window(
                 GUIUtility.GetControlID(FocusType.Passive),
@@ -275,31 +274,13 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
                 GUILayout.Width(windowWidth));
 
             save_rect_pos();
+
             // Draw the tool tip if needed
             ToolTipsManager.DrawToolTips();
             
             // check editor focus and unset Input if needed
             UI_Fields.CheckEditor();
-            //if (gameInputState && inputFields.Contains(GUI.GetNameOfFocusedControl()))
-            //{
-            //    gameInputState = false;
-            //    GameManager.Instance.Game.Input.Disable();
-            //}
-
-            //if (!gameInputState && !inputFields.Contains(GUI.GetNameOfFocusedControl()))
-            //{
-            //    gameInputState = true;
-            //    GameManager.Instance.Game.Input.Enable();
-            //}
         }
-        //else
-        //{
-        //    if (!gameInputState)
-        //    {
-        //        gameInputState = true;
-        //        GameManager.Instance.Game.Input.Enable();
-        //    }
-        //}
     }
 
     private void FillWindow(int windowID)
@@ -748,17 +729,9 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
 
     private double DrawEntryTextField(string entryName, ref double value, string unit = "", bool unitSpace = true)
     {
-        // double num;
-        // Color normal;
         GUILayout.BeginHorizontal();
         GUILayout.Label($"{entryName}: ", MNCStyles.name_label);
-        // normal = GUI.color;
-        // bool parsed = double.TryParse(textEntry, out num);
-        // if (!parsed) GUI.color = Color.red;
-        // GUI.SetNextControlName(entryName);
-        // textEntry = GUILayout.TextField(textEntry, MNCStyles.text_input);
         value = UI_Fields.DoubleField(entryName, value);
-        // GUI.color = normal;
         if (unitSpace)
             GUILayout.Space(5);
         GUILayout.Label(unit, MNCStyles.unit_label);
