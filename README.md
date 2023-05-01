@@ -1,7 +1,7 @@
 # Maneuver Node Controller
  Provides an interface to finely tune maneuver nodes. Enable the GUI with ALT + N when controlling a vessel.
  
-![Maneuver Node Controller Screenshot](https://i.imgur.com/9JSQg7D.png)
+![Maneuver Node Controller Screenshot](https://github.com/schlosrat/ManeuverNodeController/blob/main/Images/MNC-Banner1.png)
 
 ## Compatibility
 * Tested with Kerbal Space Program 2 v0.1.2.0.22258 & SpaceWarp 1.1.3
