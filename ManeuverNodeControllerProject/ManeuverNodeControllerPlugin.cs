@@ -57,7 +57,6 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     private bool snapToAp, snapToPe, snapToANe, snapToDNe, snapToANt, snapToDNt, addNode, delNode, decNode, incNode;
     private bool advancedMode, spitNode;
 
-
     private SimulationObjectModel currentTarget;
     private ManeuverNodeData thisNode = null;
     private Vector3d burnParams;
