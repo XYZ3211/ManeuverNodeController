@@ -29,6 +29,7 @@ namespace ManeuverNodeController.UI
                 }
                 _inputState = value;
             }
+            get { return _inputState; }
         }
 
         static public void CheckEditor()
@@ -54,7 +55,7 @@ namespace ManeuverNodeController.UI
             if (!parsed) GUI.color = Color.red;
 
             GUI.SetNextControlName(entryName);
-            text_value = GUILayout.TextField(text_value, GUILayout.Width(100));
+            text_value = GUILayout.TextField(text_value, MNCStyles.text_input); // GUILayout.Width(100));
 
             GUI.color = normal;
 
@@ -119,7 +120,4 @@ namespace ManeuverNodeController.UI
             return result;
         }
     }
-
-
-
 }
