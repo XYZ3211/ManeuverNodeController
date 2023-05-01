@@ -25,51 +25,33 @@ public class MNCSettings
         set { s_settings_file.SetInt("window_y_pos", value); }
     }
 
-    public static double altitude_km
+    public static double absolute_value
     {
-        get => s_settings_file.GetDouble("altitude_km", 100);
-        set { s_settings_file.SetDouble("altitude_km", value); }
+        get => s_settings_file.GetDouble("absolute_value", 0);
+        set { s_settings_file.SetDouble("absolute_value", value); }
     }
 
-    public static double ap_altitude_km
+    public static double small_step
     {
-        get => s_settings_file.GetDouble("ap_altitude_km", 100);
-        set { s_settings_file.SetDouble("ap_altitude_km", value); }
+        get => s_settings_file.GetDouble("small_step", 5);
+        set { s_settings_file.SetDouble("small_step", value); }
     }
 
-    public static double pe_altitude_km
+    public static double big_step
     {
-        get => s_settings_file.GetDouble("pe_altitude_km", 100);
-        set { s_settings_file.SetDouble("pe_altitude_km", value); }
+        get => s_settings_file.GetDouble("big_step", 25);
+        set { s_settings_file.SetDouble("big_step", value); }
     }
 
-    public static double mr_altitude_km
+    public static double time_small_step
     {
-        get => s_settings_file.GetDouble("mr_altitude_km", 100);
-        set { s_settings_file.SetDouble("mr_altitude_km", value); }
+        get => s_settings_file.GetDouble("time_small_step", 5);
+        set { s_settings_file.SetDouble("time_small_step", value); }
     }
 
-    public static double target_inc_deg
+    public static double time_large_step
     {
-        get => s_settings_file.GetDouble("target_inc_deg", 0);
-        set { s_settings_file.SetDouble("target_inc_deg", value); }
-    }
-
-    public static double target_lan_deg
-    {
-        get => s_settings_file.GetDouble("target_lan_deg", 0);
-        set { s_settings_file.SetDouble("target_lan_deg", value); }
-    }
-
-    public static double interceptT
-    {
-        get => s_settings_file.GetDouble("interceptT", 0);
-        set { s_settings_file.SetDouble("interceptT", value); }
-    }
-
-    public static double timeOffset
-    {
-        get => s_settings_file.GetDouble("timeOffset", 30);
-        set { s_settings_file.SetDouble("timeOffset", value); }
+        get => s_settings_file.GetDouble("time_large_step", 25);
+        set { s_settings_file.SetDouble("time_large_step", value); }
     }
 }

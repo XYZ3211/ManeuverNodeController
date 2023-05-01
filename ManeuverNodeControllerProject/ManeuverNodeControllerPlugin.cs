@@ -52,7 +52,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     //private string bigStepString = "25";
     //private string timeSmallStepString = "5";
     //private string timeLargeStepString = "25";
-    private double absoluteValue, smallStep, bigStep, timeSmallStep, timeLargeStep;
+    // private double absoluteValue, smallStep, bigStep, timeSmallStep, timeLargeStep;
     private bool pAbs, pInc1, pInc2, pDec1, pDec2, nAbs, nInc1, nInc2, nDec1, nDec2, rAbs, rInc1, rInc2, rDec1, rDec2, timeInc1, timeInc2, timeDec1, timeDec2, orbitInc, orbitDec;
     private bool snapToAp, snapToPe, snapToANe, snapToDNe, snapToANt, snapToDNt, addNode, delNode, decNode, incNode;
     private bool advancedMode, spitNode;
@@ -368,11 +368,11 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
 
     private void drawAdvancedMode()
     {
-        burnParams.z = DrawEntryTextField("Prograde ∆v", ref burnParams.z, "m/s");
+        burnParams.z = DrawEntryTextField("Prograde ∆v", burnParams.z, "m/s"); // was: ref burnParams.z
         // double.TryParse(progradeString, out burnParams.z);
-        burnParams.y = DrawEntryTextField("Normal ∆v", ref burnParams.y, "m/s");
+        burnParams.y = DrawEntryTextField("Normal ∆v", burnParams.y, "m/s"); // was: ref burnParams.z
         // double.TryParse(normalString, out burnParams.y);
-        burnParams.x = DrawEntryTextField("Radial ∆v", ref burnParams.x, "m/s");
+        burnParams.x = DrawEntryTextField("Radial ∆v", burnParams.x, "m/s"); // was: ref burnParams.z
         // double.TryParse(radialString, out burnParams.x);
         if (GUILayout.Button("Apply Changes to Node"))
         {
@@ -387,11 +387,11 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     {
         string nextApA, nextPeA, nextInc, nextEcc, nextLAN, previousApA, previousPeA, previousInc, previousEcc, previousLAN;
 
-        absoluteValue = DrawEntryTextField("Absolute ∆v", ref absoluteValue, "m/s");
+        MNCSettings.absolute_value = DrawEntryTextField("Absolute ∆v", MNCSettings.absolute_value, "m/s"); // was: ref absoluteValue
         // double.TryParse(absoluteValueString, out absoluteValue);
-        smallStep = DrawEntryTextField("Small Step ∆v", ref smallStep, "m/s");
+        MNCSettings.small_step = DrawEntryTextField("Small Step ∆v", MNCSettings.small_step, "m/s"); // was: ref smallStep
         // double.TryParse(smallStepString, out smallStep);
-        bigStep = DrawEntryTextField("Large Step ∆v", ref bigStep, "m/s");
+        MNCSettings.big_step = DrawEntryTextField("Large Step ∆v", MNCSettings.big_step, "m/s"); // was: ref bigStep
         // double.TryParse(bigStepString, out bigStep);
         GUILayout.Box("", MNCStyles.horizontalDivider);
         DrawEntry5Button("Prograde", MNCStyles.progradeStyle, ref pDec2, "<<", ref pDec1, "<", ref pInc1, ">", ref pInc2, ">>", ref pAbs, "Abs");
@@ -401,9 +401,9 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         GUILayout.Box("", MNCStyles.horizontalDivider);
         SnapSelectionGUI();
         GUILayout.Box("", MNCStyles.horizontalDivider);
-        timeSmallStep = DrawEntryTextField("Small Time Step", ref timeSmallStep, "s");
+        MNCSettings.time_small_step = DrawEntryTextField("Small Time Step", MNCSettings.time_small_step, "s"); // was: ref timeSmallStep
         // double.TryParse(timeSmallStepString, out timeSmallStep);
-        timeLargeStep = DrawEntryTextField("Large Time Step", ref timeLargeStep, "s");
+        MNCSettings.time_large_step = DrawEntryTextField("Large Time Step", MNCSettings.time_large_step, "s"); // was: ref timeLargeStep
         // double.TryParse(timeLargeStepString, out timeLargeStep);
         GUILayout.Box("", MNCStyles.horizontalDivider);
         DrawEntry4Button("Time", MNCStyles.label, ref timeDec2, "<<", ref timeDec1, "<", ref timeInc1, ">", ref timeInc2, ">>");
@@ -715,7 +715,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         GUILayout.Space(MNCStyles.spacingAfterEntry);
     }
 
-    private double DrawEntryTextField(string entryName, ref double value, string unit = "", bool unitSpace = true)
+    private double DrawEntryTextField(string entryName, double value, string unit = "", bool unitSpace = true)
     {
         GUILayout.BeginHorizontal();
         GUILayout.Label($"{entryName}: ", MNCStyles.name_label);
@@ -815,78 +815,78 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
 
             if (pAbs) // Set the prograde burn to the absoluteValue
             {
-                burnParams.z = absoluteValue - thisNode.BurnVector.z;
-                // thisNode.BurnVector.z = absoluteValue;
+                burnParams.z = MNCSettings.absolute_value - thisNode.BurnVector.z;
+                // thisNode.BurnVector.z = MNCSettings.absolute_value;
             }
             else if (pInc1) // Add smallStep to the prograde burn
             {
-                burnParams.z += smallStep;
-                // thisNode.BurnVector.z += smallStep;
+                burnParams.z += MNCSettings.small_step;
+                // thisNode.BurnVector.z += MNCSettings.small_step;
             }
             else if (pInc2) // Add bigStep to the prograde burn
             {
-                burnParams.z += bigStep;
-                // thisNode.BurnVector.z += bigStep;
+                burnParams.z += MNCSettings.big_step;
+                // thisNode.BurnVector.z += MNCSettings.big_step;
             }
             else if (pDec1) // Subtract smallStep from the prograde burn
             {
-                burnParams.z -= smallStep;
-                // thisNode.BurnVector.z -= smallStep;
+                burnParams.z -= MNCSettings.small_step;
+                // thisNode.BurnVector.z -= MNCSettings.small_step;
             }
             else if (pDec2) // Subtract bigStep from the prograde burn
             {
-                burnParams.z -= bigStep;
-                // thisNode.BurnVector.z -= bigStep;
+                burnParams.z -= MNCSettings.big_step;
+                // thisNode.BurnVector.z -= MNCSettings.big_step;
             }
             else if (nAbs) // Set the normal burn to the absoluteValue
             {
-                burnParams.y = absoluteValue - thisNode.BurnVector.y;
-                // thisNode.BurnVector.y = absoluteValue;
+                burnParams.y = MNCSettings.absolute_value - thisNode.BurnVector.y;
+                // thisNode.BurnVector.y = MNCSettings.absolute_value;
             }
             else if (nInc1) // Add smallStep to the normal burn
             {
-                burnParams.y += smallStep;
-                // thisNode.BurnVector.y += smallStep;
+                burnParams.y += MNCSettings.small_step;
+                // thisNode.BurnVector.y += MNCSettings.small_step;
             }
             else if (nInc2) // Add bigStep to the normal burn
             {
-                burnParams.y += bigStep;
-                // thisNode.BurnVector.y += bigStep;
+                burnParams.y += MNCSettings.big_step;
+                // thisNode.BurnVector.y += MNCSettings.big_step;
             }
             else if (nDec1) // Subtract smallStep from the normal burn
             {
-                burnParams.y -= smallStep;
-                // thisNode.BurnVector.y -= smallStep;
+                burnParams.y -= MNCSettings.small_step;
+                // thisNode.BurnVector.y -= MNCSettings.small_step;
             }
             else if (nDec2) // Subtract bigStep from the normal burn
             {
-                burnParams.y -= bigStep;
-                // thisNode.BurnVector.y -= bigStep;
+                burnParams.y -= MNCSettings.big_step;
+                // thisNode.BurnVector.y -= MNCSettings.big_step;
             }
             else if (rAbs) // Set the radial burn to the absoluteValue
             {
-                burnParams.x = absoluteValue - thisNode.BurnVector.x;
-                // thisNode.BurnVector.x = absoluteValue;
+                burnParams.x = MNCSettings.absolute_value - thisNode.BurnVector.x;
+                // thisNode.BurnVector.x = MNCSettings.absolute_value;
             }
             else if (rInc1) // Add smallStep to the radial burn
             {
-                burnParams.x += smallStep;
-                // thisNode.BurnVector.x += smallStep;
+                burnParams.x += MNCSettings.small_step;
+                // thisNode.BurnVector.x += MNCSettings.small_step;
             }
             else if (rInc2) // Add bigStep to the radial burn
             {
-                burnParams.x += bigStep;
-                // thisNode.BurnVector.x += bigStep;
+                burnParams.x += MNCSettings.big_step;
+                // thisNode.BurnVector.x += MNCSettings.big_step;
             }
             else if (rDec1) // Subtract smallStep from the radial burn
             {
-                burnParams.x -= smallStep;
-                // thisNode.BurnVector.x -= smallStep;
+                burnParams.x -= MNCSettings.small_step;
+                // thisNode.BurnVector.x -= MNCSettings.small_step;
             }
             else if (rDec2) // Subtract bigStep from the radial burn
             {
-                burnParams.x -= bigStep;
-                // thisNode.BurnVector.x -= bigStep;
+                burnParams.x -= MNCSettings.big_step;
+                // thisNode.BurnVector.x -= MNCSettings.big_step;
             }
 
             // Push the update to the node
@@ -920,12 +920,12 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             var timeOfNodeFromNow = oldBurnTime - UT;
 
             double nodeTime = thisNode.Time;
-            double minTime = UT + Math.Max(timeSmallStep, 5);
+            double minTime = UT + Math.Max(MNCSettings.time_small_step, 5);
             double maxTime = UT - 1;
             if (SelectedNodeIndex > 0)
-                minTime = NodeManagerPlugin.Instance.Nodes[SelectedNodeIndex - 1].Time + Math.Max(timeSmallStep, 5);
+                minTime = NodeManagerPlugin.Instance.Nodes[SelectedNodeIndex - 1].Time + Math.Max(MNCSettings.time_small_step, 5);
             if (SelectedNodeIndex < NodeManagerPlugin.Instance.Nodes.Count - 1)
-                maxTime = NodeManagerPlugin.Instance.Nodes[SelectedNodeIndex + 1].Time - Math.Max(timeSmallStep, 5);
+                maxTime = NodeManagerPlugin.Instance.Nodes[SelectedNodeIndex + 1].Time - Math.Max(MNCSettings.time_small_step, 5);
 
             // Logger.LogDebug($"SelectedNodeIndex      : {SelectedNodeIndex}");
             // for (int i= 0; i < NodeManagerPlugin.Instance.Nodes.Count; i++)
@@ -942,29 +942,29 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
 
             if (timeDec1) // Subtract timeSmallStep
             {
-                if (timeSmallStep < timeOfNodeFromNow) // If there is enough time
+                if (MNCSettings.time_small_step < timeOfNodeFromNow) // If there is enough time
                 {
-                    nodeTime -= timeSmallStep;
-                    // thisNode.Time -= timeSmallStep;
+                    nodeTime -= MNCSettings.time_small_step;
+                    // thisNode.Time -= MNCSettings.time_small_step;
                 }
             }
             else if (timeDec2) // Subtract timeLargeStep
             {
-                if (timeLargeStep < timeOfNodeFromNow) // If there is enough time
+                if (MNCSettings.time_large_step < timeOfNodeFromNow) // If there is enough time
                 {
-                    nodeTime -= timeLargeStep;
-                    // thisNode.Time -= timeLargeStep;
+                    nodeTime -= MNCSettings.time_large_step;
+                    // thisNode.Time -= MNCSettings.time_large_step;
                 }
             }
             else if (timeInc1) // Add timeSmallStep
             {
-                nodeTime += timeSmallStep;
-                // thisNode.Time += timeSmallStep;
+                nodeTime += MNCSettings.time_small_step;
+                // thisNode.Time += MNCSettings.time_small_step;
             }
             else if (timeInc2) // Add timeLargeStep
             {
-                nodeTime += timeLargeStep;
-                // thisNode.Time += timeLargeStep;
+                nodeTime += MNCSettings.time_large_step;
+                // thisNode.Time += MNCSettings.time_large_step;
             }
             else if (orbitDec) // Subtract one orbital period
             {
