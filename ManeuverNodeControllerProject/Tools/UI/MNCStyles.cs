@@ -146,6 +146,8 @@ public class MNCStyles
     }
 
     public static GUIStyle separator;
+    public static GUIStyle horizontalDivider;
+    public static int spacingAfterEntry = -12;
     static void BuildFrames()
     {
         // Define the GUIStyle for the window
@@ -207,6 +209,10 @@ public class MNCStyles
         separator.margin = new RectOffset(10, 10, 5, 5);
         separator.fixedHeight = 3;
         setAllFromNormal(separator);
+
+        horizontalDivider = new GUIStyle();
+        horizontalDivider.fixedHeight = 2;
+        horizontalDivider.margin = new RectOffset(0, 0, 4, 4);
     }
 
     public static GUIStyle slider_line, slider_node;
