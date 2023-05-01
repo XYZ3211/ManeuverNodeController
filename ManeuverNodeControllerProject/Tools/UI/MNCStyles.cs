@@ -35,7 +35,8 @@ public class MNCStyles
     }
 
     public static GUIStyle error, warning, label, status, mid_text, console_text, phase_ok, phase_warning, phase_error;
-    public static GUIStyle icons_label, title, slider_text;
+    public static GUIStyle icons_label, title, slider_text, text_input, name_label, value_label, unit_label;
+    public static GUIStyle progradeStyle, normalStyle, radialStyle, name_label_r, value_label_l;
 
     static void BuildLabels()
     {
@@ -47,31 +48,31 @@ public class MNCStyles
         icons_label.overflow = new RectOffset(0, 0, 0, 0);
 
         error = new GUIStyle(GUI.skin.GetStyle("Label"));
-        // error.alignment = TextAnchor.MiddleLeft;
+        error.alignment = TextAnchor.MiddleLeft;
         error.normal.textColor = Color.red;
 
         warning = new GUIStyle(GUI.skin.GetStyle("Label"));
-        // warning.alignment = TextAnchor.MiddleLeft;
+        warning.alignment = TextAnchor.MiddleLeft;
         warning.normal.textColor = Color.yellow;
         //labelColor = GUI.skin.GetStyle("Label").normal.textColor;
 
         phase_ok = new GUIStyle(GUI.skin.GetStyle("Label"));
-        // phase_ok.alignment = TextAnchor.MiddleLeft;
+        phase_ok.alignment = TextAnchor.MiddleLeft;
         phase_ok.normal.textColor = ColorTools.parseColor("#00BC16");
         // phase_ok.fontSize = 20;
 
         phase_warning = new GUIStyle(GUI.skin.GetStyle("Label"));
-        // phase_warning.alignment = TextAnchor.MiddleLeft;
+        phase_warning.alignment = TextAnchor.MiddleLeft;
         phase_warning.normal.textColor = ColorTools.parseColor("#BC9200");
         // phase_warning.fontSize = 20;
 
         phase_error = new GUIStyle(GUI.skin.GetStyle("Label"));
-        // phase_error.alignment = TextAnchor.MiddleLeft;
+        phase_error.alignment = TextAnchor.MiddleLeft;
         phase_error.normal.textColor = ColorTools.parseColor("#B30F0F");
         // phase_error.fontSize = 20;
 
         console_text = new GUIStyle(GUI.skin.GetStyle("Label"));
-        // console_text.alignment = TextAnchor.MiddleLeft;
+        console_text.alignment = TextAnchor.MiddleLeft;
         console_text.normal.textColor = ColorTools.parseColor("#B6B8FA");
         // console_text.fontSize = 15;
         console_text.padding = new RectOffset(0, 0, 0, 0);
@@ -88,18 +89,60 @@ public class MNCStyles
         label = new GUIStyle(GUI.skin.GetStyle("Label"));
         label.alignment = TextAnchor.MiddleLeft;
         // label.fontSize = 17;
-        label.margin = new RectOffset(0, 0, 0, 0);
-        label.padding = new RectOffset(0, 0, 0, 0);
+        // label.margin = new RectOffset(0, 0, 0, 0);
+        // label.padding = new RectOffset(0, 0, 0, 0);
 
         status = new GUIStyle(GUI.skin.GetStyle("Label"));
         status.alignment = TextAnchor.MiddleLeft;
         // status.fontSize = 17;
-        status.margin = new RectOffset(0, 0, 0, 0);
-        status.padding = new RectOffset(0, 0, 0, 0);
+        // status.margin = new RectOffset(0, 0, 0, 0);
+        // status.padding = new RectOffset(0, 0, 0, 0);
 
         title = new GUIStyle();
         title.normal.textColor = ColorTools.parseColor("#C0C1E2");
         // title.fontSize = 19;
+
+        text_input = new GUIStyle(GUI.skin.GetStyle("textField")) // was (_spaceWarpUISkin.textField)
+        {
+            alignment = TextAnchor.LowerCenter,
+            padding = new RectOffset(10, 10, 0, 0),
+            contentOffset = new Vector2(0, 2),
+            fixedHeight = 18,
+            fixedWidth = 100, //(float)(windowWidth / 4),
+            clipping = TextClipping.Overflow,
+            margin = new RectOffset(0, 0, 10, 0)
+        };
+
+        name_label = new GUIStyle(GUI.skin.GetStyle("Label")); // was (_spaceWarpUISkin.label);
+        name_label.alignment = TextAnchor.MiddleLeft;
+        name_label.normal.textColor = new Color(.7f, .75f, .75f, 1);
+
+        name_label_r = new GUIStyle(name_label);
+        name_label_r.alignment = TextAnchor.MiddleRight;
+
+        value_label = new GUIStyle(GUI.skin.GetStyle("Label")); // was (_spaceWarpUISkin.label)
+        value_label.alignment = TextAnchor.MiddleRight;
+        value_label.normal.textColor = new Color(.6f, .7f, 1, 1);
+
+        value_label_l = new GUIStyle(value_label);
+        value_label_l.alignment = TextAnchor.MiddleLeft;
+
+        unit_label = new GUIStyle(value_label)
+        {
+            fixedWidth = 24,
+            alignment = TextAnchor.MiddleLeft
+        };
+        unit_label.normal.textColor = new Color(.7f, .75f, .75f, 1);
+
+        progradeStyle = new GUIStyle(GUI.skin.GetStyle("Label")); // was( _spaceWarpUISkin.label);
+        progradeStyle.normal.textColor = Color.green;
+        progradeStyle.fixedHeight = 24;
+        normalStyle = new GUIStyle(GUI.skin.GetStyle("Label")); // was( _spaceWarpUISkin.label);
+        normalStyle.normal.textColor = Color.magenta;
+        normalStyle.fixedHeight = 24;
+        radialStyle = new GUIStyle(GUI.skin.GetStyle("Label")); // was( _spaceWarpUISkin.label);
+        radialStyle.normal.textColor = Color.cyan;
+        radialStyle.fixedHeight = 24;
     }
 
     public static GUIStyle separator;
@@ -248,7 +291,7 @@ public class MNCStyles
         setFromOn(tab_active);
     }
 
-    public static GUIStyle bigicon_button, icon_button, small_button, big_button, button;
+    public static GUIStyle bigicon_button, icon_button, small_button, big_button, button, ctrl_button, small_btn, snap_button;
 
     static void BuildButtons()
     {
@@ -309,6 +352,42 @@ public class MNCStyles
         bigicon_button.fixedWidth = 50;
         bigicon_button.fixedHeight = 50;
         bigicon_button.fontStyle = FontStyle.Bold;
+
+        small_btn = new GUIStyle(GUI.skin.GetStyle("Button")) // was (_spaceWarpUISkin.button)
+        {
+            alignment = TextAnchor.MiddleCenter,
+            padding = new RectOffset(10, 10, 0, 3),
+            contentOffset = new Vector2(0, 2),
+            fixedHeight = 25, // 16,
+            // fixedWidth = 95,
+            fontSize = 16,
+            clipping = TextClipping.Overflow,
+            margin = new RectOffset(0, 0, 10, 0)
+        };
+
+        ctrl_button = new GUIStyle(GUI.skin.GetStyle("Button")) // was (_spaceWarpUISkin.button)
+        {
+            alignment = TextAnchor.MiddleCenter,
+            padding = new RectOffset(0, 0, 0, 3),
+            contentOffset = new Vector2(0, 2),
+            fixedHeight = 16,
+            fixedWidth = 32,
+            // fontSize = 16,
+            clipping = TextClipping.Overflow,
+            margin = new RectOffset(0, 0, 10, 0)
+        };
+
+        snap_button = new GUIStyle(GUI.skin.GetStyle("Button")) // was (_spaceWarpUISkin.button)
+        {
+            alignment = TextAnchor.MiddleCenter,
+            padding = new RectOffset(0, 0, 0, 3),
+            contentOffset = new Vector2(0, 2),
+            fixedHeight = 20,
+            fixedWidth = 40, // (float)(windowWidth / 8) - 5,
+            // fontSize = 16,
+            clipping = TextClipping.Overflow,
+            margin = new RectOffset(0, 0, 10, 0)
+        };
 
     }
     public static GUIStyle foldout_close, foldout_open;
