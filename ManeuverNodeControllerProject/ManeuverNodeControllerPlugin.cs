@@ -1,20 +1,23 @@
 ﻿using BepInEx;
-using UnityEngine;
-using KSP.Game;
-using KSP.Sim.impl;
-using KSP.Sim.Maneuver;
-using SpaceWarp;
-using SpaceWarp.API.Mods;
-using SpaceWarp.API.Assets;
-using SpaceWarp.API.UI;
-using SpaceWarp.API.UI.Appbar;
-using KSP.UI.Binding;
 using BepInEx.Logging;
-using MNCUtilities;
+using HarmonyLib;
+using KSP.Game;
 using KSP.Map;
 using KSP.Messages;
-using System.Collections;
+using KSP.Sim.impl;
+using KSP.Sim.Maneuver;
+using KSP.UI.Binding;
+using ManeuverNodeController.UI;
+using MNCUtilities;
 using NodeManager;
+using SpaceWarp;
+using SpaceWarp.API.Assets;
+using SpaceWarp.API.Mods;
+using SpaceWarp.API.UI;
+using SpaceWarp.API.UI.Appbar;
+using System.Collections;
+using System.Reflection;
+using UnityEngine;
 
 namespace ManeuverNodeController;
 
@@ -23,20 +26,25 @@ namespace ManeuverNodeController;
 [BepInDependency(NodeManagerPlugin.ModGuid, NodeManagerPlugin.ModVer)]
 public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
 {
+    public static ManeuverNodeControllerMod Instance { get; set; }
+
     // These are useful in case some other mod wants to add a dependency to this one
     public const string ModGuid = MyPluginInfo.PLUGIN_GUID;
     public const string ModName = MyPluginInfo.PLUGIN_NAME;
     public const string ModVer = MyPluginInfo.PLUGIN_VERSION;
 
-    public static ManeuverNodeControllerMod Instance { get; set; }
-
+    // Control game input state while user has clicked into a TextField.
+    private bool gameInputState = true;
+    public List<String> inputFields = new List<String>();
+    
+    // GUI stuff
     static bool loaded = false;
     private bool interfaceEnabled = false;
     private bool GUIenabled = true;
     private Rect windowRect;
     private int windowWidth = Screen.width / 5; //384px on 1920x1080
     private int windowHeight = Screen.height / 3; //360px on 1920x1080
-    private Rect closeBtnRect;
+    // private Rect closeBtnRect;
     private string progradeString = "0";
     private string normalString = "0";
     private string radialString = "0";
@@ -50,9 +58,6 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     private bool snapToAp, snapToPe, snapToANe, snapToDNe, snapToANt, snapToDNt, addNode, delNode, decNode, incNode;
     private bool advancedMode, spitNode;
 
-    // Control game input state while user has clicked into a TextField.
-    private bool gameInputState = true;
-    public List<String> inputFields = new List<String>();
 
     private SimulationObjectModel currentTarget;
     private ManeuverNodeData thisNode = null;
@@ -66,7 +71,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     private GUIStyle ctrlBtnStyle;
     private GUIStyle smallBtnStyle;
     private GUIStyle textInputStyle;
-    private GUIStyle closeBtnStyle;
+    // private GUIStyle closeBtnStyle;
     private GUIStyle snapBtnStyle;
     private GUIStyle nameLabelStyle;
     private GUIStyle valueLabelStyle;
@@ -74,13 +79,30 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     private int spacingAfterEntry = -12;
 
     internal int SelectedNodeIndex = 0;
+    
+    // App bar button(s)
+    private const string ToolbarFlightButtonID = "BTN-ManeuverNodeControllerFlight";
+    // private const string ToolbarOABButtonID = "BTN-ManeuverNodeControllerOAB";
+
+    private static string _assemblyFolder;
+    private static string AssemblyFolder =>
+        _assemblyFolder ?? (_assemblyFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location));
+
+    private static string _settingsPath;
+    private static string SettingsPath =>
+        _settingsPath ?? (_settingsPath = Path.Combine(AssemblyFolder, "settings.json"));
 
     //public ManualLogSource logger;
     public new static ManualLogSource Logger { get; set; }
 
+    /// <summary>
+    /// Runs when the mod is first initialized.
+    /// </summary>
     public override void OnInitialized()
     {
         base.OnInitialized();
+
+		MNCSettings.Init(SettingsPath);
 
         Instance = this;
 
@@ -217,12 +239,12 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         };
         unitLabelStyle.normal.textColor = new Color(.7f, .75f, .75f, 1);
 
-        closeBtnStyle = new GUIStyle(_spaceWarpUISkin.button)
-        {
-            fontSize = 8
-        };
+        //closeBtnStyle = new GUIStyle(_spaceWarpUISkin.button)
+        //{
+        //    fontSize = 12
+        //};
 
-        closeBtnRect = new Rect(windowWidth - 23, 6, 16, 16);
+        // closeBtnRect = new Rect(windowWidth - 23, 6, 16, 16);
 
         labelStyle = warnStyle = new GUIStyle(_spaceWarpUISkin.label);
         progradeStyle = new GUIStyle(_spaceWarpUISkin.label);
@@ -239,9 +261,12 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
 
         Appbar.RegisterAppButton(
             "Maneuver Node Cont.",
-            "BTN-ManeuverNodeController",
+            ToolbarFlightButtonID,
             AssetManager.GetAsset<Texture2D>($"{SpaceWarpMetadata.ModID}/images/icon.png"),
             ToggleButton);
+            
+        // Register all Harmony patches in the project
+        Harmony.CreateAndPatchAll(typeof(ManeuverNodeControllerMod).Assembly);
     }
 
     /// <summary>
@@ -321,7 +346,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     private void ToggleButton(bool toggle)
     {
         interfaceEnabled = toggle;
-        GameObject.Find("BTN-ManeuverNodeController")?.GetComponent<UIValue_WriteBool_Toggle>()?.SetValue(interfaceEnabled);
+        GameObject.Find(ToolbarFlightButtonID)?.GetComponent<UIValue_WriteBool_Toggle>()?.SetValue(interfaceEnabled);
     }
 
     public void LaunchMNC()
@@ -343,6 +368,15 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         }
     }
 
+    void save_rect_pos()
+    {
+        MNCSettings.window_x_pos = (int)windowRect.xMin;
+        MNCSettings.window_y_pos = (int)windowRect.yMin;
+    }
+
+    /// <summary>
+    /// Draws a simple UI window when <code>this._isWindowOpen</code> is set to <code>true</code>.
+    /// </summary>
     void OnGUI()
     {
         GUIenabled = false;
@@ -356,17 +390,26 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         if (MNCUtility.activeVessel != null)
             orbit = MNCUtility.activeVessel.Orbit;
 
+        // Set the UI
         if (interfaceEnabled && GUIenabled && MNCUtility.activeVessel != null)
         {
-            GUI.skin = Skins.ConsoleSkin;
+        	MNCStyles.Init();
+        	ManeuverNodeController.UI.UIWindow.check_main_window_pos(ref windowRect);
+            GUI.skin = MNCStyles.skin;
             windowRect = GUILayout.Window(
                 GUIUtility.GetControlID(FocusType.Passive),
                 windowRect,
                 FillWindow,
-                "<color=#696DFF>// MANEUVER NODE CONTROLLER</color>",
+                "<color=#696DFF>MANEUVER NODE CONTROLLER</color>",
                 GUILayout.Height(windowHeight),
                 GUILayout.Width(windowWidth));
 
+            save_rect_pos();
+            // Draw the tool tip if needed
+            ToolTipsManager.DrawToolTips();
+            
+            // check editor focus and unset Input if needed
+            // UI_Fields.CheckEditor();
             if (gameInputState && inputFields.Contains(GUI.GetNameOfFocusedControl()))
             {
                 gameInputState = false;
@@ -391,10 +434,17 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
 
     private void FillWindow(int windowID)
     {
-        if (CloseButton())
-        {
+        TopButtons.Init(windowRect.width);
+        if ( TopButtons.IconButton(MNCStyles.cross))
             CloseWindow();
-        }
+            
+        // Add a MNC icon to the upper left corner of the GUI
+        GUI.Label(new Rect(9, 2, 29, 29), MNCStyles.icon, MNCStyles.icons_label);
+
+        //if (CloseButton())
+        //{
+        //    CloseWindow();
+        //}
 
         double UT;
         double dvRemaining;
@@ -597,15 +647,18 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         GUILayout.Box("", horizontalDivider);
     }
 
-    private bool CloseButton()
-    {
-        return GUI.Button(closeBtnRect, "x", closeBtnStyle);
-    }
+    //private bool CloseButton()
+    //{
+    //    return GUI.Button(closeBtnRect, "x", closeBtnStyle);
+    //}
 
     private void CloseWindow()
     {
-        GameObject.Find("BTN-ManeuverNodeController")?.GetComponent<UIValue_WriteBool_Toggle>()?.SetValue(false);
+        GameObject.Find(ToolbarFlightButtonID)?.GetComponent<UIValue_WriteBool_Toggle>()?.SetValue(false);
         interfaceEnabled = false;
+        Logger.LogDebug("CloseWindow: Restoring Game Input on window close.");
+        // game.Input.Flight.Enable();
+        GameManager.Instance.Game.Input.Enable();
         ToggleButton(interfaceEnabled);
     }
 
