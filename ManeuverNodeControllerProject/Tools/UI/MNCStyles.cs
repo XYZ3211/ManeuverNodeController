@@ -359,42 +359,78 @@ public class MNCStyles
         bigicon_button.fixedHeight = 50;
         bigicon_button.fontStyle = FontStyle.Bold;
 
-        small_btn = new GUIStyle(GUI.skin.GetStyle("Button")) // was (_spaceWarpUISkin.button)
+        small_btn = new GUIStyle(small_button) // GUI.skin.GetStyle("Button")) // was (_spaceWarpUISkin.button)
         {
             alignment = TextAnchor.MiddleCenter,
             padding = new RectOffset(10, 10, 0, 3),
-            contentOffset = new Vector2(0, 2),
+            // contentOffset = new Vector2(0, 2),
             fixedHeight = 25, // 16,
             // fixedWidth = 95,
             fontSize = 16,
             clipping = TextClipping.Overflow,
+            border = new RectOffset(5, 5, 5, 5),
+            // padding = new RectOffset(0, 0, 0, 0),
+            overflow = new RectOffset(0, 0, 0, 0),
             margin = new RectOffset(0, 0, 10, 0)
         };
+        small_btn.normal.background = AssetsLoader.loadIcon("BigButton_Normal");
+        setAllFromNormal(small_btn);
+        small_btn.hover.background = AssetsLoader.loadIcon("BigButton_Hover");
+        small_btn.active.background = AssetsLoader.loadIcon("BigButton_Active");
+        small_btn.onNormal = small_btn.active;
+        setFromOn(small_btn);
 
-        ctrl_button = new GUIStyle(GUI.skin.GetStyle("Button")) // was (_spaceWarpUISkin.button)
+
+        ctrl_button = new GUIStyle(GUI.skin.GetStyle("Button")); // was (_spaceWarpUISkin.button)
+        ctrl_button.fixedHeight = 16;
+        ctrl_button.fixedWidth = 32;
+        ctrl_button.clipping = TextClipping.Overflow;
+        ctrl_button.normal.background = AssetsLoader.loadIcon("BigButton_Normal");
+        setAllFromNormal(ctrl_button);
+        ctrl_button.hover.background = AssetsLoader.loadIcon("BigButton_Hover");
+        ctrl_button.active.background = AssetsLoader.loadIcon("BigButton_Active");
+        ctrl_button.onNormal = ctrl_button.active;
+        setFromOn(ctrl_button);
+
+        ctrl_button.border = new RectOffset(5, 5, 5, 5);
+        ctrl_button.padding = new RectOffset(0, 0, 0, 0);
+        ctrl_button.overflow = new RectOffset(0, 0, 0, 0);
+        ctrl_button.alignment = TextAnchor.MiddleCenter;
+
+        //{
+        //    alignment = TextAnchor.MiddleCenter,
+        //    // padding = new RectOffset(0, 0, 0, 3),
+        //    // contentOffset = new Vector2(0, 2),
+        //    fixedHeight = 16,
+        //    fixedWidth = 32,
+        //    // fontSize = 16,
+        //    clipping = TextClipping.Overflow,
+        //    border = new RectOffset(5, 5, 5, 5),
+        //    padding = new RectOffset(0, 0, 0, 0),
+        //    overflow = new RectOffset(0, 0, 0, 0),
+        //    margin = new RectOffset(0, 0, 10, 0)
+        //};
+
+        snap_button = new GUIStyle(small_button) // GUI.skin.GetStyle("Button")) // was (_spaceWarpUISkin.button)
         {
             alignment = TextAnchor.MiddleCenter,
-            padding = new RectOffset(0, 0, 0, 3),
-            contentOffset = new Vector2(0, 2),
-            fixedHeight = 16,
-            fixedWidth = 32,
-            // fontSize = 16,
-            clipping = TextClipping.Overflow,
-            margin = new RectOffset(0, 0, 10, 0)
-        };
-
-        snap_button = new GUIStyle(GUI.skin.GetStyle("Button")) // was (_spaceWarpUISkin.button)
-        {
-            alignment = TextAnchor.MiddleCenter,
-            padding = new RectOffset(0, 0, 0, 3),
-            contentOffset = new Vector2(0, 2),
+            // padding = new RectOffset(0, 0, 0, 3),
+            // contentOffset = new Vector2(0, 2),
             fixedHeight = 20,
             fixedWidth = 40, // (float)(windowWidth / 8) - 5,
             // fontSize = 16,
             clipping = TextClipping.Overflow,
+            border = new RectOffset(5, 5, 5, 5),
+            padding = new RectOffset(0, 0, 0, 0),
+            overflow = new RectOffset(0, 0, 0, 0),
             margin = new RectOffset(0, 0, 10, 0)
         };
-
+        snap_button.normal.background = AssetsLoader.loadIcon("BigButton_Normal");
+        setAllFromNormal(snap_button);
+        snap_button.hover.background = AssetsLoader.loadIcon("BigButton_Hover");
+        snap_button.active.background = AssetsLoader.loadIcon("BigButton_Active");
+        snap_button.onNormal = snap_button.active;
+        setFromOn(snap_button);
     }
     public static GUIStyle foldout_close, foldout_open;
     
