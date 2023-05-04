@@ -1009,7 +1009,6 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
                 nodeTime = vessel.Orbit.TimeOfDN(target.Orbit, UT);
                 // thisNode.Time = vessel.Orbit.TimeOfDN(target.Orbit, UT);
             }
-        }
 
             if (nodeTime < minTime) // Not allowed to move the node prior to anopther node
             {
