@@ -587,6 +587,14 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         {
             value2Style = MNCStyles.value_label;
         }
+        if (value1Style == null)
+        {
+            value1Style = valueLabelStyle;
+        }
+        if (value2Style == null)
+        {
+            value2Style = valueLabelStyle;
+        }
         GUILayout.BeginHorizontal();
         GUILayout.Label($"{entryName1}: ", entryStyle);
         if (value1.Length > 0)
@@ -1009,6 +1017,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
                 nodeTime = vessel.Orbit.TimeOfDN(target.Orbit, UT);
                 // thisNode.Time = vessel.Orbit.TimeOfDN(target.Orbit, UT);
             }
+        }
 
             if (nodeTime < minTime) // Not allowed to move the node prior to anopther node
             {
