@@ -1,0 +1,29 @@
+{
+  "mod_id": "maneuver_node_controller",
+  "author": "XYZ3211, schlosrat",
+  "name": "Maneuver Node Controller",
+  "description": "Provides an interface to finely tune maneuver nodes",
+  "source": "https://github.com/schlosrat/ManeuverNodeController",
+  "version": "0.9.3",
+  "version_check": "https://raw.githubusercontent.com/schlosrat/ManeuverNodeController/master/maneuver_node_controller/swinfo.json",
+  "dependencies": [
+    {
+      "id": "SpaceWarp",
+      "version": {
+        "min": "1.0.1",
+        "max": "*"
+      }
+    },
+    {
+      "id": "NodeManager",
+      "version": {
+        "min": "0.5.3",
+        "max": "*"
+      }
+    }
+  ],
+  "ksp2_version": {
+    "min": "0.1.2",
+    "max": "*"
+  }
+}
