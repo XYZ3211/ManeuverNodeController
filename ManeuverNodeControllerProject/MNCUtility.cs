@@ -116,11 +116,11 @@ public static class MNCUtility
 
         if (minutes > 0 || hours > 0 || days > 0)
         {
-            result += returnLastUnit ? $"{secs:00.00}{spacing}" : $"{secs:00.00}";
+            result += returnLastUnit ? $"{secs:00.00}{spacing}" : $"{secs:00.0}";
         }
         else
         {
-            result += returnLastUnit ? $"{secs:00.00}{spacing}" : $"{secs:00.00}";
+            result += returnLastUnit ? $"{secs:00.00}{spacing}" : $"{secs:00.0}";
         }
 
         return result;
