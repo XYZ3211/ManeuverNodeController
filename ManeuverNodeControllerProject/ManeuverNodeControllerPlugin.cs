@@ -334,14 +334,14 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
                 dvRemaining = thisNode.BurnRequiredDV;
             UT = game.UniverseModel.UniversalTime;
             DrawEntry("∆v Remaining", dvRemaining.ToString("n2"), MNCStyles.label, "m/s");
-            string start = MNCUtility.SecondsToTimeString(thisNode.Time - UT);
+            string start = MNCUtility.SecondsToTimeString(thisNode.Time - UT, false);
             string duration = MNCUtility.SecondsToTimeString(thisNode.BurnDuration);
             if (thisNode.Time < UT)
-                Draw2LEntries("Start", "Duration", MNCStyles.label, start, duration, "s", true, MNCStyles.error);
+                Draw2LEntries("Start", "Duration", MNCStyles.label, start, duration, "", false, MNCStyles.error);
             else if (thisNode.Time < UT + 30)
-                Draw2LEntries("Start", "Duration", MNCStyles.label, start, duration, "s", true, MNCStyles.warning);
+                Draw2LEntries("Start", "Duration", MNCStyles.label, start, duration, "", false, MNCStyles.warning);
             else
-                Draw2LEntries("Start", "Duration", MNCStyles.label, start, duration, "s");
+                Draw2LEntries("Start", "Duration", MNCStyles.label, start, duration, "", false);
             GUILayout.Box("", MNCStyles.horizontalDivider);
             DrawEntry("Prograde ∆v", thisNode.BurnVector.z.ToString("n2"), MNCStyles.progradeStyle, "m/s");
             DrawEntry("Normal ∆v", thisNode.BurnVector.y.ToString("n2"), MNCStyles.normalStyle, "m/s");
@@ -436,40 +436,85 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             nextEcc = previousEcc;
             nextLAN = previousLAN;
         }
-        else if (SelectedNodeIndex == 0) // One or more nodes, and the selected node is the first
+        else
         {
-            // The previous orbit info will be from our current orbit
-            if (orbit.eccentricity < 1)
-                previousApA = (orbit.ApoapsisArl / 1000).ToString("n3");
+            // Get the patch info and index for the patch that contains this node
+            // ManeuverPlanSolver.FindPatchContainingUt(NodeManagerPlugin.Instance.Nodes[SelectedNodeIndex].Time, PatchedConicsList, out var patch, out var patchIndex);
+            var nodeTime = NodeManagerPlugin.Instance.Nodes[SelectedNodeIndex].Time;
+            PatchedConicsOrbit patch = null;
+            int patchIdx = 0;
+            if (nodeTime < PatchedConicsList[0].StartUT)
+            {
+                patchIdx = (PatchedConicsList[0].PatchEndTransition == KSP.Sim.PatchTransitionType.Encounter) ? 1 : 0;
+                patch = PatchedConicsList[patchIdx];
+            }
             else
-                previousApA = "Inf";
-            previousPeA = (orbit.PeriapsisArl / 1000).ToString("n3");
-            previousInc = orbit.inclination.ToString("n3");
-            previousEcc = orbit.eccentricity.ToString("n3");
-            previousLAN = orbit.longitudeOfAscendingNode.ToString("n3");
+            {
+                for (int i = 0; i < PatchedConicsList.Count - 1; i++)
+                {
+                    if (PatchedConicsList[i].StartUT < nodeTime && nodeTime <= PatchedConicsList[i + 1].StartUT)
+                    {
+                        patchIdx = (PatchedConicsList[i + 1].PatchEndTransition == KSP.Sim.PatchTransitionType.Encounter && i < PatchedConicsList.Count - 2) ? i + 2 : i + 1;
+                        patch = PatchedConicsList[patchIdx];
+                        break;
+                    }
+                }
+            }
+            if (patch == null)
+            {
+                patch = PatchedConicsList.Last();
+                patchIdx = PatchedConicsList.Count - 1;
+            }
 
-            // The next orbit info will be from PatchedConicsList[0]
-            nextApA = (PatchedConicsList[SelectedNodeIndex].ApoapsisArl / 1000).ToString("n3");
-            nextPeA = (PatchedConicsList[SelectedNodeIndex].PeriapsisArl / 1000).ToString("n3");
-            nextInc = PatchedConicsList[SelectedNodeIndex].inclination.ToString("n3");
-            nextEcc = PatchedConicsList[SelectedNodeIndex].eccentricity.ToString("n3");
-            nextLAN = PatchedConicsList[SelectedNodeIndex].longitudeOfAscendingNode.ToString("n3");
-        }
-        else // One or more nodes, and the selected node is not the first
-        {
-            // The previous orbit info will be from PatchedConicsList[SelectedNodeIndex - 1]
-            previousApA = (PatchedConicsList[SelectedNodeIndex - 1].ApoapsisArl / 1000).ToString("n3");
-            previousPeA = (PatchedConicsList[SelectedNodeIndex - 1].PeriapsisArl / 1000).ToString("n3");
-            previousInc = PatchedConicsList[SelectedNodeIndex - 1].inclination.ToString("n3");
-            previousEcc = PatchedConicsList[SelectedNodeIndex - 1].eccentricity.ToString("n3");
-            previousLAN = PatchedConicsList[SelectedNodeIndex - 1].longitudeOfAscendingNode.ToString("n3");
+            if (SelectedNodeIndex == 0) // One or more nodes, and the selected node is the first
+            {
+                // The previous orbit info will be from our current orbit
+                if (orbit.eccentricity < 1)
+                    previousApA = (orbit.ApoapsisArl / 1000).ToString("n3");
+                else
+                    previousApA = "Inf";
+                previousPeA = (orbit.PeriapsisArl / 1000).ToString("n3");
+                previousInc = orbit.inclination.ToString("n3");
+                previousEcc = orbit.eccentricity.ToString("n3");
+                previousLAN = orbit.longitudeOfAscendingNode.ToString("n3");
 
-            // The next orbit info will be from PatchedConicsList[SelectedNodeIndex]
-            nextApA = (PatchedConicsList[SelectedNodeIndex].ApoapsisArl / 1000).ToString("n3");
-            nextPeA = (PatchedConicsList[SelectedNodeIndex].PeriapsisArl / 1000).ToString("n3");
-            nextInc = PatchedConicsList[SelectedNodeIndex].inclination.ToString("n3");
-            nextEcc = PatchedConicsList[SelectedNodeIndex].eccentricity.ToString("n3");
-            nextLAN = PatchedConicsList[SelectedNodeIndex].longitudeOfAscendingNode.ToString("n3");
+                // The next orbit info will be from PatchedConicsList[0]
+                nextApA = (patch.ApoapsisArl / 1000).ToString("n3");
+                nextPeA = (patch.PeriapsisArl / 1000).ToString("n3");
+                nextInc = patch.inclination.ToString("n3");
+                nextEcc = patch.eccentricity.ToString("n3");
+                nextLAN = patch.longitudeOfAscendingNode.ToString("n3");
+            }
+            else // One or more nodes, and the selected node is not the first
+            {
+                if (patchIdx > 1)
+                {
+                    // The previous orbit info will be from PatchedConicsList[SelectedNodeIndex - 1]
+                    previousApA = (PatchedConicsList[patchIdx - 1].ApoapsisArl / 1000).ToString("n3");
+                    previousPeA = (PatchedConicsList[patchIdx - 1].PeriapsisArl / 1000).ToString("n3");
+                    previousInc = PatchedConicsList[patchIdx - 1].inclination.ToString("n3");
+                    previousEcc = PatchedConicsList[patchIdx - 1].eccentricity.ToString("n3");
+                    previousLAN = PatchedConicsList[patchIdx - 1].longitudeOfAscendingNode.ToString("n3");
+                }
+                else
+                {
+                    // The previous orbit info will be from our current orbit
+                    if (orbit.eccentricity < 1)
+                        previousApA = (orbit.ApoapsisArl / 1000).ToString("n3");
+                    else
+                        previousApA = "Inf";
+                    previousPeA = (orbit.PeriapsisArl / 1000).ToString("n3");
+                    previousInc = orbit.inclination.ToString("n3");
+                    previousEcc = orbit.eccentricity.ToString("n3");
+                    previousLAN = orbit.longitudeOfAscendingNode.ToString("n3");
+                }
+                // The next orbit info will be from PatchedConicsList[SelectedNodeIndex]
+                nextApA = (patch.ApoapsisArl / 1000).ToString("n3");
+                nextPeA = (patch.PeriapsisArl / 1000).ToString("n3");
+                nextInc = patch.inclination.ToString("n3");
+                nextEcc = patch.eccentricity.ToString("n3");
+                nextLAN = patch.longitudeOfAscendingNode.ToString("n3");
+            }
         }
 
         Draw2Entries("Ap", "Ap", MNCStyles.name_label_r, previousApA, nextApA, "km", true, MNCStyles.value_label_l, MNCStyles.value_label_l);
@@ -593,9 +638,12 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         {
             GUILayout.Space(5);
             GUILayout.Label(value1, value1Style);
-            if (unitSpace)
-                GUILayout.Space(5);
-            GUILayout.Label(unit, MNCStyles.unit_label);
+            if (unit.Length > 0)
+            {
+                if (unitSpace)
+                    GUILayout.Space(5);
+                GUILayout.Label(unit, MNCStyles.unit_label);
+            }
         }
         GUILayout.FlexibleSpace();
         GUILayout.Label($"{entryName2}: ", entryStyle);
@@ -603,9 +651,12 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         {
             GUILayout.Space(5);
             GUILayout.Label(value2, value2Style);
-            if (unitSpace)
-                GUILayout.Space(5);
-            GUILayout.Label(unit, MNCStyles.unit_label);
+            if (unit.Length > 0)
+            {
+                if (unitSpace)
+                    GUILayout.Space(5);
+                GUILayout.Label(unit, MNCStyles.unit_label);
+            }
         }
         GUILayout.EndHorizontal();
         GUILayout.Space(MNCStyles.spacingAfterEntry);
@@ -1020,7 +1071,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
                 nodeTime = maxTime;
                 Logger.LogDebug($"Limiting nodeTime to no more than {(nodeTime - UT):F3} from now.");
             }
-            Logger.LogDebug($"nodeTime after adjsut  : {(nodeTime - UT):F3} from now.");
+            Logger.LogDebug($"nodeTime after adjust  : {(nodeTime - UT):F3} from now.");
 
             // Push the update to the node
             // thisNode.Time = nodeTime;
