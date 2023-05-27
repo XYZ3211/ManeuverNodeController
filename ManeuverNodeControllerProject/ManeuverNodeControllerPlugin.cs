@@ -13,11 +13,11 @@ using NodeManager;
 using SpaceWarp;
 using SpaceWarp.API.Assets;
 using SpaceWarp.API.Mods;
-using SpaceWarp.API.UI;
 using SpaceWarp.API.UI.Appbar;
 using System.Collections;
 using System.Reflection;
 using UnityEngine;
+using MuMech;
 
 namespace ManeuverNodeController;
 
@@ -157,7 +157,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         Appbar.RegisterAppButton(
             "Maneuver Node Cont.",
             ToolbarFlightButtonID,
-            AssetManager.GetAsset<Texture2D>($"{SpaceWarpMetadata.ModID}/images/icon.png"),
+            AssetManager.GetAsset<Texture2D>($"{Info.Metadata.GUID}/images/icon.png"),
             ToggleButton);
             
         // Register all Harmony patches in the project

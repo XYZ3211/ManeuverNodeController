@@ -216,9 +216,9 @@ public static class MNCUtility
         }
     }
 
-    internal static (int major, int minor, int patch)? GetModVersion(string modId)
+    internal static (int major, int minor, int patch)? GetModVersion(string GUID)
     {
-        var plugin = Chainloader.Plugins?.OfType<BaseSpaceWarpPlugin>().ToList().FirstOrDefault(p => p.SpaceWarpMetadata.ModID.ToLowerInvariant() == modId.ToLowerInvariant());
+        var plugin = Chainloader.Plugins?.OfType<BaseSpaceWarpPlugin>().ToList().FirstOrDefault(p => p.Info.Metadata.GUID.ToLowerInvariant() == GUID.ToLowerInvariant());
         string versionString = plugin?.SpaceWarpMetadata?.Version;
 
         string[] versionNumbers = versionString?.Split(new char[] { '.' }, 3);
@@ -246,14 +246,14 @@ public static class MNCUtility
     /// <summary>
     /// Check if installed mod is older than the specified version
     /// </summary>
-    /// <param name="modId">SpaceWarp mod ID</param>
+    /// <param name="GUID">SpaceWarp mod ID</param>
     /// <param name="major">Specified major version (X.0.0)</param>
     /// <param name="minor">Specified minor version (0.X.0)</param>
     /// <param name="patch">Specified patch version (0.0.X)</param>
     /// <returns>True = installed mod is older. False = installed mod has the same version or it's newer or version isn't declared or version declared is gibberish that cannot be parsed</returns>
-    internal static bool IsModOlderThan (string modId, int major, int minor, int patch)
+    internal static bool IsModOlderThan (string GUID, int major, int minor, int patch)
     {
-        var modVersion = GetModVersion(modId);
+        var modVersion = GetModVersion(GUID);
 
         if (!modVersion.HasValue || modVersion.Value == (0, 0, 0))
             return false;

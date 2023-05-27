@@ -1,6 +1,8 @@
 
 using UnityEngine;
 using SpaceWarp.API.Assets;
+using static KSP.Map.impl.Targeting.Sample;
+using ManeuverNodeController;
 
 namespace ManeuverNodeController.UI
 {
@@ -9,8 +11,7 @@ namespace ManeuverNodeController.UI
 // BEPEXVersion
         public static Texture2D loadIcon(string path)
         {
-            // TODO : change the hardcoded path flight_plan
-            string full_path = $"maneuver_node_controller/images/{path}.png";
+            string full_path = $"{ManeuverNodeControllerMod.Instance.Info.Metadata.GUID}/images/{path}.png";
             var imageTexture = AssetManager.GetAsset<Texture2D>(full_path);
 
             //   Check if the texture is null
