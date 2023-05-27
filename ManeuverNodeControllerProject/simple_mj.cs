@@ -1,39 +1,28 @@
 ﻿using KSP.Sim;
 using KSP.Sim.impl;
+using System.Runtime.CompilerServices;
 
 namespace ManeuverNodeController;
 
 public static class OrbitExtensions
 {
-    //can probably be replaced with Vector3d.xzy?
-    public static Vector3d SwapYZ(Vector3d v)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Vector3d OrbitNormal(this PatchedConicsOrbit o) // KS2: OrbitNormal // was: SwappedOrbitNormal
     {
-        return v.Reorder(132);
+        return o.referenceBody.transform.celestialFrame.ToLocalPosition(o.ReferenceFrame, -o.GetRelativeOrbitNormal().SwapYAndZ).normalized; // From KS2
     }
 
-    //normalized vector perpendicular to the orbital plane
-    //convention: as you look down along the orbit normal, the satellite revolves counterclockwise
-    public static Vector3d SwappedOrbitNormal(this PatchedConicsOrbit o)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Vector3d OrbitNormal(this IKeplerOrbit o) // KS2: OrbitNormal // was: SwappedOrbitNormal
     {
-        return -SwapYZ(o.GetRelativeOrbitNormal()).normalized;
+        return o.referenceBody.transform.celestialFrame.ToLocalPosition(o.ReferenceFrame, -o.GetRelativeOrbitNormal().SwapYAndZ).normalized; // From KS2
     }
 
-    //normalized vector perpendicular to the orbital plane
-    //convention: as you look down along the orbit normal, the satellite revolves counterclockwise
-    public static Vector3d SwappedOrbitNormal(this IKeplerOrbit o)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Vector3d WorldBCIPositionAtPeriapsis(this PatchedConicsOrbit o) // was: SwappedRelativePositionAtPeriapsis
     {
-        return -SwapYZ(o.GetRelativeOrbitNormal()).normalized;
-    }
-
-    //Returns the vector from the primary to the orbiting body at periapsis
-    //Better than using PatchedConicsOrbit.eccVec because that is zero for circular orbits
-    public static Vector3d SwappedRelativePositionAtPeriapsis(this PatchedConicsOrbit o)
-    {
-        // was: (float)o.LAN -> longitudeOfAscendingNode
-        // was: Planetarium.up -> o.ReferenceFrame.up.vector
-        // was: Planetarium.right -> o.ReferenceFrame.right.vector
         Vector3d vectorToAN = QuaternionD.AngleAxis(-(float)o.longitudeOfAscendingNode, o.ReferenceFrame.up.vector) * o.ReferenceFrame.right.vector;
-        Vector3d vectorToPe = QuaternionD.AngleAxis((float)o.argumentOfPeriapsis, o.SwappedOrbitNormal()) * vectorToAN;
+        Vector3d vectorToPe = QuaternionD.AngleAxis((float)o.argumentOfPeriapsis, o.OrbitNormal()) * vectorToAN;
         return o.Periapsis * vectorToPe;
     }
 
@@ -43,7 +32,7 @@ public static class OrbitExtensions
     //the ascending node is in the past.
     //NOTE: this function will throw an ArgumentException if a is a hyperbolic orbit and the "ascending node"
     //occurs at a true anomaly that a does not actually ever attain
-    public static double TimeOfAN(this PatchedConicsOrbit a, IKeplerOrbit b, double UT)
+    public static double TimeOfAscendingNode(this PatchedConicsOrbit a, IKeplerOrbit b, double UT)
     {
         return a.TimeOfTrueAnomaly(a.AscendingNodeTrueAnomaly(b), UT);
     }
@@ -54,10 +43,11 @@ public static class OrbitExtensions
     //the descending node is in the past.
     //NOTE: this function will throw an ArgumentException if a is a hyperbolic orbit and the "descending node"
     //occurs at a true anomaly that a does not actually ever attain
-    public static double TimeOfDN(this PatchedConicsOrbit a, IKeplerOrbit b, double UT)
+    public static double TimeOfDescendingNode(this PatchedConicsOrbit a, IKeplerOrbit b, double UT)
     {
         return a.TimeOfTrueAnomaly(a.DescendingNodeTrueAnomaly(b), UT);
     }
+
     //Returns the next time at which the orbiting object will cross the equator
     //moving northward, if o is east-moving, or southward, if o is west-moving.
     //For elliptical orbits this is a time between UT and UT + o.period.
@@ -65,7 +55,7 @@ public static class OrbitExtensions
     //ascending node is in the past.
     //NOTE: this function will throw an ArgumentException if o is a hyperbolic orbit and the
     //"ascending node" occurs at a true anomaly that o does not actually ever attain.
-    public static double TimeOfANEquatorial(this PatchedConicsOrbit o, double UT)
+    public static double TimeOfAscendingNodeEquatorial(this PatchedConicsOrbit o, double UT)
     {
         return o.TimeOfTrueAnomaly(o.AscendingNodeEquatorialTrueAnomaly(), UT);
     }
@@ -77,7 +67,7 @@ public static class OrbitExtensions
     //descending node is in the past.
     //NOTE: this function will throw an ArgumentException if o is a hyperbolic orbit and the
     //"descending node" occurs at a true anomaly that o does not actually ever attain.
-    public static double TimeOfDNEquatorial(this PatchedConicsOrbit o, double UT)
+    public static double TimeOfDescendingNodeEquatorial(this PatchedConicsOrbit o, double UT)
     {
         return o.TimeOfTrueAnomaly(o.DescendingNodeEquatorialTrueAnomaly(), UT);
     }
@@ -86,11 +76,102 @@ public static class OrbitExtensions
 
     //NOTE: this function can throw an ArgumentException, if o is a hyperbolic orbit with an eccentricity
     //large enough that it never attains the given true anomaly
-    public static double TimeOfTrueAnomaly(this PatchedConicsOrbit o, double trueAnomaly, double UT)
+    public static double TimeOfTrueAnomaly(this PatchedConicsOrbit o, double trueAnomalyRad, double UT)
     {
         // ManeuverNodeControllerMod.Logger.LogWarning($"OrbitExtensions.TimeOfTrueAnomaly: trueAnomaly: {trueAnomaly*UtilMath.Deg2Rad}");
-        return o.GetUTforTrueAnomaly(trueAnomaly * UtilMath.Deg2Rad, o.period);
-        //return o.UTAtMeanAnomaly(o.GetMeanAnomalyAtEccentricAnomaly(o.GetEccentricAnomalyAtTrueAnomaly(trueAnomaly)), UT);
+        // return o.GetUTforTrueAnomaly(trueAnomaly * UtilMath.Deg2Rad, o.period);
+        return o.UTAtMeanAnomaly(o.GetMeanAnomalyAtEccentricAnomaly(o.GetEccentricAnomalyAtTrueAnomaly(trueAnomalyRad)), UT);
+    }
+
+    //mean motion is rate of increase of the mean anomaly
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static double MeanMotion(this PatchedConicsOrbit o)
+    {
+        if (o.eccentricity > 1)
+        {
+            return Math.Sqrt(o.referenceBody.gravParameter / Math.Abs(Math.Pow(o.semiMajorAxis, 3)));
+        }
+
+        // The above formula is wrong when using the RealSolarSystem mod, which messes with orbital periods.
+        // This simpler formula should be foolproof for elliptical orbits:
+        return 2 * Math.PI / o.period;
+    }
+
+    //The mean anomaly of the orbit.
+    //For elliptical orbits, the value return is always between 0 and 2pi
+    //For hyperbolic orbits, the value can be any number.
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static double MeanAnomalyAtUT(this PatchedConicsOrbit o, double UT)
+    {
+        // We use ObtAtEpoch and not meanAnomalyAtEpoch because somehow meanAnomalyAtEpoch
+        // can be wrong when using the RealSolarSystem mod. ObtAtEpoch is always correct.
+        double ret = (o.ObTAtEpoch + (UT - o.epoch)) * o.MeanMotion();
+        if (o.eccentricity < 1) ret = ClampRadiansTwoPi(ret);
+        return ret;
+    }
+
+    //The next time at which the orbiting object will reach the given mean anomaly.
+    //For elliptical orbits, this will be a time between UT and UT + o.period
+    //For hyperbolic orbits, this can be any time, including a time in the past, if
+    //the given mean anomaly occurred in the past
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static double UTAtMeanAnomaly(this PatchedConicsOrbit o, double meanAnomaly, double UT)
+    {
+        double currentMeanAnomaly = o.MeanAnomalyAtUT(UT);
+        double meanDifference = meanAnomaly - currentMeanAnomaly;
+        if (o.eccentricity < 1) meanDifference = ClampRadiansTwoPi(meanDifference);
+        return UT + meanDifference / o.MeanMotion();
+    }
+
+    //Originally by Zool, revised by The_Duck
+    //Converts a true anomaly into an eccentric anomaly.
+    //For elliptical orbits this returns a value between 0 and 2pi
+    //For hyperbolic orbits the returned value can be any number.
+    //NOTE: For a hyperbolic orbit, if a true anomaly is requested that does not exist (a true anomaly
+    //past the true anomaly of the asymptote) then an ArgumentException is thrown
+    public static double GetEccentricAnomalyAtTrueAnomaly(this PatchedConicsOrbit o, double trueAnomalyRad)
+    {
+        double e = o.eccentricity;
+        trueAnomalyRad = ClampRadiansTwoPi(trueAnomalyRad);
+        // SAVEFORNOW trueAnomaly = MuUtils.ClampDegrees360(trueAnomaly);
+        // SAVEFORNOW trueAnomaly = trueAnomaly * (UtilMath.Deg2Rad);
+
+        if (e < 1) //elliptical orbits
+        {
+            double cosE = (e + Math.Cos(trueAnomalyRad)) / (1 + e * Math.Cos(trueAnomalyRad));
+            double sinE = Math.Sqrt(1 - cosE * cosE);
+            if (trueAnomalyRad > Math.PI) sinE *= -1;
+
+            return ClampRadiansTwoPi(Math.Atan2(sinE, cosE));
+        }
+
+        //hyperbolic orbits
+        double coshE = (e + Math.Cos(trueAnomalyRad)) / (1 + e * Math.Cos(trueAnomalyRad));
+        if (coshE < 1)
+            throw new ArgumentException("OrbitExtensions.GetEccentricAnomalyAtTrueAnomaly: True anomaly of " + trueAnomalyRad +
+                                        " radians is not attained by orbit with eccentricity " + o.eccentricity);
+
+        double E = Acosh(coshE);
+        if (trueAnomalyRad > Math.PI) E *= -1;
+
+        return E;
+    }
+
+    //Originally by Zool, revised by The_Duck
+    //Converts an eccentric anomaly into a mean anomaly.
+    //For an elliptical orbit, the returned value is between 0 and 2pi
+    //For a hyperbolic orbit, the returned value is any number
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static double GetMeanAnomalyAtEccentricAnomaly(this PatchedConicsOrbit o, double E)
+    {
+        double e = o.eccentricity;
+        if (e < 1) //elliptical orbits
+        {
+            return ClampRadiansTwoPi(E - e * Math.Sin(E));
+        }
+
+        //hyperbolic orbits
+        return e * Math.Sinh(E) - E;
     }
 
     //Gives the true anomaly (in a's orbit) at which a crosses its ascending node
@@ -98,7 +179,7 @@ public static class OrbitExtensions
     //The returned value is always between 0 and 2 * PI.
     public static double AscendingNodeTrueAnomaly(this PatchedConicsOrbit a, IKeplerOrbit b)
     {
-        Vector3d vectorToAN = Vector3d.Cross(a.SwappedOrbitNormal(), b.SwappedOrbitNormal()); // tried: GetRelativeOrbitNormal()
+        Vector3d vectorToAN = Vector3d.Cross(a.OrbitNormal(), b.OrbitNormal());
         return a.TrueAnomalyFromVector(vectorToAN);
     }
 
@@ -107,7 +188,7 @@ public static class OrbitExtensions
     //The returned value is always between 0 and 2 * PI.
     public static double DescendingNodeTrueAnomaly(this PatchedConicsOrbit a, IKeplerOrbit b)
     {
-        return ClampDegrees360(a.AscendingNodeTrueAnomaly(b) + 180.0);
+        return ClampRadiansTwoPi(a.AscendingNodeTrueAnomaly(b) + Math.PI);
     }
 
     //Gives the true anomaly at which o crosses the equator going northwards, if o is east-moving,
@@ -115,8 +196,7 @@ public static class OrbitExtensions
     //The returned value is always between 0 and 2 * PI.
     public static double AscendingNodeEquatorialTrueAnomaly(this PatchedConicsOrbit o)
     {
-        // was: o.referenceBody.transform.up -> o.referenceBody.transform.up.vector
-        Vector3d vectorToAN = Vector3d.Cross(o.referenceBody.transform.up.vector, o.SwappedOrbitNormal()); // tried: GetRelativeOrbitNormal()
+        Vector3d vectorToAN = Vector3d.Cross(o.referenceBody.transform.up.vector, o.OrbitNormal());
         return o.TrueAnomalyFromVector(vectorToAN);
     }
 
@@ -125,7 +205,7 @@ public static class OrbitExtensions
     //The returned value is always between 0 and 2 * PI.
     public static double DescendingNodeEquatorialTrueAnomaly(this PatchedConicsOrbit o)
     {
-        return ClampDegrees360(o.AscendingNodeEquatorialTrueAnomaly() + 180);
+        return ClampRadiansTwoPi(o.AscendingNodeEquatorialTrueAnomaly() + Math.PI);
     }
 
     //TODO 1.1 changed trueAnomaly to rad but MJ ext stil uses deg. Should change for consistency
@@ -136,9 +216,9 @@ public static class OrbitExtensions
     //The returned value is always between 0 and 360.
     public static double TrueAnomalyFromVector(this PatchedConicsOrbit o, Vector3d vec)
     {
-        Vector3d oNormal = o.SwappedOrbitNormal(); // tried: GetRelativeOrbitNormal()
+        Vector3d oNormal = o.OrbitNormal();
         Vector3d projected = Vector3d.Exclude(oNormal, vec);
-        Vector3d vectorToPe = o.SwappedRelativePositionAtPeriapsis();
+        Vector3d vectorToPe = o.WorldBCIPositionAtPeriapsis();
         double angleFromPe = Vector3d.Angle(vectorToPe, projected);
 
         //If the vector points to the infalling part of the orbit then we need to do 360 minus the
@@ -148,20 +228,34 @@ public static class OrbitExtensions
         //during the infalling part of the orbit.
         if (Math.Abs(Vector3d.Angle(projected, Vector3d.Cross(oNormal, vectorToPe))) < 90)
         {
-            return angleFromPe;
+            return angleFromPe * UtilMath.Deg2Rad;
         }
         else
         {
-            return 360 - angleFromPe;
+            return (360 - angleFromPe) * UtilMath.Deg2Rad;
         }
     }
 
     //keeps angles in the range 0 to 360
-    public static double ClampDegrees360(double angle)
+    //public static double ClampDegrees360(double angle)
+    //{
+    //    angle = angle % 360.0;
+    //    if (angle < 0) return angle + 360.0;
+    //    else return angle;
+    //}
+
+    //keeps angles in the range 0 to 2 PI
+    public static double ClampRadiansTwoPi(double angle)
     {
-        angle = angle % 360.0;
-        if (angle < 0) return angle + 360.0;
-        else return angle;
+        angle = angle % (2 * Math.PI);
+        if (angle < 0) return angle + 2 * Math.PI;
+        return angle;
+    }
+
+    //acosh(x) = log(x + sqrt(x^2 - 1))
+    public static double Acosh(double x)
+    {
+        return Math.Log(x + Math.Sqrt(x * x - 1));
     }
 }
 

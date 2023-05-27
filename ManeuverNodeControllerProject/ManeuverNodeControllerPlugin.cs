@@ -1042,22 +1042,22 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             }
             else if (snapToANe) // Snap the maneuver time to the AN relative to the equatorial plane
             {
-                nodeTime = vessel.Orbit.TimeOfANEquatorial(UT);
+                nodeTime = vessel.Orbit.TimeOfAscendingNodeEquatorial(UT);
                 // thisNode.Time = vessel.Orbit.TimeOfANEquatorial(UT);
             }
             else if (snapToDNe) // Snap the maneuver time to the DN relative to the equatorial plane
             {
-                nodeTime = vessel.Orbit.TimeOfDNEquatorial(UT);
+                nodeTime = vessel.Orbit.TimeOfDescendingNodeEquatorial(UT);
                 // thisNode.Time = vessel.Orbit.TimeOfDNEquatorial(UT);
             }
             else if (snapToANt) // Snap the maneuver time to the AN relative to selected target's orbit
             {
-                nodeTime = vessel.Orbit.TimeOfAN(target.Orbit, UT);
+                nodeTime = vessel.Orbit.TimeOfAscendingNode(target.Orbit, UT);
                 // thisNode.Time = vessel.Orbit.TimeOfAN(target.Orbit, UT);
             }
             else if (snapToDNt) // Snap the maneuver time to the DN relative to selected target's orbit
             {
-                nodeTime = vessel.Orbit.TimeOfDN(target.Orbit, UT);
+                nodeTime = vessel.Orbit.TimeOfDescendingNode(target.Orbit, UT);
                 // thisNode.Time = vessel.Orbit.TimeOfDN(target.Orbit, UT);
             }
 
