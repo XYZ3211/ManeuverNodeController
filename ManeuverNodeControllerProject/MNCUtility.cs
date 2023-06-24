@@ -1,12 +1,8 @@
-﻿using KSP.Game;
+﻿using BepInEx.Logging;
+using KSP.Game;
+using KSP.Messages;
 using KSP.Sim.impl;
 using KSP.Sim.Maneuver;
-using UnityEngine;
-using BepInEx.Logging;
-using KSP.Messages;
-using KSP.Sim.DeltaV;
-using BepInEx.Bootstrap;
-using SpaceWarp.API.Mods;
 
 namespace MNCUtilities;
 
@@ -14,6 +10,7 @@ public static class MNCUtility
 {
     public static VesselComponent activeVessel;
     public static ManeuverNodeData currentNode;
+    public static SimulationObjectModel currentTarget;
     // public static string LayoutPath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "MicroLayout.json");
     private static ManualLogSource Logger = BepInEx.Logging.Logger.CreateLogSource("ManeuverNodeController.Utility");
     public static GameStateConfiguration gameState;
@@ -29,13 +26,14 @@ public static class MNCUtility
     {
         activeVessel = GameManager.Instance?.Game?.ViewController?.GetActiveVehicle(true)?.GetSimVessel(true);
         currentNode = activeVessel != null ? GameManager.Instance?.Game?.SpaceSimulation.Maneuvers.GetNodesForVessel(activeVessel.GlobalId).FirstOrDefault(): null;
+        currentTarget = activeVessel?.TargetObject;
     }
 
-    public static void RefreshGameManager()
-    {
-        gameState = GameManager.Instance?.Game?.GlobalGameState?.GetGameState();
-        // MessageCenter = GameManager.Instance?.Game?.Messages;
-    }
+    //public static void RefreshGameManager()
+    //{
+    //    gameState = GameManager.Instance?.Game?.GlobalGameState?.GetGameState();
+    //    // MessageCenter = GameManager.Instance?.Game?.Messages;
+    //}
 
     //public static void RefreshStagesOAB()
     //{
@@ -148,11 +146,11 @@ public static class MNCUtility
     //}
 
     /// <summary>
-	/// Validates if user entered a 3 character string
-	/// </summary>
-	/// <param name="abbreviation">String that will be shortened to 3 characters</param>
-	/// <returns>Uppercase string shortened to 3 characters. If abbreviation is empty returns "CUS"</returns>
-	// public static string ValidateAbbreviation(string abbreviation)
+	  /// Validates if user entered a 3 character string
+	  /// </summary>
+	  /// <param name="abbreviation">String that will be shortened to 3 characters</param>
+	  /// <returns>Uppercase string shortened to 3 characters. If abbreviation is empty returns "CUS"</returns>
+	  // public static string ValidateAbbreviation(string abbreviation)
     // {
     //     if (String.IsNullOrEmpty(abbreviation))
     //         return "CUS";
@@ -163,28 +161,28 @@ public static class MNCUtility
     /// Check if current vessel has an active target (celestial body or vessel)
     /// </summary>
     /// <returns></returns>
-    public static bool TargetExists()
-    {
-        try { return (activeVessel.TargetObject != null); }
-        catch { return false; }
-    }
+    //public static bool TargetExists()
+    //{
+    //    try { return (activeVessel.TargetObject != null); }
+    //    catch { return false; }
+    //}
 
     /// <summary>
     /// Checks if current vessel has a maneuver
     /// </summary>
     /// <returns></returns>
-    public static bool ManeuverExists()
-    {
-        try { return (GameManager.Instance?.Game?.SpaceSimulation.Maneuvers.GetNodesForVessel(activeVessel.GlobalId).FirstOrDefault() != null); }
-        catch { return false; }
-    }
+    //public static bool ManeuverExists()
+    //{
+    //    try { return (GameManager.Instance?.Game?.SpaceSimulation.Maneuvers.GetNodesForVessel(activeVessel.GlobalId).FirstOrDefault() != null); }
+    //    catch { return false; }
+    //}
 
-    public static Vector2 ClampToScreen(Vector2 position, Vector2 size)
-    {
-        float x = Mathf.Clamp(position.x, 0, Screen.width - size.x);
-        float y = Mathf.Clamp(position.y, 0, Screen.height - size.y);
-        return new Vector2(x, y);
-    }
+    //public static Vector2 ClampToScreen(Vector2 position, Vector2 size)
+    //{
+    //    float x = Mathf.Clamp(position.x, 0, Screen.width - size.x);
+    //    float y = Mathf.Clamp(position.y, 0, Screen.height - size.y);
+    //    return new Vector2(x, y);
+    //}
 
     /// <summary>
     /// Check if focus is on an editable text field. If it is, disable input controls. If it's not, reenable controls.
@@ -192,56 +190,56 @@ public static class MNCUtility
     /// <param name="gameInputState">If input is currently enabled or disabled</param>
     /// <param name="showGuiFlight">If MainGui window is opened</param>
     /// <returns>True = input is enabled. False = input is disabled</returns>
-    internal static bool ToggleGameInputOnControlInFocus(bool gameInputState, bool showGuiFlight)
-    {
-        if (gameInputState)
-        {
-            if (InputDisableWindowAbbreviation == GUI.GetNameOfFocusedControl() || InputDisableWindowName == GUI.GetNameOfFocusedControl())
-            {
-                GameManager.Instance.Game.Input.Disable();
-                return false;
-            }
+    //internal static bool ToggleGameInputOnControlInFocus(bool gameInputState, bool showGuiFlight)
+    //{
+    //    if (gameInputState)
+    //    {
+    //        if (InputDisableWindowAbbreviation == GUI.GetNameOfFocusedControl() || InputDisableWindowName == GUI.GetNameOfFocusedControl())
+    //        {
+    //            GameManager.Instance.Game.Input.Disable();
+    //            return false;
+    //        }
 
-            return true;
-        }
-        else
-        {
-            if ((InputDisableWindowAbbreviation != GUI.GetNameOfFocusedControl() && InputDisableWindowName != GUI.GetNameOfFocusedControl()) || !showGuiFlight)
-            {
-                GameManager.Instance.Game.Input.Enable();
-                return true;
-            }
+    //        return true;
+    //    }
+    //    else
+    //    {
+    //        if ((InputDisableWindowAbbreviation != GUI.GetNameOfFocusedControl() && InputDisableWindowName != GUI.GetNameOfFocusedControl()) || !showGuiFlight)
+    //        {
+    //            GameManager.Instance.Game.Input.Enable();
+    //            return true;
+    //        }
 
-            return false;
-        }
-    }
+    //        return false;
+    //    }
+    //}
 
-    internal static (int major, int minor, int patch)? GetModVersion(string GUID)
-    {
-        var plugin = Chainloader.Plugins?.OfType<BaseSpaceWarpPlugin>().ToList().FirstOrDefault(p => p.Info.Metadata.GUID.ToLowerInvariant() == GUID.ToLowerInvariant());
-        string versionString = plugin?.SpaceWarpMetadata?.Version;
+    //internal static (int major, int minor, int patch)? GetModVersion(string GUID)
+    //{
+    //    var plugin = Chainloader.Plugins?.OfType<BaseSpaceWarpPlugin>().ToList().FirstOrDefault(p => p.Info.Metadata.GUID.ToLowerInvariant() == GUID.ToLowerInvariant());
+    //    string versionString = plugin?.SpaceWarpMetadata?.Version;
 
-        string[] versionNumbers = versionString?.Split(new char[] { '.' }, 3);
+    //    string[] versionNumbers = versionString?.Split(new char[] { '.' }, 3);
 
-        if (versionNumbers != null && versionNumbers.Length >= 1)
-        {
-            int majorVersion = 0;
-            int minorVersion = 0;
-            int patchVersion = 0;
+    //    if (versionNumbers != null && versionNumbers.Length >= 1)
+    //    {
+    //        int majorVersion = 0;
+    //        int minorVersion = 0;
+    //        int patchVersion = 0;
 
-            if (versionNumbers.Length >= 1)
-                int.TryParse(versionNumbers[0], out majorVersion);
-            if (versionNumbers.Length >= 2)
-                int.TryParse(versionNumbers[1], out minorVersion);
-            if (versionNumbers.Length == 3)
-                int.TryParse(versionNumbers[2], out patchVersion);
+    //        if (versionNumbers.Length >= 1)
+    //            int.TryParse(versionNumbers[0], out majorVersion);
+    //        if (versionNumbers.Length >= 2)
+    //            int.TryParse(versionNumbers[1], out minorVersion);
+    //        if (versionNumbers.Length == 3)
+    //            int.TryParse(versionNumbers[2], out patchVersion);
 
-            Logger.LogInfo($"Space Warp version {majorVersion}.{minorVersion}.{patchVersion} detected.");
+    //        Logger.LogInfo($"Space Warp version {majorVersion}.{minorVersion}.{patchVersion} detected.");
 
-            return (majorVersion, minorVersion, patchVersion);
-        }
-        else return null;
-    }
+    //        return (majorVersion, minorVersion, patchVersion);
+    //    }
+    //    else return null;
+    //}
 
     /// <summary>
     /// Check if installed mod is older than the specified version
@@ -251,26 +249,26 @@ public static class MNCUtility
     /// <param name="minor">Specified minor version (0.X.0)</param>
     /// <param name="patch">Specified patch version (0.0.X)</param>
     /// <returns>True = installed mod is older. False = installed mod has the same version or it's newer or version isn't declared or version declared is gibberish that cannot be parsed</returns>
-    internal static bool IsModOlderThan (string GUID, int major, int minor, int patch)
-    {
-        var modVersion = GetModVersion(GUID);
+    //internal static bool IsModOlderThan (string GUID, int major, int minor, int patch)
+    //{
+    //    var modVersion = GetModVersion(GUID);
 
-        if (!modVersion.HasValue || modVersion.Value == (0, 0, 0))
-            return false;
+    //    if (!modVersion.HasValue || modVersion.Value == (0, 0, 0))
+    //        return false;
 
-        if (modVersion.Value.Item1 < major)
-            return true;
-        else if (modVersion.Value.Item1 > major)
-            return false;
+    //    if (modVersion.Value.Item1 < major)
+    //        return true;
+    //    else if (modVersion.Value.Item1 > major)
+    //        return false;
 
-        if (modVersion.Value.Item2 < minor)
-            return true;
-        else if (modVersion.Value.Item2 > minor)
-            return false;
+    //    if (modVersion.Value.Item2 < minor)
+    //        return true;
+    //    else if (modVersion.Value.Item2 > minor)
+    //        return false;
 
-        if (modVersion.Value.Item3 < patch)
-            return true;
-        else
-            return false;
-    }
+    //    if (modVersion.Value.Item3 < patch)
+    //        return true;
+    //    else
+    //        return false;
+    //}
 }

@@ -20,6 +20,13 @@
         "min": "0.5.5",
         "max": "*"
       }
+    },
+    {
+      "id": "UitkForKsp2",
+      "version": {
+        "min": "1.2.0",
+        "max": "*"
+      }
     }
   ],
   "ksp2_version": {
