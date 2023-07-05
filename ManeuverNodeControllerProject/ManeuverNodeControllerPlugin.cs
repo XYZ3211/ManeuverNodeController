@@ -232,8 +232,8 @@ public class MncUiController : KerbalMonoBehaviour
         int numOrbits;
         string nextApA, nextPeA, nextInc, nextEcc, nextLAN, previousApA, previousPeA, previousInc, previousEcc, previousLAN;
 
-        PatchedConicsOrbit orbit = MNCUtility.activeVessel.Orbit;
-        OrbiterComponent Orbiter = MNCUtility.activeVessel.Orbiter;
+        PatchedConicsOrbit orbit = MNCUtility.activeVessel?.Orbit;
+        OrbiterComponent Orbiter = MNCUtility.activeVessel?.Orbiter;
         ManeuverPlanSolver ManeuverPlanSolver = Orbiter?.ManeuverPlanSolver;
         List<PatchedConicsOrbit> PatchedConicsList = ManeuverPlanSolver?.PatchedConicsList;
 
