@@ -237,6 +237,9 @@ public class MncUiController : KerbalMonoBehaviour
         ManeuverPlanSolver ManeuverPlanSolver = Orbiter?.ManeuverPlanSolver;
         List<PatchedConicsOrbit> PatchedConicsList = ManeuverPlanSolver?.PatchedConicsList;
 
+        if (orbit == null)
+          return;
+
         NodeIndexValue.text = (selectedNode + 1).ToString();
         NodeMaxIndexValue.text = nodes.Count.ToString();
 
