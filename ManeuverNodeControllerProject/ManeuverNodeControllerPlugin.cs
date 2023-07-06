@@ -20,6 +20,7 @@ using UitkForKsp2.API;
 using UnityEngine;
 using UnityEngine.UIElements;
 using UitkForKsp2;
+using BepInEx.Configuration;
 
 namespace ManeuverNodeController;
 
@@ -44,6 +45,9 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
   static bool loaded = false;
   private bool interfaceEnabled = false;
   private bool GUIenabled = true;
+
+  private ConfigEntry<KeyboardShortcut> _keybind;
+  private ConfigEntry<KeyboardShortcut> _keybind2;
 
   public SimulationObjectModel currentTarget;
 
@@ -88,6 +92,18 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     mncWindow.hideFlags |= HideFlags.HideAndDontSave;
 
     controller = mncWindow.gameObject.AddComponent<MncUiController>();
+
+    _keybind = Config.Bind(
+    new ConfigDefinition("Keybindings", "First Keybind"),
+    new KeyboardShortcut(KeyCode.N, KeyCode.LeftAlt),
+    new ConfigDescription("Keybind to open mod window")
+    );
+
+    _keybind2 = Config.Bind(
+    new ConfigDefinition("Keybindings", "Second Keybind"),
+    new KeyboardShortcut(KeyCode.N, KeyCode.RightAlt, KeyCode.AltGr),
+    new ConfigDescription("Keybind to open mod window")
+    );
 
     GameManager.Instance.Game.Messages.Subscribe<ManeuverRemovedMessage>(msg =>
     {
@@ -145,10 +161,13 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
 
   void Update()
   {
-    if (Input.GetKey(KeyCode.LeftAlt) && Input.GetKeyDown(KeyCode.N))
+    if ((_keybind != null && _keybind.Value.IsDown()) || (_keybind2 != null && _keybind2.Value.IsDown()))
     {
       ToggleButton(!interfaceEnabled);
-      Logger.LogInfo("Update: UI toggled with hotkey");
+      if (_keybind != null && _keybind.Value.IsDown())
+        Logger.LogDebug($"Update: UI toggled with _keybind, hotkey {_keybind.Value}");
+      if (_keybind2 != null && _keybind2.Value.IsDown())
+        Logger.LogDebug($"Update: UI toggled with _keybind2, hotkey {_keybind2.Value}");
     }
 
     // Stuff from OnGUI that we still need to do at least once each frame
@@ -422,9 +441,35 @@ public class MncUiController : KerbalMonoBehaviour
     }
 
     _container = document.rootVisualElement;
+    _container[0].transform.position = new Vector2(800, 50);
     _container[0].CenterByDefault();
     _container.style.display = DisplayStyle.None;
 
+    //document.rootVisualElement.Query<TextField>().ForEach(textField =>
+    //{
+    //  textField.RegisterCallback<FocusInEvent>(_ => GameManager.Instance?.Game?.Input.Disable());
+    //  textField.RegisterCallback<FocusOutEvent>(_ => GameManager.Instance?.Game?.Input.Enable());
+
+    //  textField.RegisterValueChangedCallback((evt) =>
+    //  {
+    //    ManeuverNodeControllerMod.Logger.LogDebug($"TryParse attempt for {textField.name}. Tooltip = {textField.tooltip}");
+    //    if (float.TryParse(evt.newValue, out _))
+    //    {
+    //      textField.RemoveFromClassList("unity-text-field-invalid");
+    //      ManeuverNodeControllerMod.Logger.LogDebug($"TryParse success for {textField.name}, nValue = '{evt.newValue}': Removed unity-text-field-invalid from class list");
+    //    }
+    //    else
+    //    {
+    //      textField.AddToClassList("unity-text-field-invalid");
+    //      ManeuverNodeControllerMod.Logger.LogDebug($"TryParse failure for {textField.name}, nValue = '{evt.newValue}': Added unity-text-field-invalid to class list");
+    //      ManeuverNodeControllerMod.Logger.LogDebug($"document.rootVisualElement.transform.position.z = {document.rootVisualElement.transform.position.z}");
+    //    }
+    //  });
+
+    //  textField.RegisterCallback<PointerDownEvent>(evt => evt.StopPropagation());
+    //  textField.RegisterCallback<PointerUpEvent>(evt => evt.StopPropagation());
+    //  textField.RegisterCallback<PointerMoveEvent>(evt => evt.StopPropagation());
+    //});
   }
 
   public void InitializeElements()
