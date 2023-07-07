@@ -445,31 +445,31 @@ public class MncUiController : KerbalMonoBehaviour
     _container[0].CenterByDefault();
     _container.style.display = DisplayStyle.None;
 
-    //document.rootVisualElement.Query<TextField>().ForEach(textField =>
-    //{
-    //  textField.RegisterCallback<FocusInEvent>(_ => GameManager.Instance?.Game?.Input.Disable());
-    //  textField.RegisterCallback<FocusOutEvent>(_ => GameManager.Instance?.Game?.Input.Enable());
+    document.rootVisualElement.Query<TextField>().ForEach(textField =>
+    {
+      textField.RegisterCallback<FocusInEvent>(_ => GameManager.Instance?.Game?.Input.Disable());
+      textField.RegisterCallback<FocusOutEvent>(_ => GameManager.Instance?.Game?.Input.Enable());
 
-    //  textField.RegisterValueChangedCallback((evt) =>
-    //  {
-    //    ManeuverNodeControllerMod.Logger.LogDebug($"TryParse attempt for {textField.name}. Tooltip = {textField.tooltip}");
-    //    if (float.TryParse(evt.newValue, out _))
-    //    {
-    //      textField.RemoveFromClassList("unity-text-field-invalid");
-    //      ManeuverNodeControllerMod.Logger.LogDebug($"TryParse success for {textField.name}, nValue = '{evt.newValue}': Removed unity-text-field-invalid from class list");
-    //    }
-    //    else
-    //    {
-    //      textField.AddToClassList("unity-text-field-invalid");
-    //      ManeuverNodeControllerMod.Logger.LogDebug($"TryParse failure for {textField.name}, nValue = '{evt.newValue}': Added unity-text-field-invalid to class list");
-    //      ManeuverNodeControllerMod.Logger.LogDebug($"document.rootVisualElement.transform.position.z = {document.rootVisualElement.transform.position.z}");
-    //    }
-    //  });
+      textField.RegisterValueChangedCallback((evt) =>
+      {
+        ManeuverNodeControllerMod.Logger.LogDebug($"TryParse attempt for {textField.name}. Tooltip = {textField.tooltip}");
+        if (float.TryParse(evt.newValue, out _))
+        {
+          // textField.RemoveFromClassList("unity-text-field-invalid");
+          ManeuverNodeControllerMod.Logger.LogDebug($"TryParse success for {textField.name}, nValue = '{evt.newValue}': Removed unity-text-field-invalid from class list");
+        }
+        else
+        {
+          // textField.AddToClassList("unity-text-field-invalid");
+          ManeuverNodeControllerMod.Logger.LogDebug($"TryParse failure for {textField.name}, nValue = '{evt.newValue}': Added unity-text-field-invalid to class list");
+          ManeuverNodeControllerMod.Logger.LogDebug($"document.rootVisualElement.transform.position.z = {document.rootVisualElement.transform.position.z}");
+        }
+      });
 
-    //  textField.RegisterCallback<PointerDownEvent>(evt => evt.StopPropagation());
-    //  textField.RegisterCallback<PointerUpEvent>(evt => evt.StopPropagation());
-    //  textField.RegisterCallback<PointerMoveEvent>(evt => evt.StopPropagation());
-    //});
+      textField.RegisterCallback<PointerDownEvent>(evt => evt.StopPropagation());
+      textField.RegisterCallback<PointerUpEvent>(evt => evt.StopPropagation());
+      textField.RegisterCallback<PointerMoveEvent>(evt => evt.StopPropagation());
+    });
   }
 
   public void InitializeElements()
@@ -534,86 +534,86 @@ public class MncUiController : KerbalMonoBehaviour
     _container.Q<TextField>("AbsoluteDvInput").RegisterValueChangedCallback((evt) => {
       if (float.TryParse(evt.newValue, out float newFloat))
       {
-        _container.Q<TextField>("AbsoluteDvInput").style.color = Color.white;
+        // _container.Q<TextField>("AbsoluteDvInput").style.color = Color.white;
         absDvValue = newFloat;
       }
-      else
-      {
-        _container.Q<TextField>("AbsoluteDvInput").style.color = Color.red;
-      }
+      //else
+      //{
+      //  _container.Q<TextField>("AbsoluteDvInput").style.color = Color.red;
+      //}
     });
     _container.Q<TextField>("AbsoluteDvInput").value = absDvValue.ToString();
-    _container.Q<TextField>("AbsoluteDvInput").RegisterCallback<PointerDownEvent>(evt => evt.StopPropagation());
-    _container.Q<TextField>("AbsoluteDvInput").RegisterCallback<PointerUpEvent>(evt => evt.StopPropagation());
-    _container.Q<TextField>("AbsoluteDvInput").RegisterCallback<PointerMoveEvent>(evt => evt.StopPropagation());
+    //_container.Q<TextField>("AbsoluteDvInput").RegisterCallback<PointerDownEvent>(evt => evt.StopPropagation());
+    //_container.Q<TextField>("AbsoluteDvInput").RegisterCallback<PointerUpEvent>(evt => evt.StopPropagation());
+    //_container.Q<TextField>("AbsoluteDvInput").RegisterCallback<PointerMoveEvent>(evt => evt.StopPropagation());
 
     // pass = float.TryParse(_container.Q<TextField>("SmallStepDvInput").value, out smallStepDv);
     _container.Q<TextField>("SmallStepDvInput").RegisterValueChangedCallback((evt) => {
       if (float.TryParse(evt.newValue, out float newFloat))
       {
-        _container.Q<TextField>("SmallStepDvInput").style.color = Color.white;
+        // _container.Q<TextField>("SmallStepDvInput").style.color = Color.white;
         smallStepDv = newFloat;
       }
-      else
-      {
-        _container.Q<TextField>("SmallStepDvInput").style.color = Color.red;
-      }
+      //else
+      //{
+      //  _container.Q<TextField>("SmallStepDvInput").style.color = Color.red;
+      //}
     });
     _container.Q<TextField>("SmallStepDvInput").value = smallStepDv.ToString();
-    _container.Q<TextField>("SmallStepDvInput").RegisterCallback<PointerDownEvent>(evt => evt.StopPropagation());
-    _container.Q<TextField>("SmallStepDvInput").RegisterCallback<PointerUpEvent>(evt => evt.StopPropagation());
-    _container.Q<TextField>("SmallStepDvInput").RegisterCallback<PointerMoveEvent>(evt => evt.StopPropagation());
+    //_container.Q<TextField>("SmallStepDvInput").RegisterCallback<PointerDownEvent>(evt => evt.StopPropagation());
+    //_container.Q<TextField>("SmallStepDvInput").RegisterCallback<PointerUpEvent>(evt => evt.StopPropagation());
+    //_container.Q<TextField>("SmallStepDvInput").RegisterCallback<PointerMoveEvent>(evt => evt.StopPropagation());
 
     // pass = float.TryParse(_container.Q<TextField>("LargeStepDvInput").value, out largeStepDv);
     _container.Q<TextField>("LargeStepDvInput").RegisterValueChangedCallback((evt) => {
       if (float.TryParse(evt.newValue, out float newFloat))
       {
-        _container.Q<TextField>("LargeStepDvInput").style.color = Color.white;
+        // _container.Q<TextField>("LargeStepDvInput").style.color = Color.white;
         largeStepDv = newFloat;
       }
-      else
-      {
-        _container.Q<TextField>("LargeStepDvInput").style.color = Color.red;
-      }
+      //else
+      //{
+      //  _container.Q<TextField>("LargeStepDvInput").style.color = Color.red;
+      //}
     });
     _container.Q<TextField>("LargeStepDvInput").value = largeStepDv.ToString();
-    _container.Q<TextField>("LargeStepDvInput").RegisterCallback<PointerDownEvent>(evt => evt.StopPropagation());
-    _container.Q<TextField>("LargeStepDvInput").RegisterCallback<PointerUpEvent>(evt => evt.StopPropagation());
-    _container.Q<TextField>("LargeStepDvInput").RegisterCallback<PointerMoveEvent>(evt => evt.StopPropagation());
+    //_container.Q<TextField>("LargeStepDvInput").RegisterCallback<PointerDownEvent>(evt => evt.StopPropagation());
+    //_container.Q<TextField>("LargeStepDvInput").RegisterCallback<PointerUpEvent>(evt => evt.StopPropagation());
+    //_container.Q<TextField>("LargeStepDvInput").RegisterCallback<PointerMoveEvent>(evt => evt.StopPropagation());
 
     // pass = float.TryParse(_container.Q<TextField>("SmallTimeStepInput").value, out smallStepTime);
     _container.Q<TextField>("SmallTimeStepInput").RegisterValueChangedCallback((evt) => {
       if (float.TryParse(evt.newValue, out float newFloat))
       {
-        _container.Q<TextField>("SmallTimeStepInput").style.color = Color.white;
+        // _container.Q<TextField>("SmallTimeStepInput").style.color = Color.white;
         smallStepTime = newFloat;
       }
-      else
-      {
-        _container.Q<TextField>("SmallTimeStepInput").style.color = Color.red;
-      }
+      //else
+      //{
+      //  _container.Q<TextField>("SmallTimeStepInput").style.color = Color.red;
+      //}
     });
     _container.Q<TextField>("SmallTimeStepInput").value = smallStepTime.ToString();
-    _container.Q<TextField>("SmallTimeStepInput").RegisterCallback<PointerDownEvent>(evt => evt.StopPropagation());
-    _container.Q<TextField>("SmallTimeStepInput").RegisterCallback<PointerUpEvent>(evt => evt.StopPropagation());
-    _container.Q<TextField>("SmallTimeStepInput").RegisterCallback<PointerMoveEvent>(evt => evt.StopPropagation());
+    //_container.Q<TextField>("SmallTimeStepInput").RegisterCallback<PointerDownEvent>(evt => evt.StopPropagation());
+    //_container.Q<TextField>("SmallTimeStepInput").RegisterCallback<PointerUpEvent>(evt => evt.StopPropagation());
+    //_container.Q<TextField>("SmallTimeStepInput").RegisterCallback<PointerMoveEvent>(evt => evt.StopPropagation());
 
     // pass = float.TryParse(_container.Q<TextField>("LargeTimeStepInput").value, out largeStepTime);
     _container.Q<TextField>("LargeTimeStepInput").RegisterValueChangedCallback((evt) => {
       if (float.TryParse(evt.newValue, out float newFloat))
       {
-        _container.Q<TextField>("LargeTimeStepInput").style.color = Color.white;
+        // _container.Q<TextField>("LargeTimeStepInput").style.color = Color.white;
         largeStepTime = newFloat;
       }
-      else
-      {
-        _container.Q<TextField>("LargeTimeStepInput").style.color = Color.red;
-      }
+      //else
+      //{
+      //  _container.Q<TextField>("LargeTimeStepInput").style.color = Color.red;
+      //}
     });
     _container.Q<TextField>("LargeTimeStepInput").value = largeStepTime.ToString();
-    _container.Q<TextField>("LargeTimeStepInput").RegisterCallback<PointerDownEvent>(evt => evt.StopPropagation());
-    _container.Q<TextField>("LargeTimeStepInput").RegisterCallback<PointerUpEvent>(evt => evt.StopPropagation());
-    _container.Q<TextField>("LargeTimeStepInput").RegisterCallback<PointerMoveEvent>(evt => evt.StopPropagation());
+    //_container.Q<TextField>("LargeTimeStepInput").RegisterCallback<PointerDownEvent>(evt => evt.StopPropagation());
+    //_container.Q<TextField>("LargeTimeStepInput").RegisterCallback<PointerUpEvent>(evt => evt.StopPropagation());
+    //_container.Q<TextField>("LargeTimeStepInput").RegisterCallback<PointerMoveEvent>(evt => evt.StopPropagation());
 
     _container.Q<Button>("LargeProgradeDecreaseButton").clicked += () => IncrementPrograde(-largeStepDv);
     _container.Q<Button>("SmallProgradeDecreaseButton").clicked += () => IncrementPrograde(-smallStepDv);
