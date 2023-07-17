@@ -1,6 +1,6 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
     <Style src="ManeuverNodeControllerTheme.uss" />
-    <ui:VisualElement name="GUIFrame" style="width: 350px; height: auto; background-color: rgb(0, 0, 0); border-top-left-radius: 12px; border-bottom-left-radius: 12px; border-top-right-radius: 12px; border-bottom-right-radius: 12px; -unity-background-image-tint-color: rgb(0, 0, 0); border-left-color: rgb(105, 109, 255); border-right-color: rgb(105, 109, 255); border-top-color: rgb(105, 109, 255); border-bottom-color: rgb(105, 109, 255); border-left-width: 2px; border-right-width: 2px; border-top-width: 2px; border-bottom-width: 2px; max-height: 650px; min-height: 350px; -unity-font-definition: url(&apos;/Assets/Theme/Fonts/JetBrainsMono-Regular SDF.asset&apos;);">
+    <ui:VisualElement name="GUIFrame" style="width: 350px; height: auto; background-color: rgb(0, 0, 0); border-top-left-radius: 12px; border-bottom-left-radius: 12px; border-top-right-radius: 12px; border-bottom-right-radius: 12px; -unity-background-image-tint-color: rgb(0, 0, 0); border-left-color: rgb(105, 109, 255); border-right-color: rgb(105, 109, 255); border-top-color: rgb(105, 109, 255); border-bottom-color: rgb(105, 109, 255); border-left-width: 2px; border-right-width: 2px; border-top-width: 2px; border-bottom-width: 2px; max-height: none; min-height: 350px; -unity-font-definition: url(&apos;/Assets/Theme/Fonts/LiberationSans-Regular SDF.asset&apos;);">
         <ui:VisualElement name="Title" class="row-element-lose">
             <ui:VisualElement name="IconBox" style="justify-content: space-around; width: 30px; flex-direction: column; align-items: center;">
                 <ui:VisualElement name="Icon" class="header-item" style="background-image: url(&apos;/Assets/Icons/icon.png&apos;); -unity-background-scale-mode: scale-and-crop; width: 20px; height: 20px;" />
@@ -230,6 +230,26 @@
                 <ui:VisualElement name="NextLAN" style="flex-direction: row;">
                     <ui:Label text="LAN:" display-tooltip-when-elided="true" name="Label" class="orbit-label" />
                     <ui:Label text="335.907" display-tooltip-when-elided="true" name="NextLANValue" class="value-label orbit-value" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="EncounterBody" class="row-element-tight" style="justify-content: space-around;">
+                <ui:VisualElement name="PreviousEncounterBody" style="flex-direction: row;">
+                    <ui:Label text="Body:" display-tooltip-when-elided="true" name="Label" class="orbit-label" />
+                    <ui:Label text="Kerbin" display-tooltip-when-elided="true" name="PreviousBody" class="value-label orbit-value" />
+                </ui:VisualElement>
+                <ui:VisualElement name="NextEncounterBody" style="flex-direction: row;">
+                    <ui:Label text="LAN:" display-tooltip-when-elided="true" name="Label" class="orbit-label" />
+                    <ui:Label text="Mun" display-tooltip-when-elided="true" name="NextBody" class="value-label orbit-value" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="EncounterLevel" class="row-element-tight" style="justify-content: space-around;">
+                <ui:VisualElement name="PreviousEncounterLevel" style="flex-direction: row;">
+                    <ui:Label text="LAN:" display-tooltip-when-elided="true" name="Label" class="orbit-label" />
+                    <ui:Label text="N/A" display-tooltip-when-elided="true" name="PreviousLevel" class="value-label orbit-value" />
+                </ui:VisualElement>
+                <ui:VisualElement name="NextEncounterLevel" style="flex-direction: row;">
+                    <ui:Label text="LAN:" display-tooltip-when-elided="true" name="Label" class="orbit-label" />
+                    <ui:Label text="SoiEncounter1" display-tooltip-when-elided="true" name="NextLevel" class="value-label orbit-value" />
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
