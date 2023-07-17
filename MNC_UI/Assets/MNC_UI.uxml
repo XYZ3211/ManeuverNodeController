@@ -5,7 +5,7 @@
             <ui:VisualElement name="IconBox" style="justify-content: space-around; width: 30px; flex-direction: column; align-items: center;">
                 <ui:VisualElement name="Icon" class="header-item" style="background-image: url(&apos;/Assets/Icons/icon.png&apos;); -unity-background-scale-mode: scale-and-crop; width: 20px; height: 20px;" />
             </ui:VisualElement>
-            <ui:Label text="MANEUVER NODE CONTROLLER" display-tooltip-when-elided="true" name="Title" style="color: rgb(105, 109, 255); font-size: 17px;" />
+            <ui:Label text="MANEUVER NODE CONTROLLER" display-tooltip-when-elided="true" name="Title" style="font-size: 15px; -unity-font: url(&apos;/Assets/Theme/Fonts/Orbitron-Black.ttf&apos;); -unity-font-definition: none;" />
             <ui:VisualElement name="ButtonBox" style="justify-content: center;">
                 <ui:Button display-tooltip-when-elided="true" name="CloseButton" tooltip="Close Window" class="header-item" style="padding-left: 2px; padding-right: 2px; padding-top: 2px; padding-bottom: 2px; border-left-width: 0; border-right-width: 0; border-top-width: 0; border-bottom-width: 0; background-image: none; -unity-background-scale-mode: scale-and-crop; -unity-slice-left: 0; -unity-slice-top: 0; -unity-slice-right: 0; -unity-slice-bottom: 0; border-left-color: rgb(38, 35, 41); border-right-color: rgb(38, 35, 41); border-top-color: rgb(38, 35, 41); border-bottom-color: rgb(38, 35, 41); width: 21px; height: 21px;">
                     <ui:VisualElement name="CloseButtonIcon" style="background-image: url(&apos;/Assets/Icons/Cross.png&apos;); height: 16px; background-color: rgba(38, 35, 41, 0); border-left-color: rgb(38, 35, 41); border-right-color: rgb(38, 35, 41); border-top-color: rgb(38, 35, 41); border-bottom-color: rgb(38, 35, 41); -unity-background-scale-mode: scale-to-fit;" />
@@ -233,23 +233,23 @@
                 </ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement name="EncounterBody" class="row-element-tight" style="justify-content: space-around;">
-                <ui:VisualElement name="PreviousEncounterBody" style="flex-direction: row;">
+                <ui:VisualElement name="PreviousBody" style="flex-direction: row;">
                     <ui:Label text="Body:" display-tooltip-when-elided="true" name="Label" class="orbit-label" />
-                    <ui:Label text="Kerbin" display-tooltip-when-elided="true" name="PreviousBody" class="value-label orbit-value" />
+                    <ui:Label text="Kerbin" display-tooltip-when-elided="true" name="PreviousEncounterBody" class="value-label orbit-value" />
                 </ui:VisualElement>
-                <ui:VisualElement name="NextEncounterBody" style="flex-direction: row;">
+                <ui:VisualElement name="NextBody" style="flex-direction: row;">
                     <ui:Label text="LAN:" display-tooltip-when-elided="true" name="Label" class="orbit-label" />
-                    <ui:Label text="Mun" display-tooltip-when-elided="true" name="NextBody" class="value-label orbit-value" />
+                    <ui:Label text="Mun" display-tooltip-when-elided="true" name="NextEncounterBody" class="value-label orbit-value" />
                 </ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement name="EncounterLevel" class="row-element-tight" style="justify-content: space-around;">
-                <ui:VisualElement name="PreviousEncounterLevel" style="flex-direction: row;">
+                <ui:VisualElement name="PreviousLevel" style="flex-direction: row;">
                     <ui:Label text="LAN:" display-tooltip-when-elided="true" name="Label" class="orbit-label" />
-                    <ui:Label text="N/A" display-tooltip-when-elided="true" name="PreviousLevel" class="value-label orbit-value" />
+                    <ui:Label text="N/A" display-tooltip-when-elided="true" name="PreviousEncounterLevel" class="value-label orbit-value" />
                 </ui:VisualElement>
-                <ui:VisualElement name="NextEncounterLevel" style="flex-direction: row;">
+                <ui:VisualElement name="NextLevel" style="flex-direction: row;">
                     <ui:Label text="LAN:" display-tooltip-when-elided="true" name="Label" class="orbit-label" />
-                    <ui:Label text="SoiEncounter1" display-tooltip-when-elided="true" name="NextLevel" class="value-label orbit-value" />
+                    <ui:Label text="SoiEncounter1" display-tooltip-when-elided="true" name="NextEncounterLevel" class="value-label orbit-value" />
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
