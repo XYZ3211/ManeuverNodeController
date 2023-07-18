@@ -1,5 +1,5 @@
 ManifestFileVersion: 0
-CRC: 438212370
+CRC: 1239674262
 AssetBundleManifest:
   AssetBundleInfos:
     Info_0:
@@ -7,5 +7,4 @@ AssetBundleManifest:
       Dependencies: {}
     Info_1:
       Name: mnc_ui.bundle
-      Dependencies:
-        Dependency_0: kerbalui
+      Dependencies: {}

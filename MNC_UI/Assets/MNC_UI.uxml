@@ -31,9 +31,9 @@
                 <ui:Button text="&gt;" display-tooltip-when-elided="true" name="IncreaseNodeIndexButton" tooltip="Select the next node" class="small-button" />
             </ui:VisualElement>
             <ui:VisualElement name="AddDelete" class="row-element-lose row-element-tight" style="justify-content: space-around;">
-                <ui:Button text="Del Node" display-tooltip-when-elided="true" name="DelNodeButton" tooltip="Delete this node and all following" />
-                <ui:Button text="Check Node" display-tooltip-when-elided="true" name="CheckNodeButton" style="display: none;" />
-                <ui:Button text="Add Node" display-tooltip-when-elided="true" name="AddNodeButton" tooltip="Add a maneuver node to this trajectory" />
+                <ui:Button text="Del Node" display-tooltip-when-elided="true" name="DelNodeButton" tooltip="Delete this node and all following" style="padding-left: 4px; padding-right: 4px; font-size: 14px;" />
+                <ui:Button text="Check Node" display-tooltip-when-elided="true" name="CheckNodeButton" style="display: none; padding-left: 4px; padding-right: 4px; font-size: 14px;" />
+                <ui:Button text="Add Node" display-tooltip-when-elided="true" name="AddNodeButton" tooltip="Add a maneuver node to this trajectory" style="padding-left: 4px; padding-right: 4px; font-size: 14px;" />
             </ui:VisualElement>
             <ui:VisualElement name="TotalManeuverDv" class="row-element-tight" style="justify-content: space-between;">
                 <ui:Label text="Total Maneuver ∆v:" display-tooltip-when-elided="true" name="Label" />
@@ -179,8 +179,8 @@
             </ui:VisualElement>
             <ui:VisualElement name="HorizontalSpace" />
             <ui:VisualElement name="PreviousNextTitle" class="row-element-tight" style="justify-content: space-around;">
-                <ui:Label text="Previous Orbit" display-tooltip-when-elided="true" name="Label" />
-                <ui:Label text="Next Orbit" display-tooltip-when-elided="true" name="Label" />
+                <ui:Label text="Previous Orbit" display-tooltip-when-elided="true" name="Label" style="width: 100px; -unity-text-align: middle-center;" />
+                <ui:Label text="Next Orbit" display-tooltip-when-elided="true" name="Label" style="width: 100px; -unity-text-align: middle-center;" />
             </ui:VisualElement>
             <ui:VisualElement name="Ap" class="row-element-tight" style="justify-content: space-around;">
                 <ui:VisualElement name="PreviousAp" style="flex-direction: row;">
@@ -232,23 +232,28 @@
                     <ui:Label text="335.907" display-tooltip-when-elided="true" name="NextLANValue" class="value-label orbit-value" />
                 </ui:VisualElement>
             </ui:VisualElement>
+            <ui:VisualElement name="HorizontalSpace" />
+            <ui:VisualElement name="EncounterTitle" class="row-element-tight" style="justify-content: space-around;">
+                <ui:Label text="Previous Encounter" display-tooltip-when-elided="true" name="Label" style="width: 130px; -unity-text-align: middle-center;" />
+                <ui:Label text="Next Encounter" display-tooltip-when-elided="true" name="Label" style="width: 130px; -unity-text-align: middle-center;" />
+            </ui:VisualElement>
             <ui:VisualElement name="EncounterBody" class="row-element-tight" style="justify-content: space-around;">
                 <ui:VisualElement name="PreviousBody" style="flex-direction: row;">
                     <ui:Label text="Body:" display-tooltip-when-elided="true" name="Label" class="orbit-label" />
                     <ui:Label text="Kerbin" display-tooltip-when-elided="true" name="PreviousEncounterBody" class="value-label orbit-value" />
                 </ui:VisualElement>
                 <ui:VisualElement name="NextBody" style="flex-direction: row;">
-                    <ui:Label text="LAN:" display-tooltip-when-elided="true" name="Label" class="orbit-label" />
-                    <ui:Label text="Mun" display-tooltip-when-elided="true" name="NextEncounterBody" class="value-label orbit-value" />
+                    <ui:Label text="Body:" display-tooltip-when-elided="true" name="Label" class="orbit-label" />
+                    <ui:Label text="Minmus" display-tooltip-when-elided="true" name="NextEncounterBody" class="value-label orbit-value" />
                 </ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement name="EncounterLevel" class="row-element-tight" style="justify-content: space-around;">
                 <ui:VisualElement name="PreviousLevel" style="flex-direction: row;">
-                    <ui:Label text="LAN:" display-tooltip-when-elided="true" name="Label" class="orbit-label" />
+                    <ui:Label text="Level:" display-tooltip-when-elided="true" name="Label" enable-rich-text="false" class="orbit-label" />
                     <ui:Label text="N/A" display-tooltip-when-elided="true" name="PreviousEncounterLevel" class="value-label orbit-value" />
                 </ui:VisualElement>
                 <ui:VisualElement name="NextLevel" style="flex-direction: row;">
-                    <ui:Label text="LAN:" display-tooltip-when-elided="true" name="Label" class="orbit-label" />
+                    <ui:Label text="Level:" display-tooltip-when-elided="true" name="Label" class="orbit-label" />
                     <ui:Label text="SoiEncounter1" display-tooltip-when-elided="true" name="NextEncounterLevel" class="value-label orbit-value" />
                 </ui:VisualElement>
             </ui:VisualElement>
