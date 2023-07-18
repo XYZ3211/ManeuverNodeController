@@ -219,11 +219,15 @@ public class MncUiController : KerbalMonoBehaviour
   Label PreviousIncValue;
   Label PreviousEccValue;
   Label PreviousLANValue;
+  Label PreviousEncounterBody;
+  Label PreviousEncounterLevel;
   Label NextApValue;
   Label NextPeValue;
   Label NextIncValue;
   Label NextEccValue;
   Label NextLANValue;
+  Label NextEncounterBody;
+  Label NextEncounterLevel;
 
   ManeuverNodeData thisNode = null;
 
@@ -249,7 +253,7 @@ public class MncUiController : KerbalMonoBehaviour
         thisNode = nodes[selectedNode];
         double dvRemaining, UT;
         int numOrbits;
-        string nextApA, nextPeA, nextInc, nextEcc, nextLAN, previousApA, previousPeA, previousInc, previousEcc, previousLAN;
+        string nextApA, nextPeA, nextInc, nextEcc, nextLAN, nextBody, nextLevel, previousApA, previousPeA, previousInc, previousEcc, previousLAN, previousBody, previousLevel;
 
         PatchedConicsOrbit orbit = MNCUtility.activeVessel?.Orbit;
         OrbiterComponent Orbiter = MNCUtility.activeVessel?.Orbiter;
@@ -304,11 +308,22 @@ public class MncUiController : KerbalMonoBehaviour
         }
 
         // numOrbits = Math.Truncate((thisNode.Time - UT) / MNCUtility.activeVessel.Orbit.period);
-        numOrbits = (int)Math.Truncate((thisNode.Time - game.UniverseModel.UniversalTime) / game.UniverseModel.FindVesselComponent(thisNode.RelatedSimID).Orbit.period);
+        if (game.UniverseModel.FindVesselComponent(thisNode.RelatedSimID) != null)
+        {
+          numOrbits = (int)Math.Truncate((thisNode.Time - game.UniverseModel.UniversalTime) / game.UniverseModel.FindVesselComponent(thisNode.RelatedSimID).Orbit.period);
+          NodeTimeValue.text = numOrbits.ToString("n0");
+          if (numOrbits == 1) OrbitsLabel.text = "orbit";
+          else OrbitsLabel.text = "orbits";
+        }
+        else
+        {
+          NodeTimeValue.text = "NaN";
+          OrbitsLabel.text = "orbits";
+        }
 
-        NodeTimeValue.text = numOrbits.ToString("n0");
-        if (numOrbits == 1) OrbitsLabel.text = "orbit";
-        else OrbitsLabel.text = "orbits";
+        // NodeTimeValue.text = numOrbits.ToString("n0");
+        //if (numOrbits == 1) OrbitsLabel.text = "orbit";
+        //else OrbitsLabel.text = "orbits";
 
         // ManeuverPlanComponent activeVesselPlan = Utility.activeVessel?.SimulationObject?.FindComponent<ManeuverPlanComponent>();
         // var nodes = activeVesselPlan?.GetNodes();
@@ -342,68 +357,102 @@ public class MncUiController : KerbalMonoBehaviour
           patchIdx = PatchedConicsList.Count - 1;
         }
 
+        previousBody = "None";
+        previousLevel = "N/A";
+        nextBody = "None";
+        nextLevel = "N/A";
+
         if (selectedNode == 0) // One or more nodes, and the selected node is the first
         {
           // The previous orbit info will be from our current orbit
           if (orbit.eccentricity < 1)
-            previousApA = (orbit.ApoapsisArl / 1000).ToString("n3");
+            previousApA = MNCUtility.MetersToScaledDistanceString(orbit.ApoapsisArl, 3);
           else
             previousApA = "Inf";
-          previousPeA = (orbit.PeriapsisArl / 1000).ToString("n3");
+          previousPeA = MNCUtility.MetersToScaledDistanceString(orbit.PeriapsisArl, 3);
           previousInc = orbit.inclination.ToString("n3");
           previousEcc = orbit.eccentricity.ToString("n3");
           previousLAN = orbit.longitudeOfAscendingNode.ToString("n3");
+          if (orbit.closestEncounterBody != null)
+          {
+            previousBody = orbit.closestEncounterBody.Name;
+            previousLevel = orbit.closestEncounterLevel.ToString();
+          }
 
           // The next orbit info will be from PatchedConicsList[0]
-          nextApA = (patch.ApoapsisArl / 1000).ToString("n3");
-          nextPeA = (patch.PeriapsisArl / 1000).ToString("n3");
+          nextApA = MNCUtility.MetersToScaledDistanceString(patch.ApoapsisArl, 3);
+          nextPeA = MNCUtility.MetersToScaledDistanceString(patch.PeriapsisArl, 3);
           nextInc = patch.inclination.ToString("n3");
           nextEcc = patch.eccentricity.ToString("n3");
           nextLAN = patch.longitudeOfAscendingNode.ToString("n3");
+          if (patch.closestEncounterBody != null)
+          {
+            nextBody = patch.closestEncounterBody.Name;
+            nextLevel = patch.closestEncounterLevel.ToString();
+          }
+
         }
         else // One or more nodes, and the selected node is not the first
         {
           if (patchIdx > 1)
           {
             // The previous orbit info will be from PatchedConicsList[SelectedNodeIndex - 1]
-            previousApA = (PatchedConicsList[patchIdx - 1].ApoapsisArl / 1000).ToString("n3");
-            previousPeA = (PatchedConicsList[patchIdx - 1].PeriapsisArl / 1000).ToString("n3");
+            previousApA = MNCUtility.MetersToScaledDistanceString(PatchedConicsList[patchIdx - 1].ApoapsisArl, 3);
+            previousPeA = MNCUtility.MetersToScaledDistanceString(PatchedConicsList[patchIdx - 1].PeriapsisArl, 3);
             previousInc = PatchedConicsList[patchIdx - 1].inclination.ToString("n3");
             previousEcc = PatchedConicsList[patchIdx - 1].eccentricity.ToString("n3");
             previousLAN = PatchedConicsList[patchIdx - 1].longitudeOfAscendingNode.ToString("n3");
+            if (PatchedConicsList[patchIdx - 1].closestEncounterBody != null)
+            {
+              previousBody = PatchedConicsList[patchIdx - 1].closestEncounterBody.Name;
+              previousLevel = PatchedConicsList[patchIdx - 1].closestEncounterLevel.ToString();
+            }
           }
           else
           {
             // The previous orbit info will be from our current orbit
             if (orbit.eccentricity < 1)
-              previousApA = (orbit.ApoapsisArl / 1000).ToString("n3");
+              previousApA = MNCUtility.MetersToScaledDistanceString(orbit.ApoapsisArl, 3);
             else
               previousApA = "Inf";
-            previousPeA = (orbit.PeriapsisArl / 1000).ToString("n3");
+            previousPeA = MNCUtility.MetersToScaledDistanceString(orbit.PeriapsisArl, 3);
             previousInc = orbit.inclination.ToString("n3");
             previousEcc = orbit.eccentricity.ToString("n3");
             previousLAN = orbit.longitudeOfAscendingNode.ToString("n3");
+            if (orbit.closestEncounterBody != null)
+            {
+              previousBody = orbit.closestEncounterBody.Name;
+              previousLevel = orbit.closestEncounterLevel.ToString();
+            }
           }
           // The next orbit info will be from PatchedConicsList[SelectedNodeIndex]
-          nextApA = (patch.ApoapsisArl / 1000).ToString("n3");
-          nextPeA = (patch.PeriapsisArl / 1000).ToString("n3");
+          nextApA = MNCUtility.MetersToScaledDistanceString(patch.ApoapsisArl, 3);
+          nextPeA = MNCUtility.MetersToScaledDistanceString(patch.PeriapsisArl, 3);
           nextInc = patch.inclination.ToString("n3");
           nextEcc = patch.eccentricity.ToString("n3");
           nextLAN = patch.longitudeOfAscendingNode.ToString("n3");
+          if (patch.closestEncounterBody != null)
+          {
+            nextBody = patch.closestEncounterBody.Name;
+            nextLevel = patch.closestEncounterLevel.ToString();
+          }
         }
 
-        PreviousApValue.text = previousApA + " km";
-        PreviousPeValue.text = previousPeA + " km";
+        PreviousApValue.text = previousApA;
+        PreviousPeValue.text = previousPeA;
         PreviousIncValue.text = previousInc + "°";
         PreviousEccValue.text = previousEcc;
         PreviousLANValue.text = previousLAN + "°";
+        PreviousEncounterBody.text = previousBody;
+        PreviousEncounterLevel.text = previousLevel;
 
-        NextApValue.text = nextApA + " km";
-        NextPeValue.text = nextPeA + " km";
+        NextApValue.text = nextApA;
+        NextPeValue.text = nextPeA;
         NextIncValue.text = nextInc + "°";
         NextEccValue.text = nextEcc;
         NextLANValue.text = nextLAN + "°";
-
+        NextEncounterBody.text = nextBody;
+        NextEncounterLevel.text = nextLevel;
       }
       else
       {
@@ -455,12 +504,12 @@ public class MncUiController : KerbalMonoBehaviour
         ManeuverNodeControllerMod.Logger.LogDebug($"TryParse attempt for {textField.name}. Tooltip = {textField.tooltip}");
         if (float.TryParse(evt.newValue, out _))
         {
-          // textField.RemoveFromClassList("unity-text-field-invalid");
+          textField.RemoveFromClassList("unity-text-field-invalid");
           ManeuverNodeControllerMod.Logger.LogDebug($"TryParse success for {textField.name}, nValue = '{evt.newValue}': Removed unity-text-field-invalid from class list");
         }
         else
         {
-          // textField.AddToClassList("unity-text-field-invalid");
+          textField.AddToClassList("unity-text-field-invalid");
           ManeuverNodeControllerMod.Logger.LogDebug($"TryParse failure for {textField.name}, nValue = '{evt.newValue}': Added unity-text-field-invalid to class list");
           ManeuverNodeControllerMod.Logger.LogDebug($"document.rootVisualElement.transform.position.z = {document.rootVisualElement.transform.position.z}");
         }
@@ -492,27 +541,31 @@ public class MncUiController : KerbalMonoBehaviour
     ManeuverNodeControllerMod.Logger.LogInfo($"MNC: SnapTo buttons initialized. initialized is set to {initialized}");
 
     // Set up variables to be able to access UITK GUI labels quickly (Queries are expensive) 
-    NodeIndexValue    = _container.Q<Label>("NodeIndexValue");
-    NodeMaxIndexValue = _container.Q<Label>("NodeMaxIndexValue");
-    TotalDvValue      = _container.Q<Label>("TotalDvValue");
-    DvRemainingValue  = _container.Q<Label>("DvRemainingValue");
-    StartTimeValue    = _container.Q<Label>("StartTimeValue");
-    DurationValue     = _container.Q<Label>("DurationValue");
-    ProgradeDvValue   = _container.Q<Label>("ProgradeDvValue");
-    NormalDvValue     = _container.Q<Label>("NormalDvValue");
-    RadialDvValue     = _container.Q<Label>("RadialDvValue");
-    NodeTimeValue     = _container.Q<Label>("NodeTimeValue");
-    OrbitsLabel       = _container.Q<Label>("OrbitsLabel");
-    PreviousApValue   = _container.Q<Label>("PreviousApValue");
-    PreviousPeValue   = _container.Q<Label>("PreviousPeValue");
-    PreviousIncValue  = _container.Q<Label>("PreviousIncValue");
-    PreviousEccValue  = _container.Q<Label>("PreviousEccValue");
-    PreviousLANValue  = _container.Q<Label>("PreviousLANValue");
-    NextApValue       = _container.Q<Label>("NextApValue");
-    NextPeValue       = _container.Q<Label>("NextPeValue");
-    NextIncValue      = _container.Q<Label>("NextIncValue");
-    NextEccValue      = _container.Q<Label>("NextEccValue");
-    NextLANValue      = _container.Q<Label>("NextLANValue");
+    NodeIndexValue         = _container.Q<Label>("NodeIndexValue");
+    NodeMaxIndexValue      = _container.Q<Label>("NodeMaxIndexValue");
+    TotalDvValue           = _container.Q<Label>("TotalDvValue");
+    DvRemainingValue       = _container.Q<Label>("DvRemainingValue");
+    StartTimeValue         = _container.Q<Label>("StartTimeValue");
+    DurationValue          = _container.Q<Label>("DurationValue");
+    ProgradeDvValue        = _container.Q<Label>("ProgradeDvValue");
+    NormalDvValue          = _container.Q<Label>("NormalDvValue");
+    RadialDvValue          = _container.Q<Label>("RadialDvValue");
+    NodeTimeValue          = _container.Q<Label>("NodeTimeValue");
+    OrbitsLabel            = _container.Q<Label>("OrbitsLabel");
+    PreviousApValue        = _container.Q<Label>("PreviousApValue");
+    PreviousPeValue        = _container.Q<Label>("PreviousPeValue");
+    PreviousIncValue       = _container.Q<Label>("PreviousIncValue");
+    PreviousEccValue       = _container.Q<Label>("PreviousEccValue");
+    PreviousLANValue       = _container.Q<Label>("PreviousLANValue");
+    PreviousEncounterBody  = _container.Q<Label>("PreviousEncounterBody");
+    PreviousEncounterLevel = _container.Q<Label>("PreviousEncounterLevel");
+    NextApValue            = _container.Q<Label>("NextApValue");
+    NextPeValue            = _container.Q<Label>("NextPeValue");
+    NextIncValue           = _container.Q<Label>("NextIncValue");
+    NextEccValue           = _container.Q<Label>("NextEccValue");
+    NextLANValue           = _container.Q<Label>("NextLANValue");
+    NextEncounterBody      = _container.Q<Label>("NextEncounterBody");
+    NextEncounterLevel     = _container.Q<Label>("NextEncounterLevel");
 
     ManeuverNodeControllerMod.Logger.LogInfo($"MNC: SnapTo labels initialized. initialized is set to {initialized}");
 
