@@ -236,48 +236,27 @@
             <ui:VisualElement name="HorizontalSpace" />
             <ui:VisualElement name="EncounterGroup">
                 <ui:VisualElement name="EncounterTitle" class="row-element-tight" style="justify-content: space-around;">
-                    <ui:Label text="Previous Encounter" display-tooltip-when-elided="true" name="Label" style="width: 130px; -unity-text-align: middle-center;" />
-                    <ui:Label text="Next Encounter" display-tooltip-when-elided="true" name="Label" style="width: 130px; -unity-text-align: middle-center;" />
+                    <ui:Label text="Post Node Event Lookahead" display-tooltip-when-elided="true" name="Label" style="width: auto; -unity-text-align: middle-center;" />
                 </ui:VisualElement>
-                <ui:VisualElement name="EncounterBody" class="row-element-tight" style="justify-content: space-around;">
-                    <ui:VisualElement name="PreviousBody" style="flex-direction: row;">
-                        <ui:Label text="Body:" display-tooltip-when-elided="true" name="Label" class="orbit-label" />
-                        <ui:Label text="Kerbin" display-tooltip-when-elided="true" name="PreviousEncounterBody" class="value-label orbit-value" />
-                    </ui:VisualElement>
-                    <ui:VisualElement name="NextBody" style="flex-direction: row;">
-                        <ui:Label text="Body:" display-tooltip-when-elided="true" name="Label" class="orbit-label" />
-                        <ui:Label text="Minmus" display-tooltip-when-elided="true" name="NextEncounterBody" class="value-label orbit-value" />
-                    </ui:VisualElement>
+                <ui:VisualElement name="Event1" class="row-element-tight" style="justify-content: flex-start; display: flex;">
+                    <ui:Label text="Mun" display-tooltip-when-elided="true" name="EncounterBody1" class="value-label orbit-value" style="-unity-text-align: middle-right;" />
+                    <ui:Label text="SOI Entry @" display-tooltip-when-elided="true" name="EncounterType1" class="orbit-label" style="width: auto; -unity-text-align: middle-left;" />
+                    <ui:Label text="HH:mm:ss.sss" display-tooltip-when-elided="true" name="EncounterInfo1" class="orbit-label" style="width: auto;" />
                 </ui:VisualElement>
-                <ui:VisualElement name="EncounterLevel" class="row-element-tight" style="justify-content: space-around;">
-                    <ui:VisualElement name="PreviousLevel" style="flex-direction: row;">
-                        <ui:Label text="Level:" display-tooltip-when-elided="true" name="Label" enable-rich-text="false" class="orbit-label" />
-                        <ui:Label text="N/A" display-tooltip-when-elided="true" name="PreviousEncounterLevel" class="value-label orbit-value" />
-                    </ui:VisualElement>
-                    <ui:VisualElement name="NextLevel" style="flex-direction: row;">
-                        <ui:Label text="Level:" display-tooltip-when-elided="true" name="Label" class="orbit-label" />
-                        <ui:Label text="SoiEncounter1" display-tooltip-when-elided="true" name="NextEncounterLevel" class="value-label orbit-value" />
-                    </ui:VisualElement>
+                <ui:VisualElement name="Event2" class="row-element-tight" style="justify-content: flex-start;">
+                    <ui:Label text="Mun" display-tooltip-when-elided="true" name="EncounterBody2" class="value-label orbit-value" style="-unity-text-align: middle-right;" />
+                    <ui:Label text="Fly By @" display-tooltip-when-elided="true" name="EncounterType2" class="orbit-label" style="width: auto; -unity-text-align: middle-left;" />
+                    <ui:Label text="32.7 km" display-tooltip-when-elided="true" name="EncounterInfo2" class="orbit-label" style="width: auto;" />
                 </ui:VisualElement>
-                <ui:VisualElement name="TransitionStart" class="row-element-tight" style="justify-content: space-around;">
-                    <ui:VisualElement name="PreviousStart" style="flex-direction: row;">
-                        <ui:Label text="Start:" display-tooltip-when-elided="true" name="Label" enable-rich-text="false" class="orbit-label" />
-                        <ui:Label text="N/A" display-tooltip-when-elided="true" name="PreviousTransitionStart" class="value-label orbit-value" />
-                    </ui:VisualElement>
-                    <ui:VisualElement name="NextStart" style="flex-direction: row;">
-                        <ui:Label text="Start:" display-tooltip-when-elided="true" name="Label" class="orbit-label" />
-                        <ui:Label text="N/A" display-tooltip-when-elided="true" name="NextTransitionStart" class="value-label orbit-value" />
-                    </ui:VisualElement>
+                <ui:VisualElement name="Event3" class="row-element-tight" style="justify-content: flex-start;">
+                    <ui:Label text="Mun" display-tooltip-when-elided="true" name="EncounterBody3" class="value-label orbit-value" style="-unity-text-align: middle-right;" />
+                    <ui:Label text="SOI Exit @" display-tooltip-when-elided="true" name="EncounterType3" class="orbit-label" style="width: auto; -unity-text-align: middle-left;" />
+                    <ui:Label text="HH:mm:ss.sss" display-tooltip-when-elided="true" name="EncounterInfo3" class="orbit-label" style="width: auto;" />
                 </ui:VisualElement>
-                <ui:VisualElement name="TransitionEnd" class="row-element-tight" style="justify-content: space-around;">
-                    <ui:VisualElement name="PreviousEnd" style="flex-direction: row;">
-                        <ui:Label text="End:" display-tooltip-when-elided="true" name="Label" enable-rich-text="false" class="orbit-label" />
-                        <ui:Label text="N/A" display-tooltip-when-elided="true" name="PreviousTransitionEnd" class="value-label orbit-value" />
-                    </ui:VisualElement>
-                    <ui:VisualElement name="NextEnd" style="flex-direction: row;">
-                        <ui:Label text="End:" display-tooltip-when-elided="true" name="Label" class="orbit-label" />
-                        <ui:Label text="N/A" display-tooltip-when-elided="true" name="NextTransitionEnd" class="value-label orbit-value" />
-                    </ui:VisualElement>
+                <ui:VisualElement name="Event4" class="row-element-tight" style="justify-content: flex-start;">
+                    <ui:Label text="Kerbin" display-tooltip-when-elided="true" name="EncounterBody4" class="value-label orbit-value" style="-unity-text-align: middle-right;" />
+                    <ui:Label text="SOI Exit @" display-tooltip-when-elided="true" name="EncounterType4" class="orbit-label" style="width: auto; -unity-text-align: middle-left;" />
+                    <ui:Label text="HH:mm:ss.sss" display-tooltip-when-elided="true" name="EncounterInfo4" class="orbit-label" style="width: auto;" />
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>

@@ -261,3 +261,14 @@
     border-top-color: rgb(255, 0, 0);
     border-bottom-color: rgb(255, 0, 0);
 }
+
+.unity-label-invalid {
+    flex-direction: column;
+    display: flex;
+    visibility: visible;
+    overflow: visible;
+    opacity: 1;
+    color: rgb(255, 0, 0);
+    font-size: 14px;
+    -unity-font-definition: url('/Assets/Theme/Fonts/LiberationSans-Regular SDF.asset');
+}
