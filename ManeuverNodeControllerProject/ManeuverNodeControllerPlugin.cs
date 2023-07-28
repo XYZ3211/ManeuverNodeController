@@ -21,6 +21,9 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using UitkForKsp2;
 using BepInEx.Configuration;
+using MoonSharp.VsCodeDebugger.SDK;
+using KSP.Input.Iteration;
+using static AwesomeTechnologies.External.ClipperLib.Clipper;
 
 namespace ManeuverNodeController;
 
@@ -219,19 +222,56 @@ public class MncUiController : KerbalMonoBehaviour
     Label PreviousIncValue;
     Label PreviousEccValue;
     Label PreviousLANValue;
-    Label PreviousEncounterBody;
-    Label PreviousEncounterLevel;
-    Label PreviousTransitionStart;
-    Label PreviousTransitionEnd;
     Label NextApValue;
     Label NextPeValue;
     Label NextIncValue;
     Label NextEccValue;
     Label NextLANValue;
+
+    Label PreviousEncounterBody;
+    Label PreviousEncounterLevel;
+    Label PreviousTransitionStart;
+    Label PreviousTransitionEnd;
     Label NextEncounterBody;
     Label NextEncounterLevel;
     Label NextTransitionStart;
     Label NextTransitionEnd;
+
+    VisualElement EncounterGroup;
+    //VisualElement Event1;
+    //Label EncounterBody1;
+    //Label EncounterType1;
+    //Label EncounterInfo1;
+    //VisualElement Event2;
+    //Label EncounterBody2;
+    //Label EncounterType2;
+    //Label EncounterInfo2;
+    //VisualElement Event3;
+    //Label EncounterBody3;
+    //Label EncounterType3;
+    //Label EncounterInfo3;
+    //VisualElement Event4;
+    //Label EncounterBody4;
+    //Label EncounterType4;
+    //Label EncounterInfo4;
+    //List<VisualElement> Event = new List<VisualElement>();
+    //List<Label> EncounterBody = new List<Label>();
+    //List<Label> EncounterType = new List<Label>();
+    //List<Label> EncounterInfo = new List<Label>();
+
+    // Define a custom class to store the data for each event
+    public class EventData
+    {
+        public VisualElement Event;
+        public Label EncounterBody;
+        public Label EncounterType;
+        public Label EncounterInfo;
+    }
+
+    // Create a list to store all the event data objects
+    List<EventData> eventDataList = new List<EventData>();
+
+    int maxNumEvents = 4;
 
     ManeuverNodeData thisNode = null;
 
@@ -254,6 +294,11 @@ public class MncUiController : KerbalMonoBehaviour
                 NoNodesGroup.style.display = DisplayStyle.None;
 
                 int selectedNode = ManeuverNodeControllerMod.Instance.SelectedNodeIndex;
+                if (selectedNode >= nodes.Count)
+                {
+                    selectedNode = nodes.Count - 1;
+                    ManeuverNodeControllerMod.Instance.SelectedNodeIndex = selectedNode;
+                }
                 thisNode = nodes[selectedNode];
                 double dvRemaining, UT;
                 int numOrbits;
@@ -264,6 +309,7 @@ public class MncUiController : KerbalMonoBehaviour
                 OrbiterComponent Orbiter = MNCUtility.activeVessel?.Orbiter;
                 ManeuverPlanSolver ManeuverPlanSolver = Orbiter?.ManeuverPlanSolver;
                 List<PatchedConicsOrbit> PatchedConicsList = ManeuverPlanSolver?.PatchedConicsList;
+                List<IPatchedOrbit> PatchList = new List<IPatchedOrbit>(ManeuverPlanSolver?.PatchedConicsList);
 
                 if (orbit == null)
                     return;
@@ -335,14 +381,18 @@ public class MncUiController : KerbalMonoBehaviour
 
 
                 // Get the patch info and index for the patch that contains this node
-                // ManeuverPlanSolver.FindPatchContainingUt(NodeManagerPlugin.Instance.Nodes[SelectedNodeIndex].Time, PatchedConicsList, out var patch, out var patchIndex);
-                var nodeTime = thisNode.Time;
                 PatchedConicsOrbit patch = null;
-                int patchIdx = 0;
+                var nodeTime = thisNode.Time;
+                try
+                {
+                    ManeuverPlanSolver.FindPatchContainingUt(nodeTime, PatchList, out var thisPatch, out var patchIndex);
+                }
+                catch (Exception ex) { ManeuverNodeControllerMod.Logger.LogWarning($"Supporessed exception: {ex}"); }
+                int nodePatchIdx = 0;
                 if (nodeTime < PatchedConicsList[0].StartUT)
                 {
-                    patchIdx = (PatchedConicsList[0].PatchEndTransition == PatchTransitionType.Encounter) ? 1 : 0;
-                    patch = PatchedConicsList[patchIdx];
+                    nodePatchIdx = 0; // (PatchedConicsList[0].PatchEndTransition == PatchTransitionType.Encounter) ? 1 : 0;
+                    patch = PatchedConicsList[nodePatchIdx];
                 }
                 else
                 {
@@ -350,8 +400,8 @@ public class MncUiController : KerbalMonoBehaviour
                     {
                         if (PatchedConicsList[i].StartUT < nodeTime && nodeTime <= PatchedConicsList[i + 1].StartUT)
                         {
-                            patchIdx = (PatchedConicsList[i + 1].PatchEndTransition == PatchTransitionType.Encounter && i < PatchedConicsList.Count - 2) ? i + 2 : i + 1;
-                            patch = PatchedConicsList[patchIdx];
+                            nodePatchIdx = i + 1; // (PatchedConicsList[i + 1].PatchEndTransition == PatchTransitionType.Encounter && i < PatchedConicsList.Count - 2) ? i + 2 : i + 1;
+                            patch = PatchedConicsList[nodePatchIdx];
                             break;
                         }
                     }
@@ -359,101 +409,60 @@ public class MncUiController : KerbalMonoBehaviour
                 if (patch == null)
                 {
                     patch = PatchedConicsList.Last();
-                    patchIdx = PatchedConicsList.Count - 1;
+                    nodePatchIdx = PatchedConicsList.Count - 1;
+                }
+
+                PatchedConicsOrbit previousOrbit = null;
+                PatchedConicsOrbit nextOrbit = patch;
+                if (nodePatchIdx == 0)
+                {
+                    previousOrbit = orbit;
+                }
+                else
+                {
+                    previousOrbit = PatchedConicsList[nodePatchIdx - 1];
                 }
 
                 previousBody = "None";
                 previousLevel = "N/A";
                 nextBody = "None";
                 nextLevel = "N/A";
-                previousStart = "N/A";
-                previousEnd = "N/A";
-                nextStart = "N/A";
-                nextEnd = "N/A";
 
-                if (selectedNode == 0) // One or more nodes, and the selected node is the first
+                // Populate the previous orbit info
+                if (previousOrbit.eccentricity < 1)
+                    previousApA = MNCUtility.MetersToScaledDistanceString(previousOrbit.ApoapsisArl, 3);
+                else
+                    previousApA = "Inf";
+                previousPeA = MNCUtility.MetersToScaledDistanceString(previousOrbit.PeriapsisArl, 3);
+                previousInc = previousOrbit.inclination.ToString("n3");
+                previousEcc = previousOrbit.eccentricity.ToString("n3");
+                previousLAN = previousOrbit.longitudeOfAscendingNode.ToString("n3");
+                if (previousOrbit.closestEncounterBody != null)
                 {
-                    // The previous orbit info will be from our current orbit
-                    if (orbit.eccentricity < 1)
-                        previousApA = MNCUtility.MetersToScaledDistanceString(orbit.ApoapsisArl, 3);
-                    else
-                        previousApA = "Inf";
-                    previousPeA = MNCUtility.MetersToScaledDistanceString(orbit.PeriapsisArl, 3);
-                    previousInc = orbit.inclination.ToString("n3");
-                    previousEcc = orbit.eccentricity.ToString("n3");
-                    previousLAN = orbit.longitudeOfAscendingNode.ToString("n3");
-                    if (orbit.closestEncounterBody != null)
-                    {
-                        previousBody = orbit.closestEncounterBody.Name;
-                        previousLevel = orbit.closestEncounterLevel.ToString();
-                    }
-
-                    previousStart = orbit.PatchStartTransition.ToString();
-                    previousEnd = orbit.PatchEndTransition.ToString();
-
-                    // The next orbit info will be from PatchedConicsList[0]
-                    nextApA = MNCUtility.MetersToScaledDistanceString(patch.ApoapsisArl, 3);
-                    nextPeA = MNCUtility.MetersToScaledDistanceString(patch.PeriapsisArl, 3);
-                    nextInc = patch.inclination.ToString("n3");
-                    nextEcc = patch.eccentricity.ToString("n3");
-                    nextLAN = patch.longitudeOfAscendingNode.ToString("n3");
-                }
-                else // One or more nodes, and the selected node is not the first
-                {
-                    if (patchIdx > 1)
-                    {
-                        // The previous orbit info will be from PatchedConicsList[SelectedNodeIndex - 1]
-                        previousApA = MNCUtility.MetersToScaledDistanceString(PatchedConicsList[patchIdx - 1].ApoapsisArl, 3);
-                        previousPeA = MNCUtility.MetersToScaledDistanceString(PatchedConicsList[patchIdx - 1].PeriapsisArl, 3);
-                        previousInc = PatchedConicsList[patchIdx - 1].inclination.ToString("n3");
-                        previousEcc = PatchedConicsList[patchIdx - 1].eccentricity.ToString("n3");
-                        previousLAN = PatchedConicsList[patchIdx - 1].longitudeOfAscendingNode.ToString("n3");
-                        if (PatchedConicsList[patchIdx - 1].closestEncounterBody != null)
-                        {
-                            previousBody = PatchedConicsList[patchIdx - 1].closestEncounterBody.Name;
-                            previousLevel = PatchedConicsList[patchIdx - 1].closestEncounterLevel.ToString();
-                        }
-
-                        previousStart = PatchedConicsList[patchIdx - 1].PatchStartTransition.ToString();
-                        previousEnd = PatchedConicsList[patchIdx - 1].PatchEndTransition.ToString();
-
-                    }
-                    else
-                    {
-                        // The previous orbit info will be from our current orbit
-                        if (orbit.eccentricity < 1)
-                            previousApA = MNCUtility.MetersToScaledDistanceString(orbit.ApoapsisArl, 3);
-                        else
-                            previousApA = "Inf";
-                        previousPeA = MNCUtility.MetersToScaledDistanceString(orbit.PeriapsisArl, 3);
-                        previousInc = orbit.inclination.ToString("n3");
-                        previousEcc = orbit.eccentricity.ToString("n3");
-                        previousLAN = orbit.longitudeOfAscendingNode.ToString("n3");
-                        if (orbit.closestEncounterBody != null)
-                        {
-                            previousBody = orbit.closestEncounterBody.Name;
-                            previousLevel = orbit.closestEncounterLevel.ToString();
-                        }
-
-                        previousStart = orbit.PatchStartTransition.ToString();
-                        previousEnd = orbit.PatchEndTransition.ToString();
-
-                    }
-                    // The next orbit info will be from PatchedConicsList[SelectedNodeIndex]
-                    nextApA = MNCUtility.MetersToScaledDistanceString(patch.ApoapsisArl, 3);
-                    nextPeA = MNCUtility.MetersToScaledDistanceString(patch.PeriapsisArl, 3);
-                    nextInc = patch.inclination.ToString("n3");
-                    nextEcc = patch.eccentricity.ToString("n3");
-                    nextLAN = patch.longitudeOfAscendingNode.ToString("n3");
+                    previousBody = previousOrbit.closestEncounterBody.Name;
+                    previousLevel = previousOrbit.closestEncounterLevel.ToString();
                 }
 
-                if (patch.closestEncounterBody != null)
+                previousStart = previousOrbit.PatchStartTransition.ToString();
+                previousEnd = previousOrbit.PatchEndTransition.ToString();
+
+                // Populate the next orbit info
+                if (nextOrbit.eccentricity < 1)
+                    nextApA = MNCUtility.MetersToScaledDistanceString(nextOrbit.ApoapsisArl, 3);
+                else
+                    nextApA = "Inf";
+                nextPeA = MNCUtility.MetersToScaledDistanceString(nextOrbit.PeriapsisArl, 3);
+                nextInc = nextOrbit.inclination.ToString("n3");
+                nextEcc = nextOrbit.eccentricity.ToString("n3");
+                nextLAN = nextOrbit.longitudeOfAscendingNode.ToString("n3");
+
+                if (nextOrbit.closestEncounterBody != null)
                 {
-                    nextBody = patch.closestEncounterBody.Name;
-                    nextLevel = patch.closestEncounterLevel.ToString();
-                    
+                    nextBody = nextOrbit.closestEncounterBody.Name;
+                    nextLevel = nextOrbit.closestEncounterLevel.ToString();
+
                 }
-                else if (patch.NextPatch != null && selectedNode + 1 == nodes.Count) // There's another patch and we're at the last node
+                else if (nextOrbit.NextPatch != null && selectedNode + 1 == nodes.Count) // There's another patch and we're at the last node
                 {
                     var nextPatch = patch.NextPatch as PatchedConicsOrbit;
                     if (nextPatch.closestEncounterBody != null)
@@ -462,28 +471,175 @@ public class MncUiController : KerbalMonoBehaviour
                         nextLevel = nextPatch.closestEncounterLevel.ToString();
                     }
                 }
-                nextStart = patch.PatchStartTransition.ToString();
-                nextEnd = patch.PatchEndTransition.ToString();
+                nextStart = nextOrbit.PatchStartTransition.ToString();
+                nextEnd = nextOrbit.PatchEndTransition.ToString();
+
+
+
+                //if (selectedNode == 0) // One or more nodes, and the selected node is the first
+                //{
+                //    // The previous orbit info will be from our current orbit
+                //    if (orbit.eccentricity < 1)
+                //        previousApA = MNCUtility.MetersToScaledDistanceString(orbit.ApoapsisArl, 3);
+                //    else
+                //        previousApA = "Inf";
+                //    previousPeA = MNCUtility.MetersToScaledDistanceString(orbit.PeriapsisArl, 3);
+                //    previousInc = orbit.inclination.ToString("n3");
+                //    previousEcc = orbit.eccentricity.ToString("n3");
+                //    previousLAN = orbit.longitudeOfAscendingNode.ToString("n3");
+                //    if (orbit.closestEncounterBody != null)
+                //    {
+                //        previousBody = orbit.closestEncounterBody.Name;
+                //        previousLevel = orbit.closestEncounterLevel.ToString();
+                //    }
+
+                //    previousStart = orbit.PatchStartTransition.ToString();
+                //    previousEnd = orbit.PatchEndTransition.ToString();
+
+                //    // The next orbit info will be from PatchedConicsList[0]
+                //    nextApA = MNCUtility.MetersToScaledDistanceString(patch.ApoapsisArl, 3);
+                //    nextPeA = MNCUtility.MetersToScaledDistanceString(patch.PeriapsisArl, 3);
+                //    nextInc = patch.inclination.ToString("n3");
+                //    nextEcc = patch.eccentricity.ToString("n3");
+                //    nextLAN = patch.longitudeOfAscendingNode.ToString("n3");
+                //}
+                //else // One or more nodes, and the selected node is not the first
+                //{
+                //    if (patchIdx > 1)
+                //    {
+                //        // The previous orbit info will be from PatchedConicsList[SelectedNodeIndex - 1]
+                //        previousApA = MNCUtility.MetersToScaledDistanceString(PatchedConicsList[patchIdx - 1].ApoapsisArl, 3);
+                //        previousPeA = MNCUtility.MetersToScaledDistanceString(PatchedConicsList[patchIdx - 1].PeriapsisArl, 3);
+                //        previousInc = PatchedConicsList[patchIdx - 1].inclination.ToString("n3");
+                //        previousEcc = PatchedConicsList[patchIdx - 1].eccentricity.ToString("n3");
+                //        previousLAN = PatchedConicsList[patchIdx - 1].longitudeOfAscendingNode.ToString("n3");
+                //        if (PatchedConicsList[patchIdx - 1].closestEncounterBody != null)
+                //        {
+                //            previousBody = PatchedConicsList[patchIdx - 1].closestEncounterBody.Name;
+                //            previousLevel = PatchedConicsList[patchIdx - 1].closestEncounterLevel.ToString();
+                //        }
+
+                //        previousStart = PatchedConicsList[patchIdx - 1].PatchStartTransition.ToString();
+                //        previousEnd = PatchedConicsList[patchIdx - 1].PatchEndTransition.ToString();
+
+                //    }
+                //    else
+                //    {
+                //        // The previous orbit info will be from our current orbit
+                //        if (orbit.eccentricity < 1)
+                //            previousApA = MNCUtility.MetersToScaledDistanceString(orbit.ApoapsisArl, 3);
+                //        else
+                //            previousApA = "Inf";
+                //        previousPeA = MNCUtility.MetersToScaledDistanceString(orbit.PeriapsisArl, 3);
+                //        previousInc = orbit.inclination.ToString("n3");
+                //        previousEcc = orbit.eccentricity.ToString("n3");
+                //        previousLAN = orbit.longitudeOfAscendingNode.ToString("n3");
+                //        if (orbit.closestEncounterBody != null)
+                //        {
+                //            previousBody = orbit.closestEncounterBody.Name;
+                //            previousLevel = orbit.closestEncounterLevel.ToString();
+                //        }
+
+                //        previousStart = orbit.PatchStartTransition.ToString();
+                //        previousEnd = orbit.PatchEndTransition.ToString();
+
+                //    }
+                //    // The next orbit info will be from PatchedConicsList[SelectedNodeIndex]
+                //    nextApA = MNCUtility.MetersToScaledDistanceString(patch.ApoapsisArl, 3);
+                //    nextPeA = MNCUtility.MetersToScaledDistanceString(patch.PeriapsisArl, 3);
+                //    nextInc = patch.inclination.ToString("n3");
+                //    nextEcc = patch.eccentricity.ToString("n3");
+                //    nextLAN = patch.longitudeOfAscendingNode.ToString("n3");
+                //}
+
+                //if (patch.closestEncounterBody != null)
+                //{
+                //    nextBody = patch.closestEncounterBody.Name;
+                //    nextLevel = patch.closestEncounterLevel.ToString();
+
+                //}
+                //else if (patch.NextPatch != null && selectedNode + 1 == nodes.Count) // There's another patch and we're at the last node
+                //{
+                //    var nextPatch = patch.NextPatch as PatchedConicsOrbit;
+                //    if (nextPatch.closestEncounterBody != null)
+                //    {
+                //        nextBody = nextPatch.closestEncounterBody.Name;
+                //        nextLevel = nextPatch.closestEncounterLevel.ToString();
+                //    }
+                //}
+                //nextStart = patch.PatchStartTransition.ToString();
+                //nextEnd = patch.PatchEndTransition.ToString();
 
                 PreviousApValue.text = previousApA;
                 PreviousPeValue.text = previousPeA;
                 PreviousIncValue.text = previousInc + "°";
                 PreviousEccValue.text = previousEcc;
                 PreviousLANValue.text = previousLAN + "°";
-                PreviousEncounterBody.text = previousBody;
-                PreviousEncounterLevel.text = previousLevel;
-                PreviousTransitionStart.text = previousStart;
-                PreviousTransitionEnd.text = previousEnd;
 
                 NextApValue.text = nextApA;
                 NextPeValue.text = nextPeA;
                 NextIncValue.text = nextInc + "°";
                 NextEccValue.text = nextEcc;
                 NextLANValue.text = nextLAN + "°";
-                NextEncounterBody.text = nextBody;
-                NextEncounterLevel.text = nextLevel;
-                NextTransitionStart.text = nextStart;
-                NextTransitionEnd.text = nextEnd;
+
+                //int eventPatchIdx = -1;
+                //for (int patchIdx = nodePatchIdx; patchIdx < PatchedConicsList.Count; patchIdx++)
+                //{
+                //    var thisPatch = PatchedConicsList[patchIdx];
+                //    if (PatchedConicsList[patchIdx].closestEncounterBody != null)
+                //    {
+                //        eventPatchIdx = patchIdx;
+                //        break;
+                //    }
+                //}
+
+                // Display Event Lookahead
+                int eventIdx = 0;
+                int eventCount = 0;
+                for (int patchIdx = nodePatchIdx; patchIdx < PatchedConicsList.Count; patchIdx++)
+                {
+                    // Grap the current patch in the list we're processing
+                    var thisPatch = PatchedConicsList[patchIdx];
+                    // if we've found the end of the list of active patches or hit the max humber of reportable events
+                    if (!thisPatch.ActivePatch || eventIdx > 3)
+                        break;
+                    // If there's an event at the start of the patch
+                    if ((thisPatch.PatchStartTransition == PatchTransitionType.Encounter && thisPatch.closestEncounterLevel != EncounterSolutionLevel.None) || thisPatch.PatchStartTransition == PatchTransitionType.Escape)
+                    {
+                        // Report encounter at start of thisPatch
+                        DisplayEvent(eventIdx++, thisPatch, true);
+                        eventCount++;
+                    }
+                    // If there's an event during or at the end of the patch
+                    if (((thisPatch.PatchEndTransition == PatchTransitionType.Encounter && thisPatch.closestEncounterLevel != EncounterSolutionLevel.None) ||
+                        thisPatch.PatchEndTransition == PatchTransitionType.Escape || thisPatch.PatchEndTransition == PatchTransitionType.Collision ||
+                        thisPatch.PatchEndTransition == PatchTransitionType.PartialOutOfFuel || thisPatch.PatchEndTransition == PatchTransitionType.CompletelyOutOfFuel) && eventIdx < maxNumEvents)
+                    {
+                        // Report encounter at start of thisPatch
+                        DisplayEvent(eventIdx++, thisPatch, false);
+                        eventCount++;
+                    }
+                    // If we've found at least one event to display and the event group display is switched off, then switch it on
+                    if (eventIdx > 0 && EncounterGroup.style.display == DisplayStyle.None)
+                        EncounterGroup.style.display = DisplayStyle.Flex;
+                }
+                // If there are no events to display and the event group's display is switched on, then switch it off
+                if (eventCount == 0)
+                    EncounterGroup.style.display = DisplayStyle.None;
+                if (eventCount < maxNumEvents)
+                {
+                    for (int idx = maxNumEvents; idx > eventCount; idx--)
+                        eventDataList[idx - 1].Event.style.display = DisplayStyle.None;
+                }
+                //if (eventIdx >= 0 && eventIdx < maxNumEvents)
+                //{
+                //    // Hide events after the specified index (exclusive)
+                //    eventDataList
+                //        .GetRange(eventIdx + 1, eventDataList.Count - eventIdx - 1)
+                //        .ForEach(eventData => eventData.Event.style.display = DisplayStyle.None);
+                //}
+
+
             }
             else
             {
@@ -497,6 +653,97 @@ public class MncUiController : KerbalMonoBehaviour
         }
     }
 
+    // string lastBody = "N/A";
+
+    void DisplayEvent(int idx, PatchedConicsOrbit thisPatch, bool atStart = true)
+    {
+        eventDataList[idx].Event.style.display = DisplayStyle.Flex;
+        PatchTransitionType thisTransition = PatchTransitionType.Initial;
+        if (atStart)
+            thisTransition = thisPatch.PatchStartTransition;
+        else
+            thisTransition = thisPatch.PatchEndTransition;
+        if (thisPatch.closestEncounterBody != null)
+        {
+            eventDataList[idx].EncounterBody.text = thisPatch.closestEncounterBody.Name;
+            // lastBody = thisPatch.closestEncounterBody.Name;
+        }
+        else
+            eventDataList[idx].EncounterBody.text = thisPatch.referenceBody.Name;
+
+        eventDataList[idx].EncounterType.RemoveFromClassList("unity-label-invalid");
+
+        if (thisPatch.closestEncounterLevel != EncounterSolutionLevel.None && !atStart)
+        {
+            switch (thisPatch.closestEncounterLevel)
+            {
+                case EncounterSolutionLevel.OrbitIntersect:
+                    eventDataList[idx].EncounterType.text = "Orbit Intersect @";
+                    eventDataList[idx].EncounterInfo.text = MNCUtility.SecondsToTimeString(thisPatch.EndUT - Game.UniverseModel.UniversalTime);
+                    break;
+                case EncounterSolutionLevel.SoiIntersect1:
+                    if (thisPatch.NextPatch.referenceBody.Mass >= thisPatch.referenceBody.Mass)
+                    {
+                        eventDataList[idx].EncounterType.text = "SOI Exit @";
+                        eventDataList[idx].EncounterBody.text = thisPatch.referenceBody.Name;
+                    }
+                    else
+                    {
+                        eventDataList[idx].EncounterType.text = "SOI Entry @";
+                        eventDataList[idx].EncounterBody.text = thisPatch.NextPatch.referenceBody.Name;
+                    }
+                    eventDataList[idx].EncounterInfo.text = MNCUtility.SecondsToTimeString(thisPatch.EndUT - Game.UniverseModel.UniversalTime);
+                    break;
+                case EncounterSolutionLevel.SoiIntersect2:
+                    if (thisPatch.NextPatch.referenceBody.Mass >= thisPatch.referenceBody.Mass)
+                    {
+                        eventDataList[idx].EncounterType.text = "SOI Exit @";
+                        eventDataList[idx].EncounterBody.text = thisPatch.referenceBody.Name;
+                    }
+                    else
+                    {
+                        eventDataList[idx].EncounterType.text = "SOI Entry @";
+                        eventDataList[idx].EncounterBody.text = thisPatch.NextPatch.referenceBody.Name;
+                    }
+                    eventDataList[idx].EncounterInfo.text = MNCUtility.SecondsToTimeString(thisPatch.StartUT - Game.UniverseModel.UniversalTime);
+                    break;
+                default:
+                    break;
+            }
+        }
+        else if (thisTransition == PatchTransitionType.Escape)
+        {
+            if (atStart)
+            {
+                eventDataList[idx].EncounterType.text = "SOI Exit @";
+                eventDataList[idx].EncounterBody.text = thisPatch.PreviousPatch.referenceBody.Name;
+                eventDataList[idx].EncounterInfo.text = MNCUtility.SecondsToTimeString(thisPatch.StartUT - Game.UniverseModel.UniversalTime);
+            }
+            else
+            {
+                eventDataList[idx].EncounterType.text = "Fly By @";
+                eventDataList[idx].EncounterInfo.text = MNCUtility.MetersToScaledDistanceString(thisPatch.PeriapsisArl);
+            }
+        }
+        else if (thisTransition == PatchTransitionType.Collision)
+        {
+            eventDataList[idx].EncounterType.AddToClassList("unity-label-invalid");
+            eventDataList[idx].EncounterType.text = "Collision @";
+            eventDataList[idx].EncounterInfo.text = MNCUtility.SecondsToTimeString(thisPatch.EndUT - Game.UniverseModel.UniversalTime);
+        }
+        else if (thisTransition == PatchTransitionType.PartialOutOfFuel)
+        {
+            eventDataList[idx].EncounterType.text = "Partial Out of Fuel @";
+            eventDataList[idx].EncounterInfo.text = MNCUtility.SecondsToTimeString(thisPatch.EndUT - Game.UniverseModel.UniversalTime);
+        }
+        else if (thisTransition == PatchTransitionType.CompletelyOutOfFuel)
+        {
+            eventDataList[idx].EncounterType.text = "Out of Fuel @";
+            eventDataList[idx].EncounterInfo.text = MNCUtility.SecondsToTimeString(thisPatch.EndUT - Game.UniverseModel.UniversalTime);
+        }
+        else
+            eventDataList[idx].Event.style.display = DisplayStyle.None;
+    }
     public void SetEnabled(bool newState)
     {
         if (newState) _container.style.display = DisplayStyle.Flex;
@@ -532,19 +779,19 @@ public class MncUiController : KerbalMonoBehaviour
 
             textField.RegisterValueChangedCallback((evt) =>
         {
-              ManeuverNodeControllerMod.Logger.LogDebug($"TryParse attempt for {textField.name}. Tooltip = {textField.tooltip}");
-              if (float.TryParse(evt.newValue, out _))
-              {
-                  textField.RemoveFromClassList("unity-text-field-invalid");
-                  ManeuverNodeControllerMod.Logger.LogDebug($"TryParse success for {textField.name}, nValue = '{evt.newValue}': Removed unity-text-field-invalid from class list");
-              }
-              else
-              {
-                  textField.AddToClassList("unity-text-field-invalid");
-                  ManeuverNodeControllerMod.Logger.LogDebug($"TryParse failure for {textField.name}, nValue = '{evt.newValue}': Added unity-text-field-invalid to class list");
-                  ManeuverNodeControllerMod.Logger.LogDebug($"document.rootVisualElement.transform.position.z = {document.rootVisualElement.transform.position.z}");
-              }
-          });
+            ManeuverNodeControllerMod.Logger.LogDebug($"TryParse attempt for {textField.name}. Tooltip = {textField.tooltip}");
+            if (float.TryParse(evt.newValue, out _))
+            {
+                textField.RemoveFromClassList("unity-text-field-invalid");
+                ManeuverNodeControllerMod.Logger.LogDebug($"TryParse success for {textField.name}, nValue = '{evt.newValue}': Removed unity-text-field-invalid from class list");
+            }
+            else
+            {
+                textField.AddToClassList("unity-text-field-invalid");
+                ManeuverNodeControllerMod.Logger.LogDebug($"TryParse failure for {textField.name}, nValue = '{evt.newValue}': Added unity-text-field-invalid to class list");
+                ManeuverNodeControllerMod.Logger.LogDebug($"document.rootVisualElement.transform.position.z = {document.rootVisualElement.transform.position.z}");
+            }
+        });
 
             textField.RegisterCallback<PointerDownEvent>(evt => evt.StopPropagation());
             textField.RegisterCallback<PointerUpEvent>(evt => evt.StopPropagation());
@@ -588,19 +835,27 @@ public class MncUiController : KerbalMonoBehaviour
         PreviousIncValue = _container.Q<Label>("PreviousIncValue");
         PreviousEccValue = _container.Q<Label>("PreviousEccValue");
         PreviousLANValue = _container.Q<Label>("PreviousLANValue");
-        PreviousEncounterBody = _container.Q<Label>("PreviousEncounterBody");
-        PreviousEncounterLevel = _container.Q<Label>("PreviousEncounterLevel");
-        PreviousTransitionStart = _container.Q<Label>("PreviousTransitionStart");
-        PreviousTransitionEnd = _container.Q<Label>("PreviousTransitionEnd");
         NextApValue = _container.Q<Label>("NextApValue");
         NextPeValue = _container.Q<Label>("NextPeValue");
         NextIncValue = _container.Q<Label>("NextIncValue");
         NextEccValue = _container.Q<Label>("NextEccValue");
         NextLANValue = _container.Q<Label>("NextLANValue");
-        NextEncounterBody = _container.Q<Label>("NextEncounterBody");
-        NextEncounterLevel = _container.Q<Label>("NextEncounterLevel");
-        NextTransitionStart = _container.Q<Label>("NextTransitionStart");
-        NextTransitionEnd = _container.Q<Label>("NextTransitionEnd");
+        EncounterGroup = _container.Q<VisualElement>("EncounterGroup");
+
+        //EncounterInfo.Add(EncounterInfo4);
+
+        // Loop through each event and initialize the data objects
+        for (int i = 1; i <= maxNumEvents; i++)
+        {
+            EventData eventData = new EventData();
+            eventData.Event = _container.Q<VisualElement>("Event" + i);
+            eventData.EncounterBody = _container.Q<Label>("EncounterBody" + i);
+            eventData.EncounterType = _container.Q<Label>("EncounterType" + i);
+            eventData.EncounterInfo = _container.Q<Label>("EncounterInfo" + i);
+
+            // Add the data object to the list
+            eventDataList.Add(eventData);
+        }
 
         ManeuverNodeControllerMod.Logger.LogInfo($"MNC: SnapTo labels initialized. initialized is set to {initialized}");
 
@@ -623,90 +878,50 @@ public class MncUiController : KerbalMonoBehaviour
         {
             if (float.TryParse(evt.newValue, out float newFloat))
             {
-                // _container.Q<TextField>("AbsoluteDvInput").style.color = Color.white;
                 absDvValue = newFloat;
             }
-            //else
-            //{
-            //  _container.Q<TextField>("AbsoluteDvInput").style.color = Color.red;
-            //}
         });
         _container.Q<TextField>("AbsoluteDvInput").value = absDvValue.ToString();
-        //_container.Q<TextField>("AbsoluteDvInput").RegisterCallback<PointerDownEvent>(evt => evt.StopPropagation());
-        //_container.Q<TextField>("AbsoluteDvInput").RegisterCallback<PointerUpEvent>(evt => evt.StopPropagation());
-        //_container.Q<TextField>("AbsoluteDvInput").RegisterCallback<PointerMoveEvent>(evt => evt.StopPropagation());
 
         // pass = float.TryParse(_container.Q<TextField>("SmallStepDvInput").value, out smallStepDv);
         _container.Q<TextField>("SmallStepDvInput").RegisterValueChangedCallback((evt) =>
         {
             if (float.TryParse(evt.newValue, out float newFloat))
             {
-                // _container.Q<TextField>("SmallStepDvInput").style.color = Color.white;
                 smallStepDv = newFloat;
             }
-            //else
-            //{
-            //  _container.Q<TextField>("SmallStepDvInput").style.color = Color.red;
-            //}
         });
         _container.Q<TextField>("SmallStepDvInput").value = smallStepDv.ToString();
-        //_container.Q<TextField>("SmallStepDvInput").RegisterCallback<PointerDownEvent>(evt => evt.StopPropagation());
-        //_container.Q<TextField>("SmallStepDvInput").RegisterCallback<PointerUpEvent>(evt => evt.StopPropagation());
-        //_container.Q<TextField>("SmallStepDvInput").RegisterCallback<PointerMoveEvent>(evt => evt.StopPropagation());
 
         // pass = float.TryParse(_container.Q<TextField>("LargeStepDvInput").value, out largeStepDv);
         _container.Q<TextField>("LargeStepDvInput").RegisterValueChangedCallback((evt) =>
         {
             if (float.TryParse(evt.newValue, out float newFloat))
             {
-                // _container.Q<TextField>("LargeStepDvInput").style.color = Color.white;
                 largeStepDv = newFloat;
             }
-            //else
-            //{
-            //  _container.Q<TextField>("LargeStepDvInput").style.color = Color.red;
-            //}
         });
         _container.Q<TextField>("LargeStepDvInput").value = largeStepDv.ToString();
-        //_container.Q<TextField>("LargeStepDvInput").RegisterCallback<PointerDownEvent>(evt => evt.StopPropagation());
-        //_container.Q<TextField>("LargeStepDvInput").RegisterCallback<PointerUpEvent>(evt => evt.StopPropagation());
-        //_container.Q<TextField>("LargeStepDvInput").RegisterCallback<PointerMoveEvent>(evt => evt.StopPropagation());
 
         // pass = float.TryParse(_container.Q<TextField>("SmallTimeStepInput").value, out smallStepTime);
         _container.Q<TextField>("SmallTimeStepInput").RegisterValueChangedCallback((evt) =>
         {
             if (float.TryParse(evt.newValue, out float newFloat))
             {
-                // _container.Q<TextField>("SmallTimeStepInput").style.color = Color.white;
                 smallStepTime = newFloat;
             }
-            //else
-            //{
-            //  _container.Q<TextField>("SmallTimeStepInput").style.color = Color.red;
-            //}
         });
         _container.Q<TextField>("SmallTimeStepInput").value = smallStepTime.ToString();
-        //_container.Q<TextField>("SmallTimeStepInput").RegisterCallback<PointerDownEvent>(evt => evt.StopPropagation());
-        //_container.Q<TextField>("SmallTimeStepInput").RegisterCallback<PointerUpEvent>(evt => evt.StopPropagation());
-        //_container.Q<TextField>("SmallTimeStepInput").RegisterCallback<PointerMoveEvent>(evt => evt.StopPropagation());
 
         // pass = float.TryParse(_container.Q<TextField>("LargeTimeStepInput").value, out largeStepTime);
         _container.Q<TextField>("LargeTimeStepInput").RegisterValueChangedCallback((evt) =>
         {
             if (float.TryParse(evt.newValue, out float newFloat))
             {
-                // _container.Q<TextField>("LargeTimeStepInput").style.color = Color.white;
                 largeStepTime = newFloat;
             }
-            //else
-            //{
-            //  _container.Q<TextField>("LargeTimeStepInput").style.color = Color.red;
-            //}
         });
         _container.Q<TextField>("LargeTimeStepInput").value = largeStepTime.ToString();
-        //_container.Q<TextField>("LargeTimeStepInput").RegisterCallback<PointerDownEvent>(evt => evt.StopPropagation());
-        //_container.Q<TextField>("LargeTimeStepInput").RegisterCallback<PointerUpEvent>(evt => evt.StopPropagation());
-        //_container.Q<TextField>("LargeTimeStepInput").RegisterCallback<PointerMoveEvent>(evt => evt.StopPropagation());
 
         _container.Q<Button>("LargeProgradeDecreaseButton").clicked += () => IncrementPrograde(-largeStepDv);
         _container.Q<Button>("SmallProgradeDecreaseButton").clicked += () => IncrementPrograde(-smallStepDv);
@@ -791,11 +1006,11 @@ public class MncUiController : KerbalMonoBehaviour
             pass = NodeManagerPlugin.Instance.AddNode();
             ManeuverNodeControllerMod.Instance.SelectedNodeIndex = 0;
             NodeManagerPlugin.Instance.SpitNode(ManeuverNodeControllerMod.Instance.SelectedNodeIndex);
-            StartCoroutine(NodeManagerPlugin.Instance.RefreshNodes());
+            // StartCoroutine(NodeManagerPlugin.Instance.RefreshNodes());
         }
         else
         {
-            StartCoroutine(NodeManagerPlugin.Instance.RefreshNodes());
+            // StartCoroutine(NodeManagerPlugin.Instance.RefreshNodes());
             pass = NodeManagerPlugin.Instance.AddNode();
             ManeuverNodeControllerMod.Instance.SelectedNodeIndex = NodeManagerPlugin.Instance.Nodes.Count - 1;
             NodeManagerPlugin.Instance.SpitNode(ManeuverNodeControllerMod.Instance.SelectedNodeIndex);
@@ -816,6 +1031,55 @@ public class MncUiController : KerbalMonoBehaviour
     void CheckManeuverNode()
     {
         NodeManagerPlugin.Instance.SpitNode(ManeuverNodeControllerMod.Instance.SelectedNodeIndex);
+        OrbiterComponent Orbiter = MNCUtility.activeVessel?.Orbiter;
+        ManeuverPlanSolver ManeuverPlanSolver = Orbiter?.ManeuverPlanSolver;
+        List<PatchedConicsOrbit> patch = ManeuverPlanSolver?.PatchedConicsList;
+
+        int nodePatchIdx = 0;
+        double nodeTime = NodeManagerPlugin.Instance.Nodes[ManeuverNodeControllerMod.Instance.SelectedNodeIndex].Time;
+        if (nodeTime < patch[0].StartUT)
+        {
+            nodePatchIdx = 0; // (PatchedConicsList[0].PatchEndTransition == PatchTransitionType.Encounter) ? 1 : 0;
+        }
+        else
+        {
+            for (int i = 0; i < patch.Count - 1; i++)
+            {
+                if (patch[i].StartUT < nodeTime && nodeTime <= patch[i + 1].StartUT)
+                {
+                    nodePatchIdx = i + 1; // (PatchedConicsList[i + 1].PatchEndTransition == PatchTransitionType.Encounter && i < PatchedConicsList.Count - 2) ? i + 2 : i + 1;
+                    break;
+                }
+            }
+        }
+
+        ManeuverNodeControllerMod.Logger.LogInfo($"Node Patch {nodePatchIdx}");
+        int eventCount = 0;
+        for (int i = 0; i < patch.Count; i++)
+        {
+            if (!patch[i].ActivePatch)
+                break;
+            if (patch[i].closestEncounterBody != null)
+                ManeuverNodeControllerMod.Logger.LogInfo($"Patch {i}: Active {patch[i].ActivePatch}, SOI Encounter {patch[i].UniversalTimeAtSoiEncounter}, Start {patch[i].PatchStartTransition} @ {patch[i].StartUT:N3}, End {patch[i].PatchEndTransition} @ {patch[i].EndUT:N3}, referenceBody: {patch[i].referenceBody.Name}, Encounter: {patch[i].closestEncounterBody.Name} ({patch[i].closestEncounterLevel})");
+            else
+                ManeuverNodeControllerMod.Logger.LogInfo($"Patch {i}: Active {patch[i].ActivePatch}, SOI Encounter {patch[i].UniversalTimeAtSoiEncounter}, Start {patch[i].PatchStartTransition} @ {patch[i].StartUT:N3}, End {patch[i].PatchEndTransition} @ {patch[i].EndUT:N3}, referenceBody: {patch[i].referenceBody.Name}");
+            if ((patch[i].PatchStartTransition == PatchTransitionType.Encounter && patch[i].closestEncounterLevel != EncounterSolutionLevel.None) || patch[i].PatchStartTransition == PatchTransitionType.Escape)
+            {
+                // Report encounter at start of thisPatch
+                ManeuverNodeControllerMod.Logger.LogInfo($"Patch {i}: Has event at start of patch");
+                eventCount++;
+            }
+            // If there's an event during or at the end of the patch
+            if ((patch[i].PatchEndTransition == PatchTransitionType.Encounter && patch[i].closestEncounterLevel != EncounterSolutionLevel.None) ||
+                patch[i].PatchEndTransition == PatchTransitionType.Escape || patch[i].PatchEndTransition == PatchTransitionType.Collision ||
+                patch[i].PatchEndTransition == PatchTransitionType.PartialOutOfFuel || patch[i].PatchEndTransition == PatchTransitionType.CompletelyOutOfFuel)
+            {
+                // Report encounter at end of thisPatch
+                ManeuverNodeControllerMod.Logger.LogInfo($"Patch {i}: Has event mid patch or at end of patch");
+                eventCount++;
+            }
+        }
+        ManeuverNodeControllerMod.Logger.LogInfo($"Events Detected {eventCount}");
     }
 
     void IncrementPrograde(float amount)
