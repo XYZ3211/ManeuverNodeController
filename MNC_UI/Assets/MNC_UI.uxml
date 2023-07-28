@@ -178,63 +178,65 @@
                     <ui:Label display-tooltip-when-elided="true" name="Units" class="units-label" />
                 </ui:VisualElement>
             </ui:VisualElement>
-            <ui:VisualElement name="HorizontalSpace" />
-            <ui:VisualElement name="PreviousNextTitle" class="row-element-tight" style="justify-content: space-around;">
-                <ui:Label text="Previous Orbit" display-tooltip-when-elided="true" name="Label" style="width: 100px; -unity-text-align: middle-center;" />
-                <ui:Label text="Next Orbit" display-tooltip-when-elided="true" name="Label" style="width: 100px; -unity-text-align: middle-center;" />
+            <ui:VisualElement name="PreviousNextGroup" style="display: flex;">
+                <ui:VisualElement name="HorizontalSpace" />
+                <ui:VisualElement name="PreviousNextTitle" class="row-element-tight" style="justify-content: space-around;">
+                    <ui:Label text="Previous Orbit" display-tooltip-when-elided="true" name="Label" style="width: 100px; -unity-text-align: middle-center;" />
+                    <ui:Label text="Next Orbit" display-tooltip-when-elided="true" name="Label" style="width: 100px; -unity-text-align: middle-center;" />
+                </ui:VisualElement>
+                <ui:VisualElement name="Ap" class="row-element-tight" style="justify-content: space-around;">
+                    <ui:VisualElement name="PreviousAp" style="flex-direction: row;">
+                        <ui:Label text="Ap:" display-tooltip-when-elided="true" name="Label" class="orbit-label" />
+                        <ui:Label text="279.654 km" display-tooltip-when-elided="true" name="PreviousApValue" class="value-label orbit-value" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="NextAp" style="flex-direction: row;">
+                        <ui:Label text="Ap:" display-tooltip-when-elided="true" name="Label" class="orbit-label" />
+                        <ui:Label text="279.653 km" display-tooltip-when-elided="true" name="NextApValue" class="value-label orbit-value" style="height: 14px;" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="Pe" class="row-element-tight" style="justify-content: space-around;">
+                    <ui:VisualElement name="PreviousPe" style="flex-direction: row;">
+                        <ui:Label text="Pe:" display-tooltip-when-elided="true" name="Label" class="orbit-label" />
+                        <ui:Label text="120.331 km" display-tooltip-when-elided="true" name="PreviousPeValue" class="value-label orbit-value" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="NextPe" style="flex-direction: row;">
+                        <ui:Label text="Pe:" display-tooltip-when-elided="true" name="Label" class="orbit-label" />
+                        <ui:Label text="120.324 km" display-tooltip-when-elided="true" name="NextPeValue" class="value-label orbit-value" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="Inc" class="row-element-tight" style="justify-content: space-around;">
+                    <ui:VisualElement name="PreviousInc" style="flex-direction: row;">
+                        <ui:Label text="Inc:" display-tooltip-when-elided="true" name="Label" class="orbit-label" />
+                        <ui:Label text="0.000" display-tooltip-when-elided="true" name="PreviousIncValue" class="value-label orbit-value" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="NextInc" style="flex-direction: row;">
+                        <ui:Label text="Inc:" display-tooltip-when-elided="true" name="Label" enable-rich-text="false" class="orbit-label" />
+                        <ui:Label text="0.000" display-tooltip-when-elided="true" name="NextIncValue" class="value-label orbit-value" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="Ecc" class="row-element-tight" style="justify-content: space-around;">
+                    <ui:VisualElement name="PreviousEcc" style="flex-direction: row;">
+                        <ui:Label text="Ecc:" display-tooltip-when-elided="true" name="Label" class="orbit-label" />
+                        <ui:Label text="0.100" display-tooltip-when-elided="true" name="PreviousEccValue" class="value-label orbit-value" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="NextEcc" style="flex-direction: row;">
+                        <ui:Label text="Ecc:" display-tooltip-when-elided="true" name="Label" class="orbit-label" />
+                        <ui:Label text="0.100" display-tooltip-when-elided="true" name="NextEccValue" class="value-label orbit-value" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="LAN" class="row-element-tight" style="justify-content: space-around;">
+                    <ui:VisualElement name="PreviousLAN" style="flex-direction: row;">
+                        <ui:Label text="LAN:" display-tooltip-when-elided="true" name="Label" class="orbit-label" />
+                        <ui:Label text="335.907" display-tooltip-when-elided="true" name="PreviousLANValue" class="value-label orbit-value" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="NextLAN" style="flex-direction: row;">
+                        <ui:Label text="LAN:" display-tooltip-when-elided="true" name="Label" class="orbit-label" />
+                        <ui:Label text="335.907" display-tooltip-when-elided="true" name="NextLANValue" class="value-label orbit-value" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
             </ui:VisualElement>
-            <ui:VisualElement name="Ap" class="row-element-tight" style="justify-content: space-around;">
-                <ui:VisualElement name="PreviousAp" style="flex-direction: row;">
-                    <ui:Label text="Ap:" display-tooltip-when-elided="true" name="Label" class="orbit-label" />
-                    <ui:Label text="279.654 km" display-tooltip-when-elided="true" name="PreviousApValue" class="value-label orbit-value" />
-                </ui:VisualElement>
-                <ui:VisualElement name="NextAp" style="flex-direction: row;">
-                    <ui:Label text="Ap:" display-tooltip-when-elided="true" name="Label" class="orbit-label" />
-                    <ui:Label text="279.653 km" display-tooltip-when-elided="true" name="NextApValue" class="value-label orbit-value" style="height: 14px;" />
-                </ui:VisualElement>
-            </ui:VisualElement>
-            <ui:VisualElement name="Pe" class="row-element-tight" style="justify-content: space-around;">
-                <ui:VisualElement name="PreviousPe" style="flex-direction: row;">
-                    <ui:Label text="Pe:" display-tooltip-when-elided="true" name="Label" class="orbit-label" />
-                    <ui:Label text="120.331 km" display-tooltip-when-elided="true" name="PreviousPeValue" class="value-label orbit-value" />
-                </ui:VisualElement>
-                <ui:VisualElement name="NextPe" style="flex-direction: row;">
-                    <ui:Label text="Pe:" display-tooltip-when-elided="true" name="Label" class="orbit-label" />
-                    <ui:Label text="120.324 km" display-tooltip-when-elided="true" name="NextPeValue" class="value-label orbit-value" />
-                </ui:VisualElement>
-            </ui:VisualElement>
-            <ui:VisualElement name="Inc" class="row-element-tight" style="justify-content: space-around;">
-                <ui:VisualElement name="PreviousInc" style="flex-direction: row;">
-                    <ui:Label text="Inc:" display-tooltip-when-elided="true" name="Label" class="orbit-label" />
-                    <ui:Label text="0.000" display-tooltip-when-elided="true" name="PreviousIncValue" class="value-label orbit-value" />
-                </ui:VisualElement>
-                <ui:VisualElement name="NextInc" style="flex-direction: row;">
-                    <ui:Label text="Inc:" display-tooltip-when-elided="true" name="Label" enable-rich-text="false" class="orbit-label" />
-                    <ui:Label text="0.000" display-tooltip-when-elided="true" name="NextIncValue" class="value-label orbit-value" />
-                </ui:VisualElement>
-            </ui:VisualElement>
-            <ui:VisualElement name="Ecc" class="row-element-tight" style="justify-content: space-around;">
-                <ui:VisualElement name="PreviousEcc" style="flex-direction: row;">
-                    <ui:Label text="Ecc:" display-tooltip-when-elided="true" name="Label" class="orbit-label" />
-                    <ui:Label text="0.100" display-tooltip-when-elided="true" name="PreviousEccValue" class="value-label orbit-value" />
-                </ui:VisualElement>
-                <ui:VisualElement name="NextEcc" style="flex-direction: row;">
-                    <ui:Label text="Ecc:" display-tooltip-when-elided="true" name="Label" class="orbit-label" />
-                    <ui:Label text="0.100" display-tooltip-when-elided="true" name="NextEccValue" class="value-label orbit-value" />
-                </ui:VisualElement>
-            </ui:VisualElement>
-            <ui:VisualElement name="LAN" class="row-element-tight" style="justify-content: space-around;">
-                <ui:VisualElement name="PreviousLAN" style="flex-direction: row;">
-                    <ui:Label text="LAN:" display-tooltip-when-elided="true" name="Label" class="orbit-label" />
-                    <ui:Label text="335.907" display-tooltip-when-elided="true" name="PreviousLANValue" class="value-label orbit-value" />
-                </ui:VisualElement>
-                <ui:VisualElement name="NextLAN" style="flex-direction: row;">
-                    <ui:Label text="LAN:" display-tooltip-when-elided="true" name="Label" class="orbit-label" />
-                    <ui:Label text="335.907" display-tooltip-when-elided="true" name="NextLANValue" class="value-label orbit-value" />
-                </ui:VisualElement>
-            </ui:VisualElement>
-            <ui:VisualElement name="HorizontalSpace" />
-            <ui:VisualElement name="EncounterGroup">
+            <ui:VisualElement name="EncounterGroup" style="display: flex;">
+                <ui:VisualElement name="HorizontalSpace" />
                 <ui:VisualElement name="EncounterTitle" class="row-element-tight" style="justify-content: space-around;">
                     <ui:Label text="Post Node Event Lookahead" display-tooltip-when-elided="true" name="Label" style="width: auto; -unity-text-align: middle-center;" />
                 </ui:VisualElement>
