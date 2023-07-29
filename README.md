@@ -16,8 +16,8 @@
 1. Download and extract this mod into the game folder. From the FlightPlan-x.x.x.zip file copy the `BepInEx` folder on top of your game's install folder. If done correctly, you should have the following folder structure within your KSP2 game folder: `...\Kerbal Space Program 2\BepInEx\plugins\maneuver_node_controller`.
 
 # Features
-## Encounter Display
-[![Watch the video](https://img.youtube.com/vi/DURdmNOWx74/default.jpg)](https://youtu.be/DURdmNOWx74)
+## Post-Node Event Lookahead
+[![Watch the video](https://img.youtube.com/vi/Y8UYwdgtOhE/default.jpg)](https://youtu.be/Y8UYwdgtOhE)
 
 # License
 Maneuver Node Controller and its originally authored code are distributed under the CC BY-SA 4.0 license.
