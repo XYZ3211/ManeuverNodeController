@@ -98,7 +98,6 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
 
         var mncUxml = AssetManager.GetAsset<VisualTreeAsset>($"{Info.Metadata.GUID}/mnc_ui/mnc_ui.uxml");
         var mncWindow = Window.CreateFromUxml(mncUxml, "Maneuver Node Controller Main Window", transform, true);
-        UnityEngine.Object.DontDestroyOnLoad(mncWindow);
         mncWindow.hideFlags |= HideFlags.HideAndDontSave;
 
         controller = mncWindow.gameObject.AddComponent<MncUiController>();
