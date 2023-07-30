@@ -139,6 +139,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
 
         // Register all Harmony patches in the project
         Harmony.CreateAndPatchAll(typeof(ManeuverNodeControllerMod).Assembly);
+        // Harmony.CreateAndPatchAll(typeof(STFUPatches));
 
         previousNextEnable = Config.Bind<bool>("Features Section", "Previous / Next Orbit Display", true, "Enable/Disable the display of the PRevious Obrit / Next Orbit information block");
         postNodeEventLookahead = Config.Bind<bool>("Features Section", "Post-Node Event Lookahead", true, "Enable/Disable the display of the Post-Node Event Lookahead information block");
@@ -267,7 +268,9 @@ public class MncUiController : KerbalMonoBehaviour
         // We do need things to be initialized first...
         if (initialized)
         {
-            List<ManeuverNodeData> nodes = NodeManagerPlugin.Instance.Nodes;
+            List<ManeuverNodeData> nodes = new List<ManeuverNodeData>();
+            if (NodeManagerPlugin.Instance.Nodes != null)
+                nodes = NodeManagerPlugin.Instance.Nodes;
 
             // If we've got nodes...
             if (nodes.Count > 0)
