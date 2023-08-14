@@ -1,9 +1,9 @@
 ManifestFileVersion: 0
-CRC: 2681375832
+CRC: 2449233500
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 2f3aa8baba0346dbef74c8d49c969111
+    Hash: e07f07a374099e16dea2346097136b71
   TypeTreeHash:
     serializedVersion: 2
     Hash: 8942a65878ffee03f8807e5e7737544e
@@ -61,8 +61,12 @@ SerializeReferenceClassIdentifiers:
 - AssemblyName: UnityEngine.UIElementsModule
   ClassName: UnityEngine.UIElements.VisualElementAsset
 Assets:
+- Assets/Theme/Fonts/Orbitron-Black SDF.asset
 - Assets/MNC_UI.uxml
+- Assets/Theme/Fonts/LiberationSans-Regular.ttf
 - Assets/ManeuverNodeControllerTheme.uss
+- Assets/Theme/Fonts/LiberationSans-Regular SDF.asset
+- Assets/Theme/Fonts/Orbitron-Black.ttf
 - Assets/Icons/Cross.png
 - Assets/Icons/icon_white.png
 Dependencies: []
