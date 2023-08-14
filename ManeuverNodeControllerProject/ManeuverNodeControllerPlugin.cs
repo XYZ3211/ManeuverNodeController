@@ -51,6 +51,8 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     private ConfigEntry<KeyboardShortcut> _keybind2;
     public ConfigEntry<bool> previousNextEnable;
     public ConfigEntry<bool> postNodeEventLookahead;
+    public ConfigEntry<bool> autoLaunch;
+    public ConfigEntry<bool> autoClose;
 
     public enum PatchEventType
     {
@@ -96,6 +98,20 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         // game = GameManager.Instance.Game;
         Logger = base.Logger;
 
+        // GameManager.Instance.Game.Messages.Subscribe<ManeuverRemovedMessage>(msg =>
+        Game.Messages.Subscribe<ManeuverRemovedMessage>(msg =>
+        {
+            MessageCenterMessage message = (ManeuverRemovedMessage)msg;
+            OnManeuverRemovedMessage(message);
+        });
+
+        // GameManager.Instance.Game.Messages.Subscribe<ManeuverCreatedMessage>(msg =>
+        Game.Messages.Subscribe<ManeuverCreatedMessage>(msg =>
+        {
+            MessageCenterMessage message = (ManeuverCreatedMessage)msg;
+            OnManeuverCreatedMessage(message);
+        });
+
         var mncUxml = AssetManager.GetAsset<VisualTreeAsset>($"{Info.Metadata.GUID}/mnc_ui/mnc_ui.uxml");
         var mncWindow = Window.CreateFromUxml(mncUxml, "Maneuver Node Controller Main Window", transform, true);
         mncWindow.hideFlags |= HideFlags.HideAndDontSave;
@@ -114,11 +130,11 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         new ConfigDescription("Keybind to open mod window")
         );
 
-        GameManager.Instance.Game.Messages.Subscribe<ManeuverRemovedMessage>(msg =>
-        {
-            var message = (ManeuverRemovedMessage)msg;
-            OnManeuverRemovedMessage(message);
-        });
+        //GameManager.Instance.Game.Messages.Subscribe<ManeuverRemovedMessage>(msg =>
+        //{
+        //    var message = (ManeuverRemovedMessage)msg;
+        //    OnManeuverRemovedMessage(message);
+        //});
 
         Logger.LogInfo("Loaded");
         if (loaded)
@@ -143,18 +159,69 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
 
         previousNextEnable = Config.Bind<bool>("Features Section", "Previous / Next Orbit Display", true, "Enable/Disable the display of the PRevious Obrit / Next Orbit information block");
         postNodeEventLookahead = Config.Bind<bool>("Features Section", "Post-Node Event Lookahead", true, "Enable/Disable the display of the Post-Node Event Lookahead information block");
-
+        autoLaunch = Config.Bind<bool>("Control Section", "Automatic Launch Enable", true, "Enable/Disable automatically raising the Maneuver Node Controler GUI when nodes are created");
+        autoClose = Config.Bind<bool>("Control Section", "Automatic Shutdown Enable", true, "Enable/Disable automatic dismissal of the Maneuver Node Controller GUI whenm there are no nodes");
     }
 
     private void OnManeuverRemovedMessage(MessageCenterMessage message)
     {
-        // Update the lsit of nodes to capture the effect of the node deletion
+        // Update the list of nodes to capture the effect of the node deletion
         var nodeCount = NodeManagerPlugin.Instance.RefreshManeuverNodes();
+
+        // If there are no nodes remaining
         if (nodeCount == 0)
+        {
             SelectedNodeIndex = 0;
-        if (SelectedNodeIndex + 1 > nodeCount && nodeCount > 0)
-            SelectedNodeIndex = nodeCount - 1;
+            if (autoClose.Value)
+            {
+                Logger.LogDebug("Automatically closing Maneuver Node Controller due to autoClose == true and nodeCount == 0");
+                ToggleButton(false);
+            }
+        }
+        else
+        {
+            // If the SelectedNodeIndex points to a node index not in the current list
+            if (SelectedNodeIndex + 1 > nodeCount)
+                SelectedNodeIndex = nodeCount - 1;
+            
+            bool keepGui = false;
+            double UT = Game.UniverseModel.UniversalTime;
+            for (int i = 0; i < nodeCount; i++)
+            {
+                if (NodeManagerPlugin.Instance.Nodes[i].Time > UT)
+                {
+                    Logger.LogDebug($"Node[{i}].Time > UT: Setting keepGui = true");
+                    keepGui = true;
+                }
+                else
+                    Logger.LogDebug($"Node[{i}].Time <= UT");
+            }
+            if (autoClose.Value && !keepGui)
+                ToggleButton(false);
+        }
     }
+
+    //double pressure(double altitude, CelestialBodyComponent thisBody)
+    //{
+    //    double staticPressure = thisBody.atmospherePressureSeaLevel; // Pa
+    //    double standardTemp = thisBody.atmosphereTemperatureSeaLevel; // K
+    //    double standardLapseRate = thisBody.atmosphereTemperatureLapseRate; // K/m
+    //    double M = thisBody.atmosphereMolarMass; // kg/mol
+    //    double atmoDepth = thisBody.atmosphereDepth; // m
+    //    double g0 = thisBody.gravParameter; // 9.80665; // m/s^2
+    //    double R = 8.31432; // N*m/(mol*K)
+    //    // thisBody.GetDynamicPressurekPa()
+
+    //    return staticPressure * Math.Pow(1 + standardLapseRate * (altitude - atmoDepth) / standardTemp, -g0 * M / (R * standardLapseRate));
+    //}
+
+    private void OnManeuverCreatedMessage(MessageCenterMessage message)
+    {
+        // If we're configured to automatically launch when a node is created
+        if (autoLaunch.Value)
+            ToggleButton(true);
+    }
+
 
     public void ToggleButton(bool toggle)
     {
@@ -195,6 +262,16 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         currentTarget = MNCUtility.activeVessel?.TargetObject;
         //if (MNCUtility.activeVessel != null)
         //  orbit = MNCUtility.activeVessel.Orbit;
+
+        if (autoClose.Value)
+        {
+            bool keepGui = false;
+            for (int i = 0; i < NodeManagerPlugin.Instance.Nodes.Count; i++)
+                if (NodeManagerPlugin.Instance.Nodes[i].Time > Game.UniverseModel.UniversalTime)
+                    keepGui = true;
+            if (!keepGui)
+                ToggleButton(false);
+        }
     }
 }
 
@@ -976,6 +1053,7 @@ public class MncUiController : KerbalMonoBehaviour
 
         ManeuverNodeControllerMod.Logger.LogInfo($"Node Patch {nodePatchIdx}");
         int eventCount = 0;
+        double NextClosestApproachDist = -1;
         for (int i = 0; i < patch.Count; i++)
         {
             var thisPatch = patch[i];
@@ -985,7 +1063,28 @@ public class MncUiController : KerbalMonoBehaviour
                 ManeuverNodeControllerMod.Logger.LogInfo($"Patch {i}: Active {thisPatch.ActivePatch}, SOI Encounter {thisPatch.UniversalTimeAtSoiEncounter}, Start {thisPatch.PatchStartTransition} @ {thisPatch.StartUT:N3}, End {thisPatch.PatchEndTransition} @ {thisPatch.EndUT:N3}, referenceBody: {thisPatch.referenceBody.Name}, Encounter: {thisPatch.closestEncounterBody.Name} ({thisPatch.closestEncounterLevel})");
             else
                 ManeuverNodeControllerMod.Logger.LogInfo($"Patch {i}: Active {thisPatch.ActivePatch}, SOI Encounter {thisPatch.UniversalTimeAtSoiEncounter}, Start {thisPatch.PatchStartTransition} @ {thisPatch.StartUT:N3}, End {thisPatch.PatchEndTransition} @ {thisPatch.EndUT:N3}, referenceBody: {thisPatch.referenceBody.Name}");
-
+            var NextClosestApproachTime = thisPatch.NextClosestApproachTime(MNCUtility.currentTarget.Orbit as PatchedConicsOrbit, thisPatch.StartUT);
+            if (NextClosestApproachTime > thisPatch.StartUT)
+            {
+                PatchedConicsOrbit o = thisPatch;
+                NextClosestApproachDist = (o.GetRelativePositionAtUTZup(NextClosestApproachTime) - MNCUtility.currentTarget.Orbit.GetRelativePositionAtUTZup(NextClosestApproachTime)).magnitude;
+            }
+            ManeuverNodeControllerMod.Logger.LogInfo($"Patch {i}: TrueAnomalyFirstEncounterPriOrbit {thisPatch.TrueAnomalyFirstEncounterPriOrbit}");
+            ManeuverNodeControllerMod.Logger.LogInfo($"Patch {i}: TrueAnomalyFirstEncounterSecOrbit {thisPatch.TrueAnomalyFirstEncounterSecOrbit}");
+            ManeuverNodeControllerMod.Logger.LogInfo($"Patch {i}: TrueAnomalySecEncounterPriOrbit   {thisPatch.TrueAnomalySecEncounterPriOrbit}");
+            ManeuverNodeControllerMod.Logger.LogInfo($"Patch {i}: TrueAnomalySecEncounterSecOrbit   {thisPatch.TrueAnomalySecEncounterSecOrbit}");
+            ManeuverNodeControllerMod.Logger.LogInfo($"Patch {i}: closestTgtApprUT                  {thisPatch.closestTgtApprUT}");
+            ManeuverNodeControllerMod.Logger.LogInfo($"Patch {i}: ClosestApproachDistance           {thisPatch.ClosestApproachDistance}");
+            ManeuverNodeControllerMod.Logger.LogInfo($"Patch {i}: numClosePoints                    {thisPatch.numClosePoints}");
+            ManeuverNodeControllerMod.Logger.LogInfo($"Patch {i}: UniversalTimeAtClosestApproach    {thisPatch.UniversalTimeAtClosestApproach}");
+            ManeuverNodeControllerMod.Logger.LogInfo($"Patch {i}: UniversalTimeAtSoiEncounter       {thisPatch.UniversalTimeAtSoiEncounter}");
+            ManeuverNodeControllerMod.Logger.LogInfo($"Patch {i}: timeToTransition1                 {thisPatch.timeToTransition1}");
+            ManeuverNodeControllerMod.Logger.LogInfo($"Patch {i}: timeToTransition2                 {thisPatch.timeToTransition2}");
+            ManeuverNodeControllerMod.Logger.LogInfo($"Patch {i}: NextClosestApproachTime           {NextClosestApproachTime:N3} = {MNCUtility.SecondsToTimeString(NextClosestApproachTime)}");
+            ManeuverNodeControllerMod.Logger.LogInfo($"Patch {i}: NextClosestApproachDist           {NextClosestApproachDist:N3}");
+            ManeuverNodeControllerMod.Logger.LogInfo($"Patch {i}: findClosestPoints                 {thisPatch.findClosestPoints}");
+            ManeuverNodeControllerMod.Logger.LogInfo($"Patch {i}: ClEctr1                           {thisPatch.ClEctr1}");
+            ManeuverNodeControllerMod.Logger.LogInfo($"Patch {i}: ClEctr2                           {thisPatch.ClEctr2}");
             // If there's an event at the start of the patch
             if (thisPatch.PatchStartTransition == PatchTransitionType.PartialOutOfFuel || thisPatch.PatchStartTransition == PatchTransitionType.CompletelyOutOfFuel ||
                 thisPatch.PatchStartTransition == PatchTransitionType.Escape)
