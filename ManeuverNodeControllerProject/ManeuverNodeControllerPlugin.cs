@@ -159,8 +159,8 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
 
         previousNextEnable = Config.Bind<bool>("Features Section", "Previous / Next Orbit Display", true, "Enable/Disable the display of the PRevious Obrit / Next Orbit information block");
         postNodeEventLookahead = Config.Bind<bool>("Features Section", "Post-Node Event Lookahead", true, "Enable/Disable the display of the Post-Node Event Lookahead information block");
-        autoLaunch = Config.Bind<bool>("Control Section", "Automatic Launch Enable", true, "Enable/Disable automatically raising the Maneuver Node Controler GUI when nodes are created");
-        autoClose = Config.Bind<bool>("Control Section", "Automatic Shutdown Enable", true, "Enable/Disable automatic dismissal of the Maneuver Node Controller GUI whenm there are no nodes");
+        autoLaunch = Config.Bind<bool>("Control Section", "Automatic Launch Enable", false, "Enable/Disable automatically raising the Maneuver Node Controler GUI when nodes are created");
+        autoClose = Config.Bind<bool>("Control Section", "Automatic Shutdown Enable", false, "Enable/Disable automatic dismissal of the Maneuver Node Controller GUI whenm there are no nodes");
     }
 
     private void OnManeuverRemovedMessage(MessageCenterMessage message)
