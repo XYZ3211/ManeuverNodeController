@@ -53,6 +53,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     public ConfigEntry<bool> postNodeEventLookahead;
     public ConfigEntry<bool> autoLaunch;
     public ConfigEntry<bool> autoClose;
+    public bool forceOpen = false;
 
     public enum PatchEventType
     {
@@ -174,7 +175,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             SelectedNodeIndex = 0;
             if (autoClose.Value)
             {
-                Logger.LogDebug("Automatically closing Maneuver Node Controller due to autoClose == true and nodeCount == 0");
+                Logger.LogInfo("Automatically closing Maneuver Node Controller due to autoClose == true and nodeCount == 0");
                 ToggleButton(false);
             }
         }
@@ -188,38 +189,28 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             double UT = Game.UniverseModel.UniversalTime;
             for (int i = 0; i < nodeCount; i++)
             {
-                if (NodeManagerPlugin.Instance.Nodes[i].Time > UT)
+                if (NodeManagerPlugin.Instance.Nodes[i].Time + NodeManagerPlugin.Instance.Nodes[i].BurnDuration + 10 > UT)
                 {
-                    Logger.LogDebug($"Node[{i}].Time > UT: Setting keepGui = true");
+                    Logger.LogInfo($"Node[{i}].Time + Node[{i}].BurnDuration + 10 > UT: Setting keepGui = true");
                     keepGui = true;
                 }
                 else
-                    Logger.LogDebug($"Node[{i}].Time <= UT");
+                    Logger.LogInfo($"Node[{i}].Time + Node[{i}].BurnDuration + 10 <= UT");
             }
             if (autoClose.Value && !keepGui)
                 ToggleButton(false);
         }
     }
 
-    //double pressure(double altitude, CelestialBodyComponent thisBody)
-    //{
-    //    double staticPressure = thisBody.atmospherePressureSeaLevel; // Pa
-    //    double standardTemp = thisBody.atmosphereTemperatureSeaLevel; // K
-    //    double standardLapseRate = thisBody.atmosphereTemperatureLapseRate; // K/m
-    //    double M = thisBody.atmosphereMolarMass; // kg/mol
-    //    double atmoDepth = thisBody.atmosphereDepth; // m
-    //    double g0 = thisBody.gravParameter; // 9.80665; // m/s^2
-    //    double R = 8.31432; // N*m/(mol*K)
-    //    // thisBody.GetDynamicPressurekPa()
-
-    //    return staticPressure * Math.Pow(1 + standardLapseRate * (altitude - atmoDepth) / standardTemp, -g0 * M / (R * standardLapseRate));
-    //}
-
     private void OnManeuverCreatedMessage(MessageCenterMessage message)
     {
         // If we're configured to automatically launch when a node is created
         if (autoLaunch.Value)
+        {
             ToggleButton(true);
+            if (NodeManagerPlugin.Instance.Nodes.Count == 0)
+                forceOpen = true;
+        }
     }
 
 
@@ -233,6 +224,8 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     public void LaunchMNC()
     {
         ToggleButton(true);
+        if (NodeManagerPlugin.Instance.Nodes.Count == 0)
+            forceOpen = true;
     }
 
     void Awake()
@@ -245,6 +238,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         if ((_keybind != null && _keybind.Value.IsDown()) || (_keybind2 != null && _keybind2.Value.IsDown()))
         {
             ToggleButton(!interfaceEnabled);
+            if (interfaceEnabled) forceOpen = true;
             if (_keybind != null && _keybind.Value.IsDown())
                 Logger.LogDebug($"Update: UI toggled with _keybind, hotkey {_keybind.Value}");
             if (_keybind2 != null && _keybind2.Value.IsDown())
@@ -263,14 +257,17 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         //if (MNCUtility.activeVessel != null)
         //  orbit = MNCUtility.activeVessel.Orbit;
 
-        if (autoClose.Value)
+        if (autoClose != null)
         {
-            bool keepGui = false;
-            for (int i = 0; i < NodeManagerPlugin.Instance.Nodes.Count; i++)
-                if (NodeManagerPlugin.Instance.Nodes[i].Time > Game.UniverseModel.UniversalTime)
-                    keepGui = true;
-            if (!keepGui)
-                ToggleButton(false);
+            if (autoClose.Value && !forceOpen)
+            {
+                bool keepGui = false;
+                for (int i = 0; i < NodeManagerPlugin.Instance.Nodes.Count; i++)
+                    if (NodeManagerPlugin.Instance.Nodes[i].Time + NodeManagerPlugin.Instance.Nodes[i].BurnDuration + 10 > Game.UniverseModel.UniversalTime)
+                        keepGui = true;
+                if (!keepGui)
+                    ToggleButton(false);
+            }
         }
     }
 }
@@ -1013,7 +1010,7 @@ public class MncUiController : KerbalMonoBehaviour
             ManeuverNodeControllerMod.Instance.SelectedNodeIndex = NodeManagerPlugin.Instance.Nodes.Count - 1;
             NodeManagerPlugin.Instance.SpitNode(ManeuverNodeControllerMod.Instance.SelectedNodeIndex);
         }
-
+        if (pass) ManeuverNodeControllerMod.Instance.forceOpen = false;
     }
 
     void DelManeuverNode()
