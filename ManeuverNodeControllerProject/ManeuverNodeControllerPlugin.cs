@@ -186,7 +186,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
                 SelectedNodeIndex = nodeCount - 1;
             
             bool keepGui = false;
-            double UT = Game.UniverseModel.UniversalTime;
+            double UT = Game.UniverseModel.UniverseTime;
             for (int i = 0; i < nodeCount; i++)
             {
                 if (NodeManagerPlugin.Instance.Nodes[i].Time + NodeManagerPlugin.Instance.Nodes[i].BurnDuration + 10 > UT)
@@ -263,7 +263,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             {
                 bool keepGui = false;
                 for (int i = 0; i < NodeManagerPlugin.Instance.Nodes.Count; i++)
-                    if (NodeManagerPlugin.Instance.Nodes[i].Time + NodeManagerPlugin.Instance.Nodes[i].BurnDuration + 10 > Game.UniverseModel.UniversalTime)
+                    if (NodeManagerPlugin.Instance.Nodes[i].Time + NodeManagerPlugin.Instance.Nodes[i].BurnDuration + 10 > Game.UniverseModel.UniverseTime)
                         keepGui = true;
                 if (!keepGui)
                     ToggleButton(false);
@@ -381,7 +381,7 @@ public class MncUiController : KerbalMonoBehaviour
                 else
                     dvRemaining = thisNode.BurnRequiredDV;
 
-                UT = game.UniverseModel.UniversalTime;
+                UT = game.UniverseModel.UniverseTime;
                 TotalDvValue.text = nodes[selectedNode].BurnVector.magnitude.ToString("N2");
                 DvRemainingValue.text = dvRemaining.ToString("N2");
                 StartTimeValue.text = MNCUtility.SecondsToTimeString(thisNode.Time - UT, false);
@@ -420,7 +420,7 @@ public class MncUiController : KerbalMonoBehaviour
                 // numOrbits = Math.Truncate((thisNode.Time - UT) / MNCUtility.activeVessel.Orbit.period);
                 if (game.UniverseModel.FindVesselComponent(thisNode.RelatedSimID) != null)
                 {
-                    numOrbits = (int)Math.Truncate((thisNode.Time - game.UniverseModel.UniversalTime) / game.UniverseModel.FindVesselComponent(thisNode.RelatedSimID).Orbit.period);
+                    numOrbits = (int)Math.Truncate((thisNode.Time - game.UniverseModel.UniverseTime) / game.UniverseModel.FindVesselComponent(thisNode.RelatedSimID).Orbit.period);
                     NodeTimeValue.text = numOrbits.ToString("n0");
                     if (numOrbits == 1) OrbitsLabel.text = "orbit";
                     else OrbitsLabel.text = "orbits";
@@ -641,19 +641,19 @@ public class MncUiController : KerbalMonoBehaviour
             {
                 eventDataList[idx].EncounterType.text = "SOI Exit @";
                 eventDataList[idx].EncounterBody.text = thisPatch.PreviousPatch.referenceBody.Name;
-                eventDataList[idx].EncounterInfo.text = MNCUtility.SecondsToTimeString(thisPatch.StartUT - Game.UniverseModel.UniversalTime);
+                eventDataList[idx].EncounterInfo.text = MNCUtility.SecondsToTimeString(thisPatch.StartUT - Game.UniverseModel.UniverseTime);
             }
             else if (thisPatch.PatchStartTransition == PatchTransitionType.PartialOutOfFuel) // Does this ever occur?
             {
                 eventDataList[idx].EncounterType.text = "Partial Out of Fuel @";
                 eventDataList[idx].EncounterBody.text = thisPatch.PreviousPatch.referenceBody.Name;
-                eventDataList[idx].EncounterInfo.text = MNCUtility.SecondsToTimeString(thisPatch.StartUT - Game.UniverseModel.UniversalTime);
+                eventDataList[idx].EncounterInfo.text = MNCUtility.SecondsToTimeString(thisPatch.StartUT - Game.UniverseModel.UniverseTime);
             }
             else if (thisPatch.PatchStartTransition == PatchTransitionType.CompletelyOutOfFuel) // Does this ever occur?
             {
                 eventDataList[idx].EncounterType.text = "Out of Fuel @";
                 eventDataList[idx].EncounterBody.text = thisPatch.PreviousPatch.referenceBody.Name;
-                eventDataList[idx].EncounterInfo.text = MNCUtility.SecondsToTimeString(thisPatch.StartUT - Game.UniverseModel.UniversalTime);
+                eventDataList[idx].EncounterInfo.text = MNCUtility.SecondsToTimeString(thisPatch.StartUT - Game.UniverseModel.UniverseTime);
             }
             //else if (thisPatch.PatchStartTransition == PatchTransitionType.Encounter)
             //{
@@ -674,13 +674,13 @@ public class MncUiController : KerbalMonoBehaviour
             {
                 eventDataList[idx].EncounterType.text = "Partial Out of Fuel @";
                 eventDataList[idx].EncounterBody.text = thisPatch.referenceBody.Name;
-                eventDataList[idx].EncounterInfo.text = MNCUtility.SecondsToTimeString(thisPatch.EndUT - Game.UniverseModel.UniversalTime);
+                eventDataList[idx].EncounterInfo.text = MNCUtility.SecondsToTimeString(thisPatch.EndUT - Game.UniverseModel.UniverseTime);
             }
             else if (thisPatch.PatchEndTransition == PatchTransitionType.CompletelyOutOfFuel) // Does this ever occur?
             {
                 eventDataList[idx].EncounterType.text = "Out of Fuel @";
                 eventDataList[idx].EncounterBody.text = thisPatch.referenceBody.Name;
-                eventDataList[idx].EncounterInfo.text = MNCUtility.SecondsToTimeString(thisPatch.EndUT - Game.UniverseModel.UniversalTime);
+                eventDataList[idx].EncounterInfo.text = MNCUtility.SecondsToTimeString(thisPatch.EndUT - Game.UniverseModel.UniverseTime);
             }
         }
         else if (eventType == PatchEventType.EndOfPatch)
@@ -692,7 +692,7 @@ public class MncUiController : KerbalMonoBehaviour
                 eventDataList[idx].EncounterType.AddToClassList("unity-label-invalid");
                 eventDataList[idx].EncounterBody.text = thisPatch.referenceBody.Name;
                 eventDataList[idx].EncounterType.text = "Collision @";
-                eventDataList[idx].EncounterInfo.text = MNCUtility.SecondsToTimeString(thisPatch.EndUT - Game.UniverseModel.UniversalTime);
+                eventDataList[idx].EncounterInfo.text = MNCUtility.SecondsToTimeString(thisPatch.EndUT - Game.UniverseModel.UniverseTime);
             }
             else if (thisPatch.closestEncounterLevel != EncounterSolutionLevel.None)
             {
@@ -700,7 +700,7 @@ public class MncUiController : KerbalMonoBehaviour
                 {
                     case EncounterSolutionLevel.OrbitIntersect:
                         eventDataList[idx].EncounterType.text = "Orbit Intersect @";
-                        eventDataList[idx].EncounterInfo.text = MNCUtility.SecondsToTimeString(thisPatch.EndUT - Game.UniverseModel.UniversalTime);
+                        eventDataList[idx].EncounterInfo.text = MNCUtility.SecondsToTimeString(thisPatch.EndUT - Game.UniverseModel.UniverseTime);
                         break;
                     case EncounterSolutionLevel.SoiIntersect1:
                         if (thisPatch.NextPatch.referenceBody.Mass >= thisPatch.referenceBody.Mass)
@@ -713,7 +713,7 @@ public class MncUiController : KerbalMonoBehaviour
                             eventDataList[idx].EncounterType.text = "SOI Entry @";
                             eventDataList[idx].EncounterBody.text = thisPatch.NextPatch.referenceBody.Name;
                         }
-                        eventDataList[idx].EncounterInfo.text = MNCUtility.SecondsToTimeString(thisPatch.EndUT - Game.UniverseModel.UniversalTime);
+                        eventDataList[idx].EncounterInfo.text = MNCUtility.SecondsToTimeString(thisPatch.EndUT - Game.UniverseModel.UniverseTime);
                         break;
                     case EncounterSolutionLevel.SoiIntersect2:
                         if (thisPatch.NextPatch.referenceBody.Mass >= thisPatch.referenceBody.Mass)
@@ -726,7 +726,7 @@ public class MncUiController : KerbalMonoBehaviour
                             eventDataList[idx].EncounterType.text = "SOI Entry @";
                             eventDataList[idx].EncounterBody.text = thisPatch.NextPatch.referenceBody.Name;
                         }
-                        eventDataList[idx].EncounterInfo.text = MNCUtility.SecondsToTimeString(thisPatch.StartUT - Game.UniverseModel.UniversalTime);
+                        eventDataList[idx].EncounterInfo.text = MNCUtility.SecondsToTimeString(thisPatch.StartUT - Game.UniverseModel.UniverseTime);
                         break;
                     default:
                         break;
@@ -1172,32 +1172,32 @@ public class MncUiController : KerbalMonoBehaviour
 
     void SnapToAp()
     {
-        ApplyChange(game.UniverseModel.UniversalTime + MNCUtility.activeVessel.Orbit.TimeToAp, Vector3d.zero);
+        ApplyChange(game.UniverseModel.UniverseTime + MNCUtility.activeVessel.Orbit.TimeToAp, Vector3d.zero);
     }
 
     void SnapToPe()
     {
-        ApplyChange(game.UniverseModel.UniversalTime + MNCUtility.activeVessel.Orbit.TimeToPe, Vector3d.zero);
+        ApplyChange(game.UniverseModel.UniverseTime + MNCUtility.activeVessel.Orbit.TimeToPe, Vector3d.zero);
     }
 
     void SnapToANe()
     {
-        ApplyChange(MNCUtility.activeVessel.Orbit.TimeOfAscendingNodeEquatorial(game.UniverseModel.UniversalTime), Vector3d.zero);
+        ApplyChange(MNCUtility.activeVessel.Orbit.TimeOfAscendingNodeEquatorial(game.UniverseModel.UniverseTime), Vector3d.zero);
     }
 
     void SnapToDNe()
     {
-        ApplyChange(MNCUtility.activeVessel.Orbit.TimeOfDescendingNodeEquatorial(game.UniverseModel.UniversalTime), Vector3d.zero);
+        ApplyChange(MNCUtility.activeVessel.Orbit.TimeOfDescendingNodeEquatorial(game.UniverseModel.UniverseTime), Vector3d.zero);
     }
 
     void SnapToANt()
     {
-        ApplyChange(MNCUtility.activeVessel.Orbit.TimeOfAscendingNode(MNCUtility.currentTarget.Orbit, game.UniverseModel.UniversalTime), Vector3d.zero);
+        ApplyChange(MNCUtility.activeVessel.Orbit.TimeOfAscendingNode(MNCUtility.currentTarget.Orbit, game.UniverseModel.UniverseTime), Vector3d.zero);
     }
 
     void SnapToDNt()
     {
-        ApplyChange(MNCUtility.activeVessel.Orbit.TimeOfDescendingNode(MNCUtility.currentTarget.Orbit, game.UniverseModel.UniversalTime), Vector3d.zero);
+        ApplyChange(MNCUtility.activeVessel.Orbit.TimeOfDescendingNode(MNCUtility.currentTarget.Orbit, game.UniverseModel.UniverseTime), Vector3d.zero);
     }
 
     void ApplyChange(double nodeTime, Vector3d burnParams)
@@ -1220,7 +1220,7 @@ public class MncUiController : KerbalMonoBehaviour
         // ManeuverNodeData thisNode = NodeManagerPlugin.Instance.Nodes[ManeuverNodeControllerMod.Instance.SelectedNodeIndex];
         VesselComponent vessel = game.UniverseModel.FindVesselComponent(thisNode.RelatedSimID);
         // var target = vessel?.TargetObject;
-        double UT = game.UniverseModel.UniversalTime;
+        double UT = game.UniverseModel.UniverseTime;
 
         if (nodeTime > 0)
         {
