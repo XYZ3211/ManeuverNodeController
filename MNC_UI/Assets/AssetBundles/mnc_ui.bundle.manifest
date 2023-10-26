@@ -1,12 +1,12 @@
 ManifestFileVersion: 0
-CRC: 2449233500
+CRC: 692450821
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: e07f07a374099e16dea2346097136b71
+    Hash: 78d0afbdf045093042e913afbd9857a8
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 8942a65878ffee03f8807e5e7737544e
+    Hash: dd75ad2fc78789cc6148fea62674803c
 HashAppended: 0
 ClassTypes:
 - Class: 21
@@ -16,55 +16,15 @@ ClassTypes:
 - Class: 48
   Script: {instanceID: 0}
 - Class: 114
-  Script: {fileID: 11995, guid: 0000000000000000e000000000000000, type: 0}
-- Class: 114
-  Script: {fileID: 11998, guid: 0000000000000000e000000000000000, type: 0}
-- Class: 114
   Script: {fileID: 11500000, guid: 9a8fdda5b4c5f6544bbac8a17c59089c, type: 3}
-- Class: 115
-  Script: {instanceID: 0}
 - Class: 128
   Script: {instanceID: 0}
 - Class: 213
   Script: {instanceID: 0}
-SerializeReferenceClassIdentifiers:
-- AssemblyName: UnityEngine.TextCoreModule
-  ClassName: UnityEngine.TextCore.FaceInfo
-- AssemblyName: UnityEngine.TextCoreModule
-  ClassName: UnityEngine.TextCore.Glyph
-- AssemblyName: UnityEngine.TextCoreModule
-  ClassName: UnityEngine.TextCore.GlyphMetrics
-- AssemblyName: UnityEngine.TextCoreModule
-  ClassName: UnityEngine.TextCore.GlyphRect
-- AssemblyName: UnityEngine.TextCoreTextEngineModule
-  ClassName: UnityEngine.TextCore.Text.Character
-- AssemblyName: UnityEngine.TextCoreTextEngineModule
-  ClassName: UnityEngine.TextCore.Text.FontAssetCreationEditorSettings
-- AssemblyName: UnityEngine.TextCoreTextEngineModule
-  ClassName: UnityEngine.TextCore.Text.FontFeatureTable
-- AssemblyName: UnityEngine.TextCoreTextEngineModule
-  ClassName: UnityEngine.TextCore.Text.FontWeightPair
-- AssemblyName: UnityEngine.UIElementsModule
-  ClassName: UnityEngine.UIElements.StyleComplexSelector
-- AssemblyName: UnityEngine.UIElementsModule
-  ClassName: UnityEngine.UIElements.StyleProperty
-- AssemblyName: UnityEngine.UIElementsModule
-  ClassName: UnityEngine.UIElements.StyleRule
-- AssemblyName: UnityEngine.UIElementsModule
-  ClassName: UnityEngine.UIElements.StyleSelector
-- AssemblyName: UnityEngine.UIElementsModule
-  ClassName: UnityEngine.UIElements.StyleSelectorPart
-- AssemblyName: UnityEngine.UIElementsModule
-  ClassName: UnityEngine.UIElements.StyleSheets.Dimension
-- AssemblyName: UnityEngine.UIElementsModule
-  ClassName: UnityEngine.UIElements.StyleValueHandle
-- AssemblyName: UnityEngine.UIElementsModule
-  ClassName: UnityEngine.UIElements.VisualElementAsset
+SerializeReferenceClassIdentifiers: []
 Assets:
 - Assets/Theme/Fonts/Orbitron-Black SDF.asset
-- Assets/MNC_UI.uxml
 - Assets/Theme/Fonts/LiberationSans-Regular.ttf
-- Assets/ManeuverNodeControllerTheme.uss
 - Assets/Theme/Fonts/LiberationSans-Regular SDF.asset
 - Assets/Theme/Fonts/Orbitron-Black.ttf
 - Assets/Icons/Cross.png
