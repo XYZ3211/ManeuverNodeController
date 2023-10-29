@@ -768,8 +768,8 @@ public class MncUiController : KerbalMonoBehaviour
 
         document.rootVisualElement.Query<TextField>().ForEach(textField =>
         {
-            textField.RegisterCallback<FocusInEvent>(_ => GameManager.Instance?.Game?.Input.Disable());
-            textField.RegisterCallback<FocusOutEvent>(_ => GameManager.Instance?.Game?.Input.Enable());
+            // textField.RegisterCallback<FocusInEvent>(_ => GameManager.Instance?.Game?.Input.Disable());
+            // textField.RegisterCallback<FocusOutEvent>(_ => GameManager.Instance?.Game?.Input.Enable());
 
             textField.RegisterValueChangedCallback((evt) =>
         {
