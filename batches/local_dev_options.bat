@@ -3,7 +3,7 @@
 
 @REM set your own KSP2_LOCATION and rename me to ksp_location.bat (git ignored)
 @REM ps : don't use ""
-set KSP2_LOCATION=C:\Kerbal Space Program 2 Debug
+set KSP2_LOCATION=F:\Kerbal Space Program 2 Debug
 
 @REM Create Zip package (require 7zip)
 set Create_zip=True
