@@ -291,6 +291,23 @@ public class MncUiController : KerbalMonoBehaviour
     Button SnapToANtButton;//  = _container.Q<Button>("SnapToANtButton");
     Button SnapToDNtButton;
 
+    Button AbsoluteDvIncrementUpButton;
+    Button AbsoluteDvIncrementDownButton;
+    Button SmallStepDvIncrementUpButton;
+    Button SmallStepDvIncrementDownButton;
+    Button LargeStepDvIncrementUpButton;
+    Button LargeStepDvIncrementDownButton;
+    Button SmallTimeStepIncrementUpButton;
+    Button SmallTimeStepIncrementDownButton;
+    Button LargeTimeStepIncrementUpButton;
+    Button LargeTimeStepIncrementDownButton;
+
+    TextField AbsoluteDvInput;
+    TextField SmallStepDvInput;
+    TextField LargeStepDvInput;
+    TextField SmallTimeStepInput;
+    TextField LargeTimeStepInput;
+
     Label NodeIndexValue;
     Label NodeMaxIndexValue;
     Label TotalDvValue;
@@ -809,6 +826,23 @@ public class MncUiController : KerbalMonoBehaviour
         // Set up variables to be able to access UITK GUI Buttons quickly (Queries are expensive) 
         SnapToANtButton = _container.Q<Button>("SnapToANtButton");
         SnapToDNtButton = _container.Q<Button>("SnapToDNtButton");
+        AbsoluteDvIncrementUpButton    = _container.Q<Button>("AbsoluteDvIncrementUpButton");
+        AbsoluteDvIncrementDownButton  = _container.Q<Button>("AbsoluteDvIncrementDownButton");
+        SmallStepDvIncrementUpButton   = _container.Q<Button>("SmallStepDvIncrementUpButton");
+        SmallStepDvIncrementDownButton = _container.Q<Button>("SmallStepDvIncrementDownButton");
+        LargeStepDvIncrementUpButton   = _container.Q<Button>("LargeStepDvIncrementUpButton");
+        LargeStepDvIncrementDownButton = _container.Q<Button>("LargeStepDvIncrementDownButton");
+
+        SmallTimeStepIncrementUpButton   = _container.Q<Button>("SmallTimeStepIncrementUpButton");
+        SmallTimeStepIncrementDownButton = _container.Q<Button>("SmallTimeStepIncrementDownButton");
+        LargeTimeStepIncrementUpButton   = _container.Q<Button>("LargeTimeStepIncrementUpButton");
+        LargeTimeStepIncrementDownButton = _container.Q<Button>("LargeTimeStepIncrementDownButton");
+
+        AbsoluteDvInput = _container.Q<TextField>("AbsoluteDvInput");
+        SmallStepDvInput = _container.Q<TextField>("SmallStepDvInput");
+        LargeStepDvInput = _container.Q<TextField>("LargeStepDvInput");
+        SmallTimeStepInput = _container.Q<TextField>("SmallTimeStepInput");
+        LargeTimeStepInput = _container.Q<TextField>("LargeTimeStepInput");
 
         ManeuverNodeControllerMod.Logger.LogInfo($"MNC: SnapTo buttons initialized. initialized is set to {initialized}");
 
@@ -869,54 +903,64 @@ public class MncUiController : KerbalMonoBehaviour
         _container.Q<Button>("AddNodeButton").clicked += AddManeuverNode;
 
         // pass = float.TryParse(_container.Q<TextField>("AbsoluteDvInput").value, out absDvValue);
-        _container.Q<TextField>("AbsoluteDvInput").RegisterValueChangedCallback((evt) =>
+        AbsoluteDvInput.RegisterValueChangedCallback((evt) =>
         {
             if (float.TryParse(evt.newValue, out float newFloat))
             {
                 absDvValue = newFloat;
             }
         });
-        _container.Q<TextField>("AbsoluteDvInput").value = absDvValue.ToString();
+        AbsoluteDvInput.value = absDvValue.ToString();
+        AbsoluteDvIncrementUpButton.clicked += () => { absDvValue *= 10.0f; AbsoluteDvInput.value = absDvValue.ToString(); };
+        AbsoluteDvIncrementDownButton.clicked += () => { absDvValue *= 0.1f; AbsoluteDvInput.value = absDvValue.ToString(); };
 
         // pass = float.TryParse(_container.Q<TextField>("SmallStepDvInput").value, out smallStepDv);
-        _container.Q<TextField>("SmallStepDvInput").RegisterValueChangedCallback((evt) =>
+        SmallStepDvInput.RegisterValueChangedCallback((evt) =>
         {
             if (float.TryParse(evt.newValue, out float newFloat))
             {
                 smallStepDv = newFloat;
             }
         });
-        _container.Q<TextField>("SmallStepDvInput").value = smallStepDv.ToString();
+        SmallStepDvInput.value = smallStepDv.ToString();
+        SmallStepDvIncrementUpButton.clicked += () => { smallStepDv *= 10.0f; SmallStepDvInput.value = smallStepDv.ToString(); };
+        SmallStepDvIncrementDownButton.clicked += () => { smallStepDv *= 0.1f; SmallStepDvInput.value = smallStepDv.ToString(); };
 
         // pass = float.TryParse(_container.Q<TextField>("LargeStepDvInput").value, out largeStepDv);
-        _container.Q<TextField>("LargeStepDvInput").RegisterValueChangedCallback((evt) =>
+        LargeStepDvInput.RegisterValueChangedCallback((evt) =>
         {
             if (float.TryParse(evt.newValue, out float newFloat))
             {
                 largeStepDv = newFloat;
             }
         });
-        _container.Q<TextField>("LargeStepDvInput").value = largeStepDv.ToString();
+        LargeStepDvInput.value = largeStepDv.ToString();
+        LargeStepDvIncrementUpButton.clicked += () => { largeStepDv *= 10.0f; LargeStepDvInput.value = largeStepDv.ToString(); };
+        LargeStepDvIncrementDownButton.clicked += () => { largeStepDv *= 0.1f; LargeStepDvInput.value = largeStepDv.ToString(); };
 
         // pass = float.TryParse(_container.Q<TextField>("SmallTimeStepInput").value, out smallStepTime);
-        _container.Q<TextField>("SmallTimeStepInput").RegisterValueChangedCallback((evt) =>
+        SmallTimeStepInput.RegisterValueChangedCallback((evt) =>
         {
             if (float.TryParse(evt.newValue, out float newFloat))
             {
                 smallStepTime = newFloat;
             }
         });
-        _container.Q<TextField>("SmallTimeStepInput").value = smallStepTime.ToString();
+        SmallTimeStepInput.value = smallStepTime.ToString();
+        SmallTimeStepIncrementUpButton.clicked += () => { smallStepTime *= 10.0f; SmallTimeStepInput.value = smallStepTime.ToString(); };
+        SmallTimeStepIncrementDownButton.clicked += () => { smallStepTime *= 0.1f; SmallTimeStepInput.value = smallStepTime.ToString(); };
 
         // pass = float.TryParse(_container.Q<TextField>("LargeTimeStepInput").value, out largeStepTime);
-        _container.Q<TextField>("LargeTimeStepInput").RegisterValueChangedCallback((evt) =>
+        LargeTimeStepInput.RegisterValueChangedCallback((evt) =>
         {
             if (float.TryParse(evt.newValue, out float newFloat))
             {
                 largeStepTime = newFloat;
             }
         });
-        _container.Q<TextField>("LargeTimeStepInput").value = largeStepTime.ToString();
+        LargeTimeStepInput.value = largeStepTime.ToString();
+        LargeTimeStepIncrementUpButton.clicked += () => { largeStepTime *= 10.0f; LargeTimeStepInput.value = largeStepTime.ToString(); };
+        LargeTimeStepIncrementDownButton.clicked += () => { largeStepTime *= 0.1f; LargeTimeStepInput.value = largeStepTime.ToString(); };
 
         _container.Q<Button>("LargeProgradeDecreaseButton").clicked += () => IncrementPrograde(-largeStepDv);
         _container.Q<Button>("SmallProgradeDecreaseButton").clicked += () => IncrementPrograde(-smallStepDv);

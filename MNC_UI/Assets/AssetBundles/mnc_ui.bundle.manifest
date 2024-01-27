@@ -1,12 +1,12 @@
 ManifestFileVersion: 0
-CRC: 2201203424
+CRC: 2249631446
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: dd0f87c0980e725c5f1c68bdbdaa269e
+    Hash: eb699958cd1cac311d926b0006f02962
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 6b67e31bffa1de92ebebf0ae5bbae176
+    Hash: ff3fe76b283fb0647dffea6cd8aea77f
 HashAppended: 0
 ClassTypes:
 - Class: 21
@@ -20,7 +20,7 @@ ClassTypes:
 - Class: 114
   Script: {fileID: 11998, guid: 0000000000000000e000000000000000, type: 0}
 - Class: 114
-  Script: {fileID: 11500000, guid: 9a8fdda5b4c5f6544bbac8a17c59089c, type: 3}
+  Script: {fileID: 19001, guid: 0000000000000000e000000000000000, type: 0}
 - Class: 115
   Script: {instanceID: 0}
 - Class: 128
@@ -28,6 +28,22 @@ ClassTypes:
 - Class: 213
   Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers:
+- AssemblyName: UnityEngine.TextCoreFontEngineModule
+  ClassName: UnityEngine.TextCore.FaceInfo
+- AssemblyName: UnityEngine.TextCoreFontEngineModule
+  ClassName: UnityEngine.TextCore.Glyph
+- AssemblyName: UnityEngine.TextCoreFontEngineModule
+  ClassName: UnityEngine.TextCore.GlyphMetrics
+- AssemblyName: UnityEngine.TextCoreFontEngineModule
+  ClassName: UnityEngine.TextCore.GlyphRect
+- AssemblyName: UnityEngine.TextCoreTextEngineModule
+  ClassName: UnityEngine.TextCore.Text.Character
+- AssemblyName: UnityEngine.TextCoreTextEngineModule
+  ClassName: UnityEngine.TextCore.Text.FontAssetCreationEditorSettings
+- AssemblyName: UnityEngine.TextCoreTextEngineModule
+  ClassName: UnityEngine.TextCore.Text.FontFeatureTable
+- AssemblyName: UnityEngine.TextCoreTextEngineModule
+  ClassName: UnityEngine.TextCore.Text.FontWeightPair
 - AssemblyName: UnityEngine.UIElementsModule
   ClassName: UnityEngine.UIElements.Button/UxmlFactory
 - AssemblyName: UnityEngine.UIElementsModule
@@ -55,10 +71,8 @@ SerializeReferenceClassIdentifiers:
 - AssemblyName: UnityEngine.UIElementsModule
   ClassName: UnityEngine.UIElements.VisualElementAsset
 Assets:
-- Assets/Theme/Fonts/Orbitron-Black SDF.asset
 - Assets/MNC_UI.uxml
 - Assets/Theme/Fonts/LiberationSans-Regular.ttf
-- Assets/Theme/Fonts/LiberationSans-Regular SDF.asset
 - Assets/Theme/Fonts/Orbitron-Black.ttf
 - Assets/Icons/Cross.png
 - Assets/Icons/icon_white.png
