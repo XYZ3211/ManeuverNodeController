@@ -6,7 +6,7 @@
     opacity: 1;
     color: rgb(216, 218, 221);
     font-size: 14px;
-    -unity-font-definition: url('/Assets/Theme/Fonts/LiberationSans-Regular SDF.asset');
+    -unity-font-definition: url('project://database/Assets/Theme/Fonts/LiberationSans-Regular%20SDF.asset?fileID=11400000&guid=ad23053d0e443714eab63f8d1e8d2bfe&type=2#LiberationSans-Regular SDF');
 }
 
 .row-element-tight {
@@ -129,7 +129,7 @@
 .unity-text-field {
     flex-direction: row;
     justify-content: space-between;
-    width: 290px;
+    width: 270px;
     margin-left: 2px;
     margin-right: 2px;
     margin-top: 2px;
