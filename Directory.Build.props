@@ -25,6 +25,11 @@
         <NoWarn>$(NoWarn);CS0436</NoWarn>
     </PropertyGroup>
 
+    <PropertyGroup Label="MNC-specific configuration">
+        <PluginFolderName>maneuver_node_controller</PluginFolderName>
+        <PluginAssemblyFileName>maneuver_node_controller</PluginAssemblyFileName>
+    </PropertyGroup>
+
     <PropertyGroup Label="Package source configuration">
         <RestoreAdditionalProjectSources>
             https://nuget.spacewarp.org/v3/index.json
@@ -57,4 +62,3 @@
         </PropertyGroup>
     </Target>
 </Project>
-

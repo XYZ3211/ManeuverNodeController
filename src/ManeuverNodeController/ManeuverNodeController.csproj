@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <AssemblyName>com.github.xyz3211.maneuver_node_controller</AssemblyName>
+    </PropertyGroup>
+
     <!-- References -->
     <ItemGroup Label="NuGet package references">
         <!-- Add references to any NuGet packages you want to use in your mod here -->
