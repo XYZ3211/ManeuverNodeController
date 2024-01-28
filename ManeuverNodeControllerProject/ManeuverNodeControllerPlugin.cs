@@ -53,6 +53,9 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     public ConfigEntry<bool> postNodeEventLookahead;
     public ConfigEntry<bool> autoLaunch;
     public ConfigEntry<bool> autoClose;
+    public ConfigEntry<double> autoCloseDelay;
+    public ConfigEntry<long> repeatDelay;
+    public ConfigEntry<long> repeatInterval;
     public bool forceOpen = false;
 
     public enum PatchEventType
@@ -161,7 +164,10 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         previousNextEnable = Config.Bind<bool>("Features Section", "Previous / Next Orbit Display", true, "Enable/Disable the display of the PRevious Obrit / Next Orbit information block");
         postNodeEventLookahead = Config.Bind<bool>("Features Section", "Post-Node Event Lookahead", true, "Enable/Disable the display of the Post-Node Event Lookahead information block");
         autoLaunch = Config.Bind<bool>("Control Section", "Automatic Launch Enable", false, "Enable/Disable automatically raising the Maneuver Node Controler GUI when nodes are created");
-        autoClose = Config.Bind<bool>("Control Section", "Automatic Shutdown Enable", false, "Enable/Disable automatic dismissal of the Maneuver Node Controller GUI whenm there are no nodes");
+        autoClose = Config.Bind<bool>("Control Section", "Automatic Shutdown Enable", false, "Enable/Disable automatic dismissal of the Maneuver Node Controller GUI when there are no nodes");
+        autoCloseDelay = Config.Bind<double>("Control Section", "Automatic Shutdown Delay", 10, "Seconds after predicted end of last node burn at which to trigger Automatic Shutdown");
+        repeatDelay = Config.Bind<long>("Control Section", "Button Repeat Delay", 1000, "Milliseconds delay before button repeat commences when button is held down");
+        repeatInterval = Config.Bind<long>("Control Section", "Button Repeat Interval", 100, "Milliseconds between application of repeated button effect when button is held down");
     }
 
     private void OnManeuverRemovedMessage(MessageCenterMessage message)
@@ -189,13 +195,13 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             double UT = Game.UniverseModel.UniverseTime;
             for (int i = 0; i < nodeCount; i++)
             {
-                if (NodeManagerPlugin.Instance.Nodes[i].Time + NodeManagerPlugin.Instance.Nodes[i].BurnDuration + 10 > UT)
+                if (NodeManagerPlugin.Instance.Nodes[i].Time + NodeManagerPlugin.Instance.Nodes[i].BurnDuration + autoCloseDelay.Value > UT)
                 {
-                    Logger.LogInfo($"Node[{i}].Time + Node[{i}].BurnDuration + 10 > UT: Setting keepGui = true");
+                    Logger.LogInfo($"Node[{i}].Time + Node[{i}].BurnDuration + {autoCloseDelay.Value} > UT: Setting keepGui = true");
                     keepGui = true;
                 }
                 else
-                    Logger.LogInfo($"Node[{i}].Time + Node[{i}].BurnDuration + 10 <= UT");
+                    Logger.LogInfo($"Node[{i}].Time + Node[{i}].BurnDuration + {autoCloseDelay.Value} <= UT");
             }
             if (autoClose.Value && !keepGui)
                 ToggleButton(false);
@@ -213,12 +219,13 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         }
     }
 
-
     public void ToggleButton(bool toggle)
     {
         interfaceEnabled = toggle;
         GameObject.Find(ToolbarFlightButtonID)?.GetComponent<UIValue_WriteBool_Toggle>()?.SetValue(interfaceEnabled);
         controller.SetEnabled(toggle);
+        if (NodeManagerPlugin.Instance.Nodes.Count == 0)
+            forceOpen = true;
     }
 
     public void LaunchMNC()
@@ -259,14 +266,19 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
 
         if (autoClose != null)
         {
-            if (autoClose.Value && !forceOpen)
+            if (autoClose.Value)
             {
-                bool keepGui = false;
-                for (int i = 0; i < NodeManagerPlugin.Instance.Nodes.Count; i++)
-                    if (NodeManagerPlugin.Instance.Nodes[i].Time + NodeManagerPlugin.Instance.Nodes[i].BurnDuration + 10 > Game.UniverseModel.UniverseTime)
-                        keepGui = true;
-                if (!keepGui)
-                    ToggleButton(false);
+                if (!forceOpen)
+                {
+                    bool keepGui = false;
+                    for (int i = 0; i < NodeManagerPlugin.Instance.Nodes.Count; i++)
+                        if (NodeManagerPlugin.Instance.Nodes[i].Time + NodeManagerPlugin.Instance.Nodes[i].BurnDuration + 10 > Game.UniverseModel.UniverseTime)
+                            keepGui = true;
+                    if (!keepGui)
+                        ToggleButton(false);
+                }
+                if (forceOpen && NodeManagerPlugin.Instance.Nodes.Count > 0)
+                    forceOpen = false;
             }
         }
     }
@@ -284,6 +296,9 @@ public class MncUiController : KerbalMonoBehaviour
     private float absDvValue = 0;
     private float largeStepTime = 25;
     private float smallStepTime = 5;
+
+    // private long myDelay = ManeuverNodeControllerMod.Instance.repeatDelay.Value;
+    // private long myInterval = ManeuverNodeControllerMod.Instance.repeatInterval.Value;
 
     VisualElement NoNodesGroup;
     VisualElement HasNodesGroup;
@@ -962,22 +977,22 @@ public class MncUiController : KerbalMonoBehaviour
         LargeTimeStepIncrementUpButton.clicked += () => { largeStepTime *= 10.0f; LargeTimeStepInput.value = largeStepTime.ToString(); };
         LargeTimeStepIncrementDownButton.clicked += () => { largeStepTime *= 0.1f; LargeTimeStepInput.value = largeStepTime.ToString(); };
 
-        _container.Q<Button>("LargeProgradeDecreaseButton").clicked += () => IncrementPrograde(-largeStepDv);
-        _container.Q<Button>("SmallProgradeDecreaseButton").clicked += () => IncrementPrograde(-smallStepDv);
-        _container.Q<Button>("SmallProgradeIncreaseButton").clicked += () => IncrementPrograde(smallStepDv);
-        _container.Q<Button>("LargeProgradeIncreaseButton").clicked += () => IncrementPrograde(largeStepDv);
+        _container.Q<RepeatButton>("LargeProgradeDecreaseButton").SetAction(() => IncrementPrograde(-largeStepDv), ManeuverNodeControllerMod.Instance.repeatDelay.Value, ManeuverNodeControllerMod.Instance.repeatInterval.Value);
+        _container.Q<RepeatButton>("SmallProgradeDecreaseButton").SetAction(() => IncrementPrograde(-smallStepDv), ManeuverNodeControllerMod.Instance.repeatDelay.Value, ManeuverNodeControllerMod.Instance.repeatInterval.Value);
+        _container.Q<RepeatButton>("SmallProgradeIncreaseButton").SetAction(() => IncrementPrograde(smallStepDv), ManeuverNodeControllerMod.Instance.repeatDelay.Value, ManeuverNodeControllerMod.Instance.repeatInterval.Value);
+        _container.Q<RepeatButton>("LargeProgradeIncreaseButton").SetAction(() => IncrementPrograde(largeStepDv), ManeuverNodeControllerMod.Instance.repeatDelay.Value, ManeuverNodeControllerMod.Instance.repeatInterval.Value);
         _container.Q<Button>("AbsoluteProgradeButton").clicked += () => SetPrograde(absDvValue);
 
-        _container.Q<Button>("LargeNormalDecreaseButton").clicked += () => IncrementNormal(-largeStepDv);
-        _container.Q<Button>("SmallNormalDecreaseButton").clicked += () => IncrementNormal(-smallStepDv);
-        _container.Q<Button>("SmallNormalIncreaseButton").clicked += () => IncrementNormal(smallStepDv);
-        _container.Q<Button>("LargeNormalIncreaseButton").clicked += () => IncrementNormal(largeStepDv);
+        _container.Q<RepeatButton>("LargeNormalDecreaseButton").SetAction(() => IncrementNormal(-largeStepDv), ManeuverNodeControllerMod.Instance.repeatDelay.Value, ManeuverNodeControllerMod.Instance.repeatInterval.Value);
+        _container.Q<RepeatButton>("SmallNormalDecreaseButton").SetAction(() => IncrementNormal(-smallStepDv), ManeuverNodeControllerMod.Instance.repeatDelay.Value, ManeuverNodeControllerMod.Instance.repeatInterval.Value);
+        _container.Q<RepeatButton>("SmallNormalIncreaseButton").SetAction(() => IncrementNormal(smallStepDv), ManeuverNodeControllerMod.Instance.repeatDelay.Value, ManeuverNodeControllerMod.Instance.repeatInterval.Value);
+        _container.Q<RepeatButton>("LargeNormalIncreaseButton").SetAction(() => IncrementNormal(largeStepDv), ManeuverNodeControllerMod.Instance.repeatDelay.Value, ManeuverNodeControllerMod.Instance.repeatInterval.Value);
         _container.Q<Button>("AbsoluteNormalButton").clicked += () => SetNormal(absDvValue);
 
-        _container.Q<Button>("LargeRadialDecreaseButton").clicked += () => IncrementRadial(-largeStepDv);
-        _container.Q<Button>("SmallRadialDecreaseButton").clicked += () => IncrementRadial(-smallStepDv);
-        _container.Q<Button>("SmallRadialIncreaseButton").clicked += () => IncrementRadial(smallStepDv);
-        _container.Q<Button>("LargeRadialIncreaseButton").clicked += () => IncrementRadial(largeStepDv);
+        _container.Q<RepeatButton>("LargeRadialDecreaseButton").SetAction(() => IncrementRadial(-largeStepDv), ManeuverNodeControllerMod.Instance.repeatDelay.Value, ManeuverNodeControllerMod.Instance.repeatInterval.Value);
+        _container.Q<RepeatButton>("SmallRadialDecreaseButton").SetAction(() => IncrementRadial(-smallStepDv), ManeuverNodeControllerMod.Instance.repeatDelay.Value, ManeuverNodeControllerMod.Instance.repeatInterval.Value);
+        _container.Q<RepeatButton>("SmallRadialIncreaseButton").SetAction(() => IncrementRadial(smallStepDv), ManeuverNodeControllerMod.Instance.repeatDelay.Value, ManeuverNodeControllerMod.Instance.repeatInterval.Value);
+        _container.Q<RepeatButton>("LargeRadialIncreaseButton").SetAction(() => IncrementRadial(largeStepDv), ManeuverNodeControllerMod.Instance.repeatDelay.Value, ManeuverNodeControllerMod.Instance.repeatInterval.Value);
         _container.Q<Button>("AbsoluteRadialButton").clicked += () => SetRadial(absDvValue);
 
         _container.Q<Button>("SnapToApButton").clicked += SnapToAp;
@@ -987,13 +1002,13 @@ public class MncUiController : KerbalMonoBehaviour
         _container.Q<Button>("SnapToANtButton").clicked += SnapToANt;
         _container.Q<Button>("SnapToDNtButton").clicked += SnapToDNt;
 
-        _container.Q<Button>("LargeTimeDecreaseButton").clicked += () => IncrementTime(-largeStepTime);
-        _container.Q<Button>("SmallTimeDecreaseButton").clicked += () => IncrementTime(-smallStepTime);
-        _container.Q<Button>("SmallTimeIncreaseButton").clicked += () => IncrementTime(smallStepTime);
-        _container.Q<Button>("LargeTimeIncreaseButton").clicked += () => IncrementTime(largeStepTime);
+        _container.Q<RepeatButton>("LargeTimeDecreaseButton").SetAction(() => IncrementTime(-largeStepTime), ManeuverNodeControllerMod.Instance.repeatDelay.Value, ManeuverNodeControllerMod.Instance.repeatInterval.Value);
+        _container.Q<RepeatButton>("SmallTimeDecreaseButton").SetAction(() => IncrementTime(-smallStepTime), ManeuverNodeControllerMod.Instance.repeatDelay.Value, ManeuverNodeControllerMod.Instance.repeatInterval.Value);
+        _container.Q<RepeatButton>("SmallTimeIncreaseButton").SetAction(() => IncrementTime(smallStepTime), ManeuverNodeControllerMod.Instance.repeatDelay.Value, ManeuverNodeControllerMod.Instance.repeatInterval.Value);
+        _container.Q<RepeatButton>("LargeTimeIncreaseButton").SetAction(() => IncrementTime(largeStepTime), ManeuverNodeControllerMod.Instance.repeatDelay.Value, ManeuverNodeControllerMod.Instance.repeatInterval.Value);
 
-        _container.Q<Button>("DecreaseOrbitButton").clicked += () => IncrementOrbit(-1);
-        _container.Q<Button>("IncreaseOrbitButton").clicked += () => IncrementOrbit(1);
+        _container.Q<RepeatButton>("DecreaseOrbitButton").SetAction(() => IncrementOrbit(-1), ManeuverNodeControllerMod.Instance.repeatDelay.Value, ManeuverNodeControllerMod.Instance.repeatInterval.Value);
+        _container.Q<RepeatButton>("IncreaseOrbitButton").SetAction(() => IncrementOrbit(1), ManeuverNodeControllerMod.Instance.repeatDelay.Value, ManeuverNodeControllerMod.Instance.repeatInterval.Value);
 
         initialized = true;
         ManeuverNodeControllerMod.Logger.LogInfo($"MNC: UITK GUI Initialized. initialized set to {initialized}");

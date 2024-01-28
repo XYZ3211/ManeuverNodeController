@@ -1,9 +1,9 @@
 ManifestFileVersion: 0
-CRC: 2249631446
+CRC: 1459480789
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: eb699958cd1cac311d926b0006f02962
+    Hash: 88447b901b7c7a7ccc8c5abb52dcad2d
   TypeTreeHash:
     serializedVersion: 2
     Hash: ff3fe76b283fb0647dffea6cd8aea77f
@@ -48,6 +48,8 @@ SerializeReferenceClassIdentifiers:
   ClassName: UnityEngine.UIElements.Button/UxmlFactory
 - AssemblyName: UnityEngine.UIElementsModule
   ClassName: UnityEngine.UIElements.Label/UxmlFactory
+- AssemblyName: UnityEngine.UIElementsModule
+  ClassName: UnityEngine.UIElements.RepeatButton/UxmlFactory
 - AssemblyName: UnityEngine.UIElementsModule
   ClassName: UnityEngine.UIElements.StyleComplexSelector
 - AssemblyName: UnityEngine.UIElementsModule

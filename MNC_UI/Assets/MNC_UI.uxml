@@ -104,37 +104,37 @@
             <ui:VisualElement name="HorizontalSpace" />
             <ui:VisualElement name="ProgradeAdjust" class="row-element-tight">
                 <ui:VisualElement name="DecreaseButtons" style="flex-direction: row;">
-                    <ui:Button text="&lt;&lt;" display-tooltip-when-elided="true" name="LargeProgradeDecreaseButton" tooltip="Subtract Large Step ∆v" class="small-button" />
-                    <ui:Button text="&lt;" display-tooltip-when-elided="true" name="SmallProgradeDecreaseButton" tooltip="Subtract Small Step ∆v" class="small-button" />
+                    <ui:RepeatButton text="&lt;&lt;" display-tooltip-when-elided="true" name="LargeProgradeDecreaseButton" tooltip="Subtract Large Step ∆v" class="small-button" />
+                    <ui:RepeatButton text="&lt;" display-tooltip-when-elided="true" name="SmallProgradeDecreaseButton" tooltip="Subtract Small Step ∆v" class="small-button" />
                 </ui:VisualElement>
                 <ui:Label text="Prograde" display-tooltip-when-elided="true" name="ProgradeLabel" class="prograde" />
                 <ui:VisualElement name="IncreaseSetButtons" style="flex-direction: row;">
-                    <ui:Button text="&gt;" display-tooltip-when-elided="true" name="SmallProgradeIncreaseButton" tooltip="Add Small Step ∆v" class="small-button" />
-                    <ui:Button text="&gt;&gt;" display-tooltip-when-elided="true" name="LargeProgradeIncreaseButton" tooltip="Add Large Step ∆v" class="small-button" />
+                    <ui:RepeatButton text="&gt;" display-tooltip-when-elided="true" name="SmallProgradeIncreaseButton" tooltip="Add Small Step ∆v" class="small-button" />
+                    <ui:RepeatButton text="&gt;&gt;" display-tooltip-when-elided="true" name="LargeProgradeIncreaseButton" tooltip="Add Large Step ∆v" class="small-button" />
                     <ui:Button text="Abs" display-tooltip-when-elided="true" name="AbsoluteProgradeButton" tooltip="Set ∆v to the specified value" class="small-button" />
                 </ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement name="NormalAdjust" class="row-element-tight">
                 <ui:VisualElement name="DecreaseButtons" style="flex-direction: row;">
-                    <ui:Button text="&lt;&lt;" display-tooltip-when-elided="true" name="LargeNormalDecreaseButton" tooltip="Subtract Large Step ∆v" class="small-button" />
-                    <ui:Button text="&lt;" display-tooltip-when-elided="true" name="SmallNormalDecreaseButton" tooltip="Subtract Small Step ∆v" class="small-button" />
+                    <ui:RepeatButton text="&lt;&lt;" display-tooltip-when-elided="true" name="LargeNormalDecreaseButton" tooltip="Subtract Large Step ∆v" class="small-button" />
+                    <ui:RepeatButton text="&lt;" display-tooltip-when-elided="true" name="SmallNormalDecreaseButton" tooltip="Subtract Small Step ∆v" class="small-button" />
                 </ui:VisualElement>
                 <ui:Label text="Normal" display-tooltip-when-elided="true" name="NormalLabel" class="normal" />
                 <ui:VisualElement name="IncreaseSetButtons" style="flex-direction: row;">
-                    <ui:Button text="&gt;" display-tooltip-when-elided="true" name="SmallNormalIncreaseButton" tooltip="Add Small Step ∆v" class="small-button" />
-                    <ui:Button text="&gt;&gt;" display-tooltip-when-elided="true" name="LargeNormalIncreaseButton" tooltip="Add Large Step ∆v" class="small-button" />
+                    <ui:RepeatButton text="&gt;" display-tooltip-when-elided="true" name="SmallNormalIncreaseButton" tooltip="Add Small Step ∆v" class="small-button" />
+                    <ui:RepeatButton text="&gt;&gt;" display-tooltip-when-elided="true" name="LargeNormalIncreaseButton" tooltip="Add Large Step ∆v" class="small-button" />
                     <ui:Button text="Abs" display-tooltip-when-elided="true" name="AbsoluteNormalButton" tooltip="Set ∆v to the specified value" class="small-button" />
                 </ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement name="RadialAdjust" class="row-element-tight">
                 <ui:VisualElement name="DecreaseButtons" style="flex-direction: row;">
-                    <ui:Button text="&lt;&lt;" display-tooltip-when-elided="true" name="LargeRadialDecreaseButton" tooltip="Subtract Large Step ∆v" class="small-button" />
-                    <ui:Button text="&lt;" display-tooltip-when-elided="true" name="SmallRadialDecreaseButton" tooltip="Subtract Small Step ∆v" class="small-button" />
+                    <ui:RepeatButton text="&lt;&lt;" display-tooltip-when-elided="true" name="LargeRadialDecreaseButton" tooltip="Subtract Large Step ∆v" class="small-button" />
+                    <ui:RepeatButton text="&lt;" display-tooltip-when-elided="true" name="SmallRadialDecreaseButton" tooltip="Subtract Small Step ∆v" class="small-button" />
                 </ui:VisualElement>
                 <ui:Label text="Radial" display-tooltip-when-elided="true" name="RadialLabel" class="radial" />
                 <ui:VisualElement name="IncreaseSetButtons" style="flex-direction: row;">
-                    <ui:Button text="&gt;" display-tooltip-when-elided="true" name="SmallRadialIncreaseButton" tooltip="Add Small Step ∆v" class="small-button" />
-                    <ui:Button text="&gt;&gt;" display-tooltip-when-elided="true" name="LargeRadialIncreaseButton" tooltip="Add Large Step ∆v" class="small-button" />
+                    <ui:RepeatButton text="&gt;" display-tooltip-when-elided="true" name="SmallRadialIncreaseButton" tooltip="Add Small Step ∆v" class="small-button" />
+                    <ui:RepeatButton text="&gt;&gt;" display-tooltip-when-elided="true" name="LargeRadialIncreaseButton" tooltip="Add Large Step ∆v" class="small-button" />
                     <ui:Button text="Abs" display-tooltip-when-elided="true" name="AbsoluteRadialButton" tooltip="Set ∆v to the specified value" class="small-button" />
                 </ui:VisualElement>
             </ui:VisualElement>
@@ -164,20 +164,20 @@
             <ui:VisualElement name="HorizontalSpace" />
             <ui:VisualElement name="TimeAdjust" class="row-element-tight">
                 <ui:VisualElement name="DecreaseButtons" style="flex-direction: row;">
-                    <ui:Button text="&lt;&lt;" display-tooltip-when-elided="true" name="LargeTimeDecreaseButton" tooltip="Subtract Large Time Step" class="small-button" />
-                    <ui:Button text="&lt;" display-tooltip-when-elided="true" name="SmallTimeDecreaseButton" tooltip="Subtract Small Time Step" class="small-button" />
+                    <ui:RepeatButton text="&lt;&lt;" display-tooltip-when-elided="true" name="LargeTimeDecreaseButton" tooltip="Subtract Large Time Step" class="small-button" />
+                    <ui:RepeatButton text="&lt;" display-tooltip-when-elided="true" name="SmallTimeDecreaseButton" tooltip="Subtract Small Time Step" class="small-button" />
                 </ui:VisualElement>
                 <ui:Label text="Time" display-tooltip-when-elided="true" name="Label" />
                 <ui:VisualElement name="IncreaseButtons" style="flex-direction: row;">
-                    <ui:Button text="&gt;" display-tooltip-when-elided="true" name="SmallTimeIncreaseButton" tooltip="Add Small Time Step" class="small-button" />
-                    <ui:Button text="&gt;&gt;" display-tooltip-when-elided="true" name="LargeTimeIncreaseButton" tooltip="Add Large Time Step" class="small-button" />
+                    <ui:RepeatButton text="&gt;" display-tooltip-when-elided="true" name="SmallTimeIncreaseButton" tooltip="Add Small Time Step" class="small-button" />
+                    <ui:RepeatButton text="&gt;&gt;" display-tooltip-when-elided="true" name="LargeTimeIncreaseButton" tooltip="Add Large Time Step" class="small-button" />
                 </ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement name="HorizontalSpace" />
             <ui:VisualElement name="OrbitAdjust" class="row-element-tight">
-                <ui:Button text="-" display-tooltip-when-elided="true" name="DecreaseOrbitButton" tooltip="Shift node back one orbit" class="small-button" />
+                <ui:RepeatButton text="-" display-tooltip-when-elided="true" name="DecreaseOrbitButton" tooltip="Shift node back one orbit" class="small-button" />
                 <ui:Label text="+/- Orbital Period" display-tooltip-when-elided="true" name="Label" />
-                <ui:Button text="+" display-tooltip-when-elided="true" name="IncreaseOrbitButton" tooltip="Shift node forward one orbit" class="small-button" />
+                <ui:RepeatButton text="+" display-tooltip-when-elided="true" name="IncreaseOrbitButton" tooltip="Shift node forward one orbit" class="small-button" />
             </ui:VisualElement>
             <ui:VisualElement name="HorizontalSpace" />
             <ui:VisualElement name="ManeuveNodeTime" class="row-element-tight">
