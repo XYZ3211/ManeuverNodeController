@@ -24,9 +24,9 @@ namespace ManeuverNodeController;
 [BepInDependency(SpaceWarpPlugin.ModGuid, SpaceWarpPlugin.ModVer)]
 [BepInDependency(UitkForKsp2Plugin.ModGuid, UitkForKsp2Plugin.ModVer)]
 [BepInDependency(NodeManagerPlugin.ModGuid, NodeManagerPlugin.ModVer)]
-public class ManeuverNodeControllerPlugin : BaseSpaceWarpPlugin
+public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
 {
-    public static ManeuverNodeControllerPlugin Instance { get; private set; }
+    public static ManeuverNodeControllerMod Instance { get; private set; }
 
     // These are useful in case some other mod wants to add a dependency to this one
     [PublicAPI] public const string ModGuid = MyPluginInfo.PLUGIN_GUID;
@@ -150,7 +150,7 @@ public class ManeuverNodeControllerPlugin : BaseSpaceWarpPlugin
             ToggleButton);
 
         // Register all Harmony patches in the project
-        Harmony.CreateAndPatchAll(typeof(ManeuverNodeControllerPlugin).Assembly);
+        Harmony.CreateAndPatchAll(typeof(ManeuverNodeControllerMod).Assembly);
         // Harmony.CreateAndPatchAll(typeof(STFUPatches));
 
         previousNextEnable = Config.Bind<bool>("Features Section", "Previous / Next Orbit Display", true, "Enable/Disable the display of the PRevious Obrit / Next Orbit information block");

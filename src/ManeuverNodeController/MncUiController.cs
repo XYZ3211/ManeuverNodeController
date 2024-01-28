@@ -111,11 +111,11 @@ public class MncUiController : KerbalMonoBehaviour
                 HasNodesGroup.style.display = DisplayStyle.Flex;
                 NoNodesGroup.style.display = DisplayStyle.None;
 
-                int selectedNode = ManeuverNodeControllerPlugin.Instance.SelectedNodeIndex;
+                int selectedNode = ManeuverNodeControllerMod.Instance.SelectedNodeIndex;
                 if (selectedNode >= nodes.Count)
                 {
                     selectedNode = nodes.Count - 1;
-                    ManeuverNodeControllerPlugin.Instance.SelectedNodeIndex = selectedNode;
+                    ManeuverNodeControllerMod.Instance.SelectedNodeIndex = selectedNode;
                 }
                 thisNode = nodes[selectedNode];
                 double dvRemaining, UT;
@@ -157,9 +157,9 @@ public class MncUiController : KerbalMonoBehaviour
                 RadialDvValue.text = thisNode.BurnVector.x.ToString("N2");
 
                 // If we've got a target
-                if (ManeuverNodeControllerPlugin.Instance.currentTarget != null)
+                if (ManeuverNodeControllerMod.Instance.currentTarget != null)
                 { // If that target is orbiting the same body the active vessel is
-                    if (ManeuverNodeControllerPlugin.Instance.currentTarget.Orbit.referenceBody == orbit.referenceBody)
+                    if (ManeuverNodeControllerMod.Instance.currentTarget.Orbit.referenceBody == orbit.referenceBody)
                     { // Allow SnapTo ANt and DNt
                         SnapToANtButton.style.display = DisplayStyle.Flex;
                         SnapToDNtButton.style.display = DisplayStyle.Flex;
@@ -205,7 +205,7 @@ public class MncUiController : KerbalMonoBehaviour
                 {
                     ManeuverPlanSolver.FindPatchContainingUt(nodeTime, PatchList, out var thisPatch, out var patchIndex);
                 }
-                catch (Exception ex) { ManeuverNodeControllerPlugin.Logger.LogWarning($"Supporessed exception: {ex}"); }
+                catch (Exception ex) { ManeuverNodeControllerMod.Logger.LogWarning($"Supporessed exception: {ex}"); }
                 int nodePatchIdx = 0;
                 if (nodeTime < PatchedConicsList[0].StartUT)
                 {
@@ -230,7 +230,7 @@ public class MncUiController : KerbalMonoBehaviour
                     nodePatchIdx = PatchedConicsList.Count - 1;
                 }
 
-                if (ManeuverNodeControllerPlugin.Instance.previousNextEnable.Value)
+                if (ManeuverNodeControllerMod.Instance.previousNextEnable.Value)
                 {
                     PreviousNextGroup.style.display = DisplayStyle.Flex;
                     PatchedConicsOrbit previousOrbit = null;
@@ -310,7 +310,7 @@ public class MncUiController : KerbalMonoBehaviour
                 else
                     PreviousNextGroup.style.display = DisplayStyle.None;
 
-                if (ManeuverNodeControllerPlugin.Instance.postNodeEventLookahead.Value)
+                if (ManeuverNodeControllerMod.Instance.postNodeEventLookahead.Value)
                 {
                     // Display Event Lookahead
                     int eventIdx = 0;
@@ -327,7 +327,7 @@ public class MncUiController : KerbalMonoBehaviour
                             thisPatch.PatchStartTransition == PatchTransitionType.Escape) && eventIdx < maxNumEvents)
                         {
                             // Report encounter at start of thisPatch
-                            DisplayEvent(eventIdx++, thisPatch, ManeuverNodeControllerPlugin.PatchEventType.StartOfPatch);
+                            DisplayEvent(eventIdx++, thisPatch, ManeuverNodeControllerMod.PatchEventType.StartOfPatch);
                             eventCount++;
                         }
                         // If there's an event during the patch
@@ -335,7 +335,7 @@ public class MncUiController : KerbalMonoBehaviour
                             thisPatch.PatchEndTransition == PatchTransitionType.PartialOutOfFuel || thisPatch.PatchEndTransition == PatchTransitionType.CompletelyOutOfFuel) && eventIdx < maxNumEvents)
                         {
                             // Report encounter durring thisPatch
-                            DisplayEvent(eventIdx++, thisPatch, ManeuverNodeControllerPlugin.PatchEventType.MidPatch);
+                            DisplayEvent(eventIdx++, thisPatch, ManeuverNodeControllerMod.PatchEventType.MidPatch);
                             eventCount++;
                         }
                         // If there's an event at the end of the patch
@@ -343,7 +343,7 @@ public class MncUiController : KerbalMonoBehaviour
                             thisPatch.PatchEndTransition == PatchTransitionType.Collision) && eventIdx < maxNumEvents)
                         {
                             // Report encounter at end of thisPatch
-                            DisplayEvent(eventIdx++, thisPatch, ManeuverNodeControllerPlugin.PatchEventType.EndOfPatch);
+                            DisplayEvent(eventIdx++, thisPatch, ManeuverNodeControllerMod.PatchEventType.EndOfPatch);
                             eventCount++;
                         }
 
@@ -378,7 +378,7 @@ public class MncUiController : KerbalMonoBehaviour
 
     // string lastBody = "N/A";
 
-    private void DisplayEvent(int idx, PatchedConicsOrbit thisPatch, ManeuverNodeControllerPlugin.PatchEventType eventType = ManeuverNodeControllerPlugin.PatchEventType.StartOfPatch)
+    private void DisplayEvent(int idx, PatchedConicsOrbit thisPatch, ManeuverNodeControllerMod.PatchEventType eventType = ManeuverNodeControllerMod.PatchEventType.StartOfPatch)
     {
         eventDataList[idx].Event.style.display = DisplayStyle.Flex;
 
@@ -392,7 +392,7 @@ public class MncUiController : KerbalMonoBehaviour
 
         eventDataList[idx].EncounterType.RemoveFromClassList("unity-label-invalid");
 
-        if (eventType == ManeuverNodeControllerPlugin.PatchEventType.StartOfPatch)
+        if (eventType == ManeuverNodeControllerMod.PatchEventType.StartOfPatch)
         {
             // (thisPatch.PatchStartTransition == PatchTransitionType.PartialOutOfFuel || thisPatch.PatchStartTransition == PatchTransitionType.CompletelyOutOfFuel ||
             //  thisPatch.PatchStartTransition == PatchTransitionType.Escape)
@@ -419,7 +419,7 @@ public class MncUiController : KerbalMonoBehaviour
             //    // do what?
             //}
         }
-        else if (eventType == ManeuverNodeControllerPlugin.PatchEventType.MidPatch)
+        else if (eventType == ManeuverNodeControllerMod.PatchEventType.MidPatch)
         {
             // ((thisPatch.PatchStartTransition == PatchTransitionType.Encounter && thisPatch.PatchEndTransition == PatchTransitionType.Escape) ||
             //   thisPatch.PatchEndTransition == PatchTransitionType.PartialOutOfFuel || thisPatch.PatchEndTransition == PatchTransitionType.CompletelyOutOfFuel)
@@ -442,7 +442,7 @@ public class MncUiController : KerbalMonoBehaviour
                 eventDataList[idx].EncounterInfo.text = MncUtility.SecondsToTimeString(thisPatch.EndUT - Game.UniverseModel.UniverseTime);
             }
         }
-        else if (eventType == ManeuverNodeControllerPlugin.PatchEventType.EndOfPatch)
+        else if (eventType == ManeuverNodeControllerMod.PatchEventType.EndOfPatch)
         {
             // ((thisPatch.PatchEndTransition == PatchTransitionType.Encounter && thisPatch.closestEncounterLevel != EncounterSolutionLevel.None) ||
             //   thisPatch.PatchEndTransition == PatchTransitionType.Collision)
@@ -500,7 +500,7 @@ public class MncUiController : KerbalMonoBehaviour
     public void SetEnabled(bool newState)
     {
         _container.style.display = newState ? DisplayStyle.Flex : DisplayStyle.None;
-        GameObject.Find(ManeuverNodeControllerPlugin.ToolbarFlightButtonID)?.GetComponent<UIValue_WriteBool_Toggle>()?.SetValue(newState);
+        GameObject.Find(ManeuverNodeControllerMod.ToolbarFlightButtonID)?.GetComponent<UIValue_WriteBool_Toggle>()?.SetValue(newState);
     }
 
     public void SetupDocument()
@@ -527,17 +527,17 @@ public class MncUiController : KerbalMonoBehaviour
 
             textField.RegisterValueChangedCallback((evt) =>
         {
-            ManeuverNodeControllerPlugin.Logger.LogDebug($"TryParse attempt for {textField.name}. Tooltip = {textField.tooltip}");
+            ManeuverNodeControllerMod.Logger.LogDebug($"TryParse attempt for {textField.name}. Tooltip = {textField.tooltip}");
             if (float.TryParse(evt.newValue, out _))
             {
                 textField.RemoveFromClassList("unity-text-field-invalid");
-                ManeuverNodeControllerPlugin.Logger.LogDebug($"TryParse success for {textField.name}, nValue = '{evt.newValue}': Removed unity-text-field-invalid from class list");
+                ManeuverNodeControllerMod.Logger.LogDebug($"TryParse success for {textField.name}, nValue = '{evt.newValue}': Removed unity-text-field-invalid from class list");
             }
             else
             {
                 textField.AddToClassList("unity-text-field-invalid");
-                ManeuverNodeControllerPlugin.Logger.LogDebug($"TryParse failure for {textField.name}, nValue = '{evt.newValue}': Added unity-text-field-invalid to class list");
-                ManeuverNodeControllerPlugin.Logger.LogDebug($"document.rootVisualElement.transform.position.z = {document.rootVisualElement.transform.position.z}");
+                ManeuverNodeControllerMod.Logger.LogDebug($"TryParse failure for {textField.name}, nValue = '{evt.newValue}': Added unity-text-field-invalid to class list");
+                ManeuverNodeControllerMod.Logger.LogDebug($"document.rootVisualElement.transform.position.z = {document.rootVisualElement.transform.position.z}");
             }
         });
 
@@ -552,13 +552,13 @@ public class MncUiController : KerbalMonoBehaviour
         game = GameManager.Instance.Game;
         bool pass;
 
-        ManeuverNodeControllerPlugin.Logger.LogInfo($"MNC: Starting UITK GUI Initialization. initialized is set to {initialized}");
+        ManeuverNodeControllerMod.Logger.LogInfo($"MNC: Starting UITK GUI Initialization. initialized is set to {initialized}");
 
         // Set up variables to be able to access UITK GUI panel groups quickly (Queries are expensive)
         NoNodesGroup = _container.Q<VisualElement>("NoNodesGroup");
         HasNodesGroup = _container.Q<VisualElement>("HasNodesGroup");
 
-        ManeuverNodeControllerPlugin.Logger.LogInfo($"MNC: Panel groups initialized. initialized is set to {initialized}");
+        ManeuverNodeControllerMod.Logger.LogInfo($"MNC: Panel groups initialized. initialized is set to {initialized}");
 
         // Set up variables to be able to access UITK GUI Buttons quickly (Queries are expensive)
         SnapToANtButton = _container.Q<Button>("SnapToANtButton");
@@ -581,7 +581,7 @@ public class MncUiController : KerbalMonoBehaviour
         SmallTimeStepInput = _container.Q<TextField>("SmallTimeStepInput");
         LargeTimeStepInput = _container.Q<TextField>("LargeTimeStepInput");
 
-        ManeuverNodeControllerPlugin.Logger.LogInfo($"MNC: SnapTo buttons initialized. initialized is set to {initialized}");
+        ManeuverNodeControllerMod.Logger.LogInfo($"MNC: SnapTo buttons initialized. initialized is set to {initialized}");
 
         // Set up variables to be able to access UITK GUI labels quickly (Queries are expensive)
         NodeIndexValue = _container.Q<Label>("NodeIndexValue");
@@ -623,9 +623,9 @@ public class MncUiController : KerbalMonoBehaviour
             eventDataList.Add(eventData);
         }
 
-        ManeuverNodeControllerPlugin.Logger.LogInfo($"MNC: SnapTo labels initialized. initialized is set to {initialized}");
+        ManeuverNodeControllerMod.Logger.LogInfo($"MNC: SnapTo labels initialized. initialized is set to {initialized}");
 
-        _container.Q<Button>("CloseButton").clicked += () => ManeuverNodeControllerPlugin.Instance.ToggleButton(false);
+        _container.Q<Button>("CloseButton").clicked += () => ManeuverNodeControllerMod.Instance.ToggleButton(false);
 
         _container.Q<Button>("AddFirstNodeButton").clicked += AddManeuverNode;
 
@@ -699,22 +699,22 @@ public class MncUiController : KerbalMonoBehaviour
         LargeTimeStepIncrementUpButton.clicked += () => { largeStepTime *= 10.0f; LargeTimeStepInput.value = largeStepTime.ToString(); };
         LargeTimeStepIncrementDownButton.clicked += () => { largeStepTime *= 0.1f; LargeTimeStepInput.value = largeStepTime.ToString(); };
 
-        _container.Q<RepeatButton>("LargeProgradeDecreaseButton").SetAction(() => IncrementPrograde(-largeStepDv), ManeuverNodeControllerPlugin.Instance.repeatDelay.Value, ManeuverNodeControllerPlugin.Instance.repeatInterval.Value);
-        _container.Q<RepeatButton>("SmallProgradeDecreaseButton").SetAction(() => IncrementPrograde(-smallStepDv), ManeuverNodeControllerPlugin.Instance.repeatDelay.Value, ManeuverNodeControllerPlugin.Instance.repeatInterval.Value);
-        _container.Q<RepeatButton>("SmallProgradeIncreaseButton").SetAction(() => IncrementPrograde(smallStepDv), ManeuverNodeControllerPlugin.Instance.repeatDelay.Value, ManeuverNodeControllerPlugin.Instance.repeatInterval.Value);
-        _container.Q<RepeatButton>("LargeProgradeIncreaseButton").SetAction(() => IncrementPrograde(largeStepDv), ManeuverNodeControllerPlugin.Instance.repeatDelay.Value, ManeuverNodeControllerPlugin.Instance.repeatInterval.Value);
+        _container.Q<RepeatButton>("LargeProgradeDecreaseButton").SetAction(() => IncrementPrograde(-largeStepDv), ManeuverNodeControllerMod.Instance.repeatDelay.Value, ManeuverNodeControllerMod.Instance.repeatInterval.Value);
+        _container.Q<RepeatButton>("SmallProgradeDecreaseButton").SetAction(() => IncrementPrograde(-smallStepDv), ManeuverNodeControllerMod.Instance.repeatDelay.Value, ManeuverNodeControllerMod.Instance.repeatInterval.Value);
+        _container.Q<RepeatButton>("SmallProgradeIncreaseButton").SetAction(() => IncrementPrograde(smallStepDv), ManeuverNodeControllerMod.Instance.repeatDelay.Value, ManeuverNodeControllerMod.Instance.repeatInterval.Value);
+        _container.Q<RepeatButton>("LargeProgradeIncreaseButton").SetAction(() => IncrementPrograde(largeStepDv), ManeuverNodeControllerMod.Instance.repeatDelay.Value, ManeuverNodeControllerMod.Instance.repeatInterval.Value);
         _container.Q<Button>("AbsoluteProgradeButton").clicked += () => SetPrograde(absDvValue);
 
-        _container.Q<RepeatButton>("LargeNormalDecreaseButton").SetAction(() => IncrementNormal(-largeStepDv), ManeuverNodeControllerPlugin.Instance.repeatDelay.Value, ManeuverNodeControllerPlugin.Instance.repeatInterval.Value);
-        _container.Q<RepeatButton>("SmallNormalDecreaseButton").SetAction(() => IncrementNormal(-smallStepDv), ManeuverNodeControllerPlugin.Instance.repeatDelay.Value, ManeuverNodeControllerPlugin.Instance.repeatInterval.Value);
-        _container.Q<RepeatButton>("SmallNormalIncreaseButton").SetAction(() => IncrementNormal(smallStepDv), ManeuverNodeControllerPlugin.Instance.repeatDelay.Value, ManeuverNodeControllerPlugin.Instance.repeatInterval.Value);
-        _container.Q<RepeatButton>("LargeNormalIncreaseButton").SetAction(() => IncrementNormal(largeStepDv), ManeuverNodeControllerPlugin.Instance.repeatDelay.Value, ManeuverNodeControllerPlugin.Instance.repeatInterval.Value);
+        _container.Q<RepeatButton>("LargeNormalDecreaseButton").SetAction(() => IncrementNormal(-largeStepDv), ManeuverNodeControllerMod.Instance.repeatDelay.Value, ManeuverNodeControllerMod.Instance.repeatInterval.Value);
+        _container.Q<RepeatButton>("SmallNormalDecreaseButton").SetAction(() => IncrementNormal(-smallStepDv), ManeuverNodeControllerMod.Instance.repeatDelay.Value, ManeuverNodeControllerMod.Instance.repeatInterval.Value);
+        _container.Q<RepeatButton>("SmallNormalIncreaseButton").SetAction(() => IncrementNormal(smallStepDv), ManeuverNodeControllerMod.Instance.repeatDelay.Value, ManeuverNodeControllerMod.Instance.repeatInterval.Value);
+        _container.Q<RepeatButton>("LargeNormalIncreaseButton").SetAction(() => IncrementNormal(largeStepDv), ManeuverNodeControllerMod.Instance.repeatDelay.Value, ManeuverNodeControllerMod.Instance.repeatInterval.Value);
         _container.Q<Button>("AbsoluteNormalButton").clicked += () => SetNormal(absDvValue);
 
-        _container.Q<RepeatButton>("LargeRadialDecreaseButton").SetAction(() => IncrementRadial(-largeStepDv), ManeuverNodeControllerPlugin.Instance.repeatDelay.Value, ManeuverNodeControllerPlugin.Instance.repeatInterval.Value);
-        _container.Q<RepeatButton>("SmallRadialDecreaseButton").SetAction(() => IncrementRadial(-smallStepDv), ManeuverNodeControllerPlugin.Instance.repeatDelay.Value, ManeuverNodeControllerPlugin.Instance.repeatInterval.Value);
-        _container.Q<RepeatButton>("SmallRadialIncreaseButton").SetAction(() => IncrementRadial(smallStepDv), ManeuverNodeControllerPlugin.Instance.repeatDelay.Value, ManeuverNodeControllerPlugin.Instance.repeatInterval.Value);
-        _container.Q<RepeatButton>("LargeRadialIncreaseButton").SetAction(() => IncrementRadial(largeStepDv), ManeuverNodeControllerPlugin.Instance.repeatDelay.Value, ManeuverNodeControllerPlugin.Instance.repeatInterval.Value);
+        _container.Q<RepeatButton>("LargeRadialDecreaseButton").SetAction(() => IncrementRadial(-largeStepDv), ManeuverNodeControllerMod.Instance.repeatDelay.Value, ManeuverNodeControllerMod.Instance.repeatInterval.Value);
+        _container.Q<RepeatButton>("SmallRadialDecreaseButton").SetAction(() => IncrementRadial(-smallStepDv), ManeuverNodeControllerMod.Instance.repeatDelay.Value, ManeuverNodeControllerMod.Instance.repeatInterval.Value);
+        _container.Q<RepeatButton>("SmallRadialIncreaseButton").SetAction(() => IncrementRadial(smallStepDv), ManeuverNodeControllerMod.Instance.repeatDelay.Value, ManeuverNodeControllerMod.Instance.repeatInterval.Value);
+        _container.Q<RepeatButton>("LargeRadialIncreaseButton").SetAction(() => IncrementRadial(largeStepDv), ManeuverNodeControllerMod.Instance.repeatDelay.Value, ManeuverNodeControllerMod.Instance.repeatInterval.Value);
         _container.Q<Button>("AbsoluteRadialButton").clicked += () => SetRadial(absDvValue);
 
         _container.Q<Button>("SnapToApButton").clicked += SnapToAp;
@@ -724,35 +724,35 @@ public class MncUiController : KerbalMonoBehaviour
         _container.Q<Button>("SnapToANtButton").clicked += SnapToANt;
         _container.Q<Button>("SnapToDNtButton").clicked += SnapToDNt;
 
-        _container.Q<RepeatButton>("LargeTimeDecreaseButton").SetAction(() => IncrementTime(-largeStepTime), ManeuverNodeControllerPlugin.Instance.repeatDelay.Value, ManeuverNodeControllerPlugin.Instance.repeatInterval.Value);
-        _container.Q<RepeatButton>("SmallTimeDecreaseButton").SetAction(() => IncrementTime(-smallStepTime), ManeuverNodeControllerPlugin.Instance.repeatDelay.Value, ManeuverNodeControllerPlugin.Instance.repeatInterval.Value);
-        _container.Q<RepeatButton>("SmallTimeIncreaseButton").SetAction(() => IncrementTime(smallStepTime), ManeuverNodeControllerPlugin.Instance.repeatDelay.Value, ManeuverNodeControllerPlugin.Instance.repeatInterval.Value);
-        _container.Q<RepeatButton>("LargeTimeIncreaseButton").SetAction(() => IncrementTime(largeStepTime), ManeuverNodeControllerPlugin.Instance.repeatDelay.Value, ManeuverNodeControllerPlugin.Instance.repeatInterval.Value);
+        _container.Q<RepeatButton>("LargeTimeDecreaseButton").SetAction(() => IncrementTime(-largeStepTime), ManeuverNodeControllerMod.Instance.repeatDelay.Value, ManeuverNodeControllerMod.Instance.repeatInterval.Value);
+        _container.Q<RepeatButton>("SmallTimeDecreaseButton").SetAction(() => IncrementTime(-smallStepTime), ManeuverNodeControllerMod.Instance.repeatDelay.Value, ManeuverNodeControllerMod.Instance.repeatInterval.Value);
+        _container.Q<RepeatButton>("SmallTimeIncreaseButton").SetAction(() => IncrementTime(smallStepTime), ManeuverNodeControllerMod.Instance.repeatDelay.Value, ManeuverNodeControllerMod.Instance.repeatInterval.Value);
+        _container.Q<RepeatButton>("LargeTimeIncreaseButton").SetAction(() => IncrementTime(largeStepTime), ManeuverNodeControllerMod.Instance.repeatDelay.Value, ManeuverNodeControllerMod.Instance.repeatInterval.Value);
 
-        _container.Q<RepeatButton>("DecreaseOrbitButton").SetAction(() => IncrementOrbit(-1), ManeuverNodeControllerPlugin.Instance.repeatDelay.Value, ManeuverNodeControllerPlugin.Instance.repeatInterval.Value);
-        _container.Q<RepeatButton>("IncreaseOrbitButton").SetAction(() => IncrementOrbit(1), ManeuverNodeControllerPlugin.Instance.repeatDelay.Value, ManeuverNodeControllerPlugin.Instance.repeatInterval.Value);
+        _container.Q<RepeatButton>("DecreaseOrbitButton").SetAction(() => IncrementOrbit(-1), ManeuverNodeControllerMod.Instance.repeatDelay.Value, ManeuverNodeControllerMod.Instance.repeatInterval.Value);
+        _container.Q<RepeatButton>("IncreaseOrbitButton").SetAction(() => IncrementOrbit(1), ManeuverNodeControllerMod.Instance.repeatDelay.Value, ManeuverNodeControllerMod.Instance.repeatInterval.Value);
 
         initialized = true;
-        ManeuverNodeControllerPlugin.Logger.LogInfo($"MNC: UITK GUI Initialized. initialized set to {initialized}");
+        ManeuverNodeControllerMod.Logger.LogInfo($"MNC: UITK GUI Initialized. initialized set to {initialized}");
     }
 
     private void NextManeuverNode()
     {
         // increment if possible, or wrap around
-        if (ManeuverNodeControllerPlugin.Instance.SelectedNodeIndex + 1 < NodeManagerPlugin.Instance.Nodes.Count)
+        if (ManeuverNodeControllerMod.Instance.SelectedNodeIndex + 1 < NodeManagerPlugin.Instance.Nodes.Count)
         {
-            ManeuverNodeControllerPlugin.Instance.SelectedNodeIndex++;
-            thisNode = NodeManagerPlugin.Instance.Nodes[ManeuverNodeControllerPlugin.Instance.SelectedNodeIndex];
+            ManeuverNodeControllerMod.Instance.SelectedNodeIndex++;
+            thisNode = NodeManagerPlugin.Instance.Nodes[ManeuverNodeControllerMod.Instance.SelectedNodeIndex];
         }
     }
 
     private void PreviousManeuverNode()
     {
         // Decrement if possible, or wrap around
-        if (ManeuverNodeControllerPlugin.Instance.SelectedNodeIndex > 0)
+        if (ManeuverNodeControllerMod.Instance.SelectedNodeIndex > 0)
         {
-            ManeuverNodeControllerPlugin.Instance.SelectedNodeIndex--;
-            thisNode = NodeManagerPlugin.Instance.Nodes[ManeuverNodeControllerPlugin.Instance.SelectedNodeIndex];
+            ManeuverNodeControllerMod.Instance.SelectedNodeIndex--;
+            thisNode = NodeManagerPlugin.Instance.Nodes[ManeuverNodeControllerMod.Instance.SelectedNodeIndex];
         }
     }
 
@@ -765,39 +765,39 @@ public class MncUiController : KerbalMonoBehaviour
         if (firstNode)
         {
             pass = NodeManagerPlugin.Instance.AddNode();
-            ManeuverNodeControllerPlugin.Instance.SelectedNodeIndex = 0;
-            NodeManagerPlugin.Instance.SpitNode(ManeuverNodeControllerPlugin.Instance.SelectedNodeIndex);
+            ManeuverNodeControllerMod.Instance.SelectedNodeIndex = 0;
+            NodeManagerPlugin.Instance.SpitNode(ManeuverNodeControllerMod.Instance.SelectedNodeIndex);
             // StartCoroutine(NodeManagerPlugin.Instance.RefreshNodes());
         }
         else
         {
             // StartCoroutine(NodeManagerPlugin.Instance.RefreshNodes());
             pass = NodeManagerPlugin.Instance.AddNode();
-            ManeuverNodeControllerPlugin.Instance.SelectedNodeIndex = NodeManagerPlugin.Instance.Nodes.Count - 1;
-            NodeManagerPlugin.Instance.SpitNode(ManeuverNodeControllerPlugin.Instance.SelectedNodeIndex);
+            ManeuverNodeControllerMod.Instance.SelectedNodeIndex = NodeManagerPlugin.Instance.Nodes.Count - 1;
+            NodeManagerPlugin.Instance.SpitNode(ManeuverNodeControllerMod.Instance.SelectedNodeIndex);
         }
-        if (pass) ManeuverNodeControllerPlugin.Instance.forceOpen = false;
+        if (pass) ManeuverNodeControllerMod.Instance.forceOpen = false;
     }
 
     private void DelManeuverNode()
     {
         // Identical process to original
-        NodeManagerPlugin.Instance.DeleteNodes(ManeuverNodeControllerPlugin.Instance.SelectedNodeIndex);
-        if (ManeuverNodeControllerPlugin.Instance.SelectedNodeIndex > 0)
-            ManeuverNodeControllerPlugin.Instance.SelectedNodeIndex--;
+        NodeManagerPlugin.Instance.DeleteNodes(ManeuverNodeControllerMod.Instance.SelectedNodeIndex);
+        if (ManeuverNodeControllerMod.Instance.SelectedNodeIndex > 0)
+            ManeuverNodeControllerMod.Instance.SelectedNodeIndex--;
         else
-            ManeuverNodeControllerPlugin.Instance.SelectedNodeIndex = 0;
+            ManeuverNodeControllerMod.Instance.SelectedNodeIndex = 0;
     }
 
     private void CheckManeuverNode()
     {
-        NodeManagerPlugin.Instance.SpitNode(ManeuverNodeControllerPlugin.Instance.SelectedNodeIndex);
+        NodeManagerPlugin.Instance.SpitNode(ManeuverNodeControllerMod.Instance.SelectedNodeIndex);
         OrbiterComponent Orbiter = MncUtility.activeVessel?.Orbiter;
         ManeuverPlanSolver ManeuverPlanSolver = Orbiter?.ManeuverPlanSolver;
         List<PatchedConicsOrbit> patch = ManeuverPlanSolver?.PatchedConicsList;
 
         int nodePatchIdx = 0;
-        double nodeTime = NodeManagerPlugin.Instance.Nodes[ManeuverNodeControllerPlugin.Instance.SelectedNodeIndex].Time;
+        double nodeTime = NodeManagerPlugin.Instance.Nodes[ManeuverNodeControllerMod.Instance.SelectedNodeIndex].Time;
         if (nodeTime < patch[0].StartUT)
         {
             nodePatchIdx = 0; // (PatchedConicsList[0].PatchEndTransition == PatchTransitionType.Encounter) ? 1 : 0;
@@ -814,7 +814,7 @@ public class MncUiController : KerbalMonoBehaviour
             }
         }
 
-        ManeuverNodeControllerPlugin.Logger.LogInfo($"Node Patch {nodePatchIdx}");
+        ManeuverNodeControllerMod.Logger.LogInfo($"Node Patch {nodePatchIdx}");
         int eventCount = 0;
         double NextClosestApproachDist = -1;
         for (int i = 0; i < patch.Count; i++)
@@ -823,37 +823,37 @@ public class MncUiController : KerbalMonoBehaviour
             if (!thisPatch.ActivePatch)
                 break;
             if (thisPatch.closestEncounterBody != null)
-                ManeuverNodeControllerPlugin.Logger.LogInfo($"Patch {i}: Active {thisPatch.ActivePatch}, SOI Encounter {thisPatch.UniversalTimeAtSoiEncounter}, Start {thisPatch.PatchStartTransition} @ {thisPatch.StartUT:N3}, End {thisPatch.PatchEndTransition} @ {thisPatch.EndUT:N3}, referenceBody: {thisPatch.referenceBody.Name}, Encounter: {thisPatch.closestEncounterBody.Name} ({thisPatch.closestEncounterLevel})");
+                ManeuverNodeControllerMod.Logger.LogInfo($"Patch {i}: Active {thisPatch.ActivePatch}, SOI Encounter {thisPatch.UniversalTimeAtSoiEncounter}, Start {thisPatch.PatchStartTransition} @ {thisPatch.StartUT:N3}, End {thisPatch.PatchEndTransition} @ {thisPatch.EndUT:N3}, referenceBody: {thisPatch.referenceBody.Name}, Encounter: {thisPatch.closestEncounterBody.Name} ({thisPatch.closestEncounterLevel})");
             else
-                ManeuverNodeControllerPlugin.Logger.LogInfo($"Patch {i}: Active {thisPatch.ActivePatch}, SOI Encounter {thisPatch.UniversalTimeAtSoiEncounter}, Start {thisPatch.PatchStartTransition} @ {thisPatch.StartUT:N3}, End {thisPatch.PatchEndTransition} @ {thisPatch.EndUT:N3}, referenceBody: {thisPatch.referenceBody.Name}");
+                ManeuverNodeControllerMod.Logger.LogInfo($"Patch {i}: Active {thisPatch.ActivePatch}, SOI Encounter {thisPatch.UniversalTimeAtSoiEncounter}, Start {thisPatch.PatchStartTransition} @ {thisPatch.StartUT:N3}, End {thisPatch.PatchEndTransition} @ {thisPatch.EndUT:N3}, referenceBody: {thisPatch.referenceBody.Name}");
             var NextClosestApproachTime = thisPatch.NextClosestApproachTime(MncUtility.currentTarget.Orbit as PatchedConicsOrbit, thisPatch.StartUT);
             if (NextClosestApproachTime > thisPatch.StartUT)
             {
                 PatchedConicsOrbit o = thisPatch;
                 NextClosestApproachDist = (o.GetRelativePositionAtUTZup(NextClosestApproachTime) - MncUtility.currentTarget.Orbit.GetRelativePositionAtUTZup(NextClosestApproachTime)).magnitude;
             }
-            ManeuverNodeControllerPlugin.Logger.LogInfo($"Patch {i}: TrueAnomalyFirstEncounterPriOrbit {thisPatch.TrueAnomalyFirstEncounterPriOrbit}");
-            ManeuverNodeControllerPlugin.Logger.LogInfo($"Patch {i}: TrueAnomalyFirstEncounterSecOrbit {thisPatch.TrueAnomalyFirstEncounterSecOrbit}");
-            ManeuverNodeControllerPlugin.Logger.LogInfo($"Patch {i}: TrueAnomalySecEncounterPriOrbit   {thisPatch.TrueAnomalySecEncounterPriOrbit}");
-            ManeuverNodeControllerPlugin.Logger.LogInfo($"Patch {i}: TrueAnomalySecEncounterSecOrbit   {thisPatch.TrueAnomalySecEncounterSecOrbit}");
-            ManeuverNodeControllerPlugin.Logger.LogInfo($"Patch {i}: closestTgtApprUT                  {thisPatch.closestTgtApprUT}");
-            ManeuverNodeControllerPlugin.Logger.LogInfo($"Patch {i}: ClosestApproachDistance           {thisPatch.ClosestApproachDistance}");
-            ManeuverNodeControllerPlugin.Logger.LogInfo($"Patch {i}: numClosePoints                    {thisPatch.numClosePoints}");
-            ManeuverNodeControllerPlugin.Logger.LogInfo($"Patch {i}: UniversalTimeAtClosestApproach    {thisPatch.UniversalTimeAtClosestApproach}");
-            ManeuverNodeControllerPlugin.Logger.LogInfo($"Patch {i}: UniversalTimeAtSoiEncounter       {thisPatch.UniversalTimeAtSoiEncounter}");
-            ManeuverNodeControllerPlugin.Logger.LogInfo($"Patch {i}: timeToTransition1                 {thisPatch.timeToTransition1}");
-            ManeuverNodeControllerPlugin.Logger.LogInfo($"Patch {i}: timeToTransition2                 {thisPatch.timeToTransition2}");
-            ManeuverNodeControllerPlugin.Logger.LogInfo($"Patch {i}: NextClosestApproachTime           {NextClosestApproachTime:N3} = {MncUtility.SecondsToTimeString(NextClosestApproachTime)}");
-            ManeuverNodeControllerPlugin.Logger.LogInfo($"Patch {i}: NextClosestApproachDist           {NextClosestApproachDist:N3}");
-            ManeuverNodeControllerPlugin.Logger.LogInfo($"Patch {i}: findClosestPoints                 {thisPatch.findClosestPoints}");
-            ManeuverNodeControllerPlugin.Logger.LogInfo($"Patch {i}: ClEctr1                           {thisPatch.ClEctr1}");
-            ManeuverNodeControllerPlugin.Logger.LogInfo($"Patch {i}: ClEctr2                           {thisPatch.ClEctr2}");
+            ManeuverNodeControllerMod.Logger.LogInfo($"Patch {i}: TrueAnomalyFirstEncounterPriOrbit {thisPatch.TrueAnomalyFirstEncounterPriOrbit}");
+            ManeuverNodeControllerMod.Logger.LogInfo($"Patch {i}: TrueAnomalyFirstEncounterSecOrbit {thisPatch.TrueAnomalyFirstEncounterSecOrbit}");
+            ManeuverNodeControllerMod.Logger.LogInfo($"Patch {i}: TrueAnomalySecEncounterPriOrbit   {thisPatch.TrueAnomalySecEncounterPriOrbit}");
+            ManeuverNodeControllerMod.Logger.LogInfo($"Patch {i}: TrueAnomalySecEncounterSecOrbit   {thisPatch.TrueAnomalySecEncounterSecOrbit}");
+            ManeuverNodeControllerMod.Logger.LogInfo($"Patch {i}: closestTgtApprUT                  {thisPatch.closestTgtApprUT}");
+            ManeuverNodeControllerMod.Logger.LogInfo($"Patch {i}: ClosestApproachDistance           {thisPatch.ClosestApproachDistance}");
+            ManeuverNodeControllerMod.Logger.LogInfo($"Patch {i}: numClosePoints                    {thisPatch.numClosePoints}");
+            ManeuverNodeControllerMod.Logger.LogInfo($"Patch {i}: UniversalTimeAtClosestApproach    {thisPatch.UniversalTimeAtClosestApproach}");
+            ManeuverNodeControllerMod.Logger.LogInfo($"Patch {i}: UniversalTimeAtSoiEncounter       {thisPatch.UniversalTimeAtSoiEncounter}");
+            ManeuverNodeControllerMod.Logger.LogInfo($"Patch {i}: timeToTransition1                 {thisPatch.timeToTransition1}");
+            ManeuverNodeControllerMod.Logger.LogInfo($"Patch {i}: timeToTransition2                 {thisPatch.timeToTransition2}");
+            ManeuverNodeControllerMod.Logger.LogInfo($"Patch {i}: NextClosestApproachTime           {NextClosestApproachTime:N3} = {MncUtility.SecondsToTimeString(NextClosestApproachTime)}");
+            ManeuverNodeControllerMod.Logger.LogInfo($"Patch {i}: NextClosestApproachDist           {NextClosestApproachDist:N3}");
+            ManeuverNodeControllerMod.Logger.LogInfo($"Patch {i}: findClosestPoints                 {thisPatch.findClosestPoints}");
+            ManeuverNodeControllerMod.Logger.LogInfo($"Patch {i}: ClEctr1                           {thisPatch.ClEctr1}");
+            ManeuverNodeControllerMod.Logger.LogInfo($"Patch {i}: ClEctr2                           {thisPatch.ClEctr2}");
             // If there's an event at the start of the patch
             if (thisPatch.PatchStartTransition == PatchTransitionType.PartialOutOfFuel || thisPatch.PatchStartTransition == PatchTransitionType.CompletelyOutOfFuel ||
                 thisPatch.PatchStartTransition == PatchTransitionType.Escape)
             {
                 // Report encounter at start of thisPatch
-                ManeuverNodeControllerPlugin.Logger.LogInfo($"Patch {i}: Has event at start of patch");
+                ManeuverNodeControllerMod.Logger.LogInfo($"Patch {i}: Has event at start of patch");
                 eventCount++;
             }
             // If there's an event during the patch
@@ -861,7 +861,7 @@ public class MncUiController : KerbalMonoBehaviour
                 thisPatch.PatchEndTransition == PatchTransitionType.PartialOutOfFuel || thisPatch.PatchEndTransition == PatchTransitionType.CompletelyOutOfFuel)
             {
                 // Report encounter durring thisPatch
-                ManeuverNodeControllerPlugin.Logger.LogInfo($"Patch {i}: Has mid-patch event");
+                ManeuverNodeControllerMod.Logger.LogInfo($"Patch {i}: Has mid-patch event");
                 eventCount++;
             }
             // If there's an event at the end of the patch
@@ -869,18 +869,18 @@ public class MncUiController : KerbalMonoBehaviour
                 thisPatch.PatchEndTransition == PatchTransitionType.Collision)
             {
                 // Report encounter at end of thisPatch
-                ManeuverNodeControllerPlugin.Logger.LogInfo($"Patch {i}: Has event at end of patch");
+                ManeuverNodeControllerMod.Logger.LogInfo($"Patch {i}: Has event at end of patch");
                 eventCount++;
             }
         }
-        ManeuverNodeControllerPlugin.Logger.LogInfo($"Events Detected {eventCount}");
+        ManeuverNodeControllerMod.Logger.LogInfo($"Events Detected {eventCount}");
     }
 
     private void IncrementPrograde(float amount)
     {
         Vector3d burnParams = Vector3d.zero;
         burnParams.z += amount;
-        ManeuverNodeControllerPlugin.Logger.LogDebug($"IncrementPrograde: amount = {amount} BurnParams =[{burnParams.x:n3}, {burnParams.y:n3}, {burnParams.z:n3}]");
+        ManeuverNodeControllerMod.Logger.LogDebug($"IncrementPrograde: amount = {amount} BurnParams =[{burnParams.x:n3}, {burnParams.y:n3}, {burnParams.z:n3}]");
         ApplyChange(0, burnParams);
     }
 
@@ -888,7 +888,7 @@ public class MncUiController : KerbalMonoBehaviour
     {
         Vector3d burnParams = Vector3d.zero;
         burnParams.y += amount;
-        ManeuverNodeControllerPlugin.Logger.LogDebug($"IncrementNormal: amount = {amount} BurnParams =[{burnParams.x:n3}, {burnParams.y:n3}, {burnParams.z:n3}]");
+        ManeuverNodeControllerMod.Logger.LogDebug($"IncrementNormal: amount = {amount} BurnParams =[{burnParams.x:n3}, {burnParams.y:n3}, {burnParams.z:n3}]");
         ApplyChange(0, burnParams);
     }
 
@@ -896,7 +896,7 @@ public class MncUiController : KerbalMonoBehaviour
     {
         Vector3d burnParams = Vector3d.zero;
         burnParams.x += amount;
-        ManeuverNodeControllerPlugin.Logger.LogDebug($"IncrementRadial: amount = {amount} BurnParams =[{burnParams.x:n3}, {burnParams.y:n3}, {burnParams.z:n3}]");
+        ManeuverNodeControllerMod.Logger.LogDebug($"IncrementRadial: amount = {amount} BurnParams =[{burnParams.x:n3}, {burnParams.y:n3}, {burnParams.z:n3}]");
         ApplyChange(0, burnParams);
     }
 
@@ -904,7 +904,7 @@ public class MncUiController : KerbalMonoBehaviour
     {
         Vector3d burnParams = Vector3d.zero;
         burnParams.z = amount - thisNode.BurnVector.z;
-        ManeuverNodeControllerPlugin.Logger.LogDebug($"SetPrograde: amount = {amount} BurnParams =[{burnParams.x:n3}, {burnParams.y:n3}, {burnParams.z:n3}]");
+        ManeuverNodeControllerMod.Logger.LogDebug($"SetPrograde: amount = {amount} BurnParams =[{burnParams.x:n3}, {burnParams.y:n3}, {burnParams.z:n3}]");
         ApplyChange(0, burnParams);
     }
 
@@ -912,7 +912,7 @@ public class MncUiController : KerbalMonoBehaviour
     {
         Vector3d burnParams = Vector3d.zero;
         burnParams.y = amount - thisNode.BurnVector.y;
-        ManeuverNodeControllerPlugin.Logger.LogDebug($"SetNormal: amount = {amount} BurnParams =[{burnParams.x:n3}, {burnParams.y:n3}, {burnParams.z:n3}]");
+        ManeuverNodeControllerMod.Logger.LogDebug($"SetNormal: amount = {amount} BurnParams =[{burnParams.x:n3}, {burnParams.y:n3}, {burnParams.z:n3}]");
         ApplyChange(0, burnParams);
     }
 
@@ -920,19 +920,19 @@ public class MncUiController : KerbalMonoBehaviour
     {
         Vector3d burnParams = Vector3d.zero;
         burnParams.x = amount - thisNode.BurnVector.x;
-        ManeuverNodeControllerPlugin.Logger.LogDebug($"SetRadial: amount = {amount} BurnParams =[{burnParams.x:n3}, {burnParams.y:n3}, {burnParams.z:n3}]");
+        ManeuverNodeControllerMod.Logger.LogDebug($"SetRadial: amount = {amount} BurnParams =[{burnParams.x:n3}, {burnParams.y:n3}, {burnParams.z:n3}]");
         ApplyChange(0, burnParams);
     }
 
     private void IncrementTime(float amount)
     {
-        ManeuverNodeControllerPlugin.Logger.LogDebug($"IncrementTime: amount = {amount}");
+        ManeuverNodeControllerMod.Logger.LogDebug($"IncrementTime: amount = {amount}");
         ApplyChange(thisNode.Time + amount, Vector3d.zero);
     }
 
     private void IncrementOrbit(float amount)
     {
-        ManeuverNodeControllerPlugin.Logger.LogDebug($"IncrementOrbit: amount = {amount}");
+        ManeuverNodeControllerMod.Logger.LogDebug($"IncrementOrbit: amount = {amount}");
         IncrementTime(amount * (float)MncUtility.activeVessel.Orbit.period);
     }
 
@@ -982,33 +982,33 @@ public class MncUiController : KerbalMonoBehaviour
         {
             double minTime = ut + Math.Max(smallStepTime, 5);
             double maxTime = ut - 1;
-            if (ManeuverNodeControllerPlugin.Instance.SelectedNodeIndex > 0)
-                minTime = NodeManagerPlugin.Instance.Nodes[ManeuverNodeControllerPlugin.Instance.SelectedNodeIndex - 1].Time + Math.Max(smallStepTime, 5);
-            if (ManeuverNodeControllerPlugin.Instance.SelectedNodeIndex < NodeManagerPlugin.Instance.Nodes.Count - 1)
-                maxTime = NodeManagerPlugin.Instance.Nodes[ManeuverNodeControllerPlugin.Instance.SelectedNodeIndex + 1].Time - Math.Max(smallStepTime, 5);
+            if (ManeuverNodeControllerMod.Instance.SelectedNodeIndex > 0)
+                minTime = NodeManagerPlugin.Instance.Nodes[ManeuverNodeControllerMod.Instance.SelectedNodeIndex - 1].Time + Math.Max(smallStepTime, 5);
+            if (ManeuverNodeControllerMod.Instance.SelectedNodeIndex < NodeManagerPlugin.Instance.Nodes.Count - 1)
+                maxTime = NodeManagerPlugin.Instance.Nodes[ManeuverNodeControllerMod.Instance.SelectedNodeIndex + 1].Time - Math.Max(smallStepTime, 5);
 
             if (nodeTime < minTime) // Not allowed to move the node prior to another node
             {
                 nodeTime = minTime;
-                ManeuverNodeControllerPlugin.Logger.LogDebug($"Limiting nodeTime to no less than {(nodeTime - ut):F3} from now.");
+                ManeuverNodeControllerMod.Logger.LogDebug($"Limiting nodeTime to no less than {(nodeTime - ut):F3} from now.");
             }
             if (maxTime > minTime && nodeTime > maxTime) // Not allowed to move the node ahead of a later node
             {
                 nodeTime = maxTime;
-                ManeuverNodeControllerPlugin.Logger.LogDebug($"Limiting nodeTime to no more than {(nodeTime - ut):F3} from now.");
+                ManeuverNodeControllerMod.Logger.LogDebug($"Limiting nodeTime to no more than {(nodeTime - ut):F3} from now.");
             }
 
             // Push the update to the node
             maneuverPlanComponent.UpdateTimeOnNode(thisNode, nodeTime);
 
-            ManeuverNodeControllerPlugin.Logger.LogDebug($"nodeTime after adjust  : {(nodeTime - ut):F3} from now.");
+            ManeuverNodeControllerMod.Logger.LogDebug($"nodeTime after adjust  : {(nodeTime - ut):F3} from now.");
         }
         if (burnParams.magnitude != 0)
         {
             // Push the update to the node
             maneuverPlanComponent.UpdateChangeOnNode(thisNode, burnParams);
 
-            ManeuverNodeControllerPlugin.Logger.LogDebug($"ApplyChange: Updated BurnVector    [{thisNode.BurnVector.x:F3}, {thisNode.BurnVector.y:F3}, {thisNode.BurnVector.z:F3}] m/s");
+            ManeuverNodeControllerMod.Logger.LogDebug($"ApplyChange: Updated BurnVector    [{thisNode.BurnVector.x:F3}, {thisNode.BurnVector.y:F3}, {thisNode.BurnVector.z:F3}] m/s");
 
         }
 
