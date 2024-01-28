@@ -111,7 +111,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             OnManeuverCreatedMessage(message);
         });
 
-        var mncUxml = AssetManager.GetAsset<VisualTreeAsset>($"{Info.Metadata.GUID}/mnc_ui/mnc_ui.uxml");
+        var mncUxml = AssetManager.GetAsset<VisualTreeAsset>($"{Info.Metadata.GUID}/mnc_ui/ui/mnc_ui.uxml");
         var mncWindow = Window.CreateFromUxml(mncUxml, "Maneuver Node Controller Main Window", transform, true);
         mncWindow.hideFlags |= HideFlags.HideAndDontSave;
 
