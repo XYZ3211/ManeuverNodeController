@@ -1,0 +1,277 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/ManeuverNodeControllerTheme.uss?fileID=7433441132597879392&amp;guid=73a250367c28bac49a63dab4cfd06f0e&amp;type=3#ManeuverNodeControllerTheme" />
+    <ui:VisualElement name="GUIFrame" style="width: 350px; height: auto; background-color: rgb(0, 0, 0); border-top-left-radius: 12px; border-bottom-left-radius: 12px; border-top-right-radius: 12px; border-bottom-right-radius: 12px; -unity-background-image-tint-color: rgb(0, 0, 0); border-left-color: rgb(76, 79, 188); border-right-color: rgb(76, 79, 188); border-top-color: rgb(76, 79, 188); border-bottom-color: rgb(76, 79, 188); border-left-width: 1px; border-right-width: 1px; border-top-width: 1px; border-bottom-width: 1px; max-height: none; min-height: 350px; -unity-font-definition: url(&apos;project://database/Assets/Fonts/LiberationSans-Regular%20SDF.asset?fileID=11400000&amp;guid=1aa6f9b14a5b16b42ab66d521ba3157c&amp;type=2#LiberationSans-Regular SDF&apos;);">
+        <ui:VisualElement name="Title" class="row-element-lose" style="height: 28px;">
+            <ui:VisualElement name="IconBox" style="justify-content: space-around; width: 30px; flex-direction: column; align-items: center;">
+                <ui:VisualElement name="Icon" class="header-item" style="background-image: url(&apos;project://database/Assets/Images/icon.png?fileID=21300000&amp;guid=7ed5cdb1dc1b4730bdb0f8096d09dd9d&amp;type=3#icon&apos;); -unity-background-scale-mode: scale-and-crop; width: 20px; height: 20px;" />
+            </ui:VisualElement>
+            <ui:Label text="MANEUVER NODE CONTROLLER" display-tooltip-when-elided="true" name="Title" style="font-size: 15px; -unity-font-definition: url(&apos;project://database/Assets/Fonts/Orbitron-Black%20SDF.asset?fileID=11400000&amp;guid=5239ed64b02a55342a920e51ecef2971&amp;type=2#Orbitron-Black SDF&apos;);" />
+            <ui:VisualElement name="ButtonBox" style="justify-content: center;">
+                <ui:Button display-tooltip-when-elided="true" name="CloseButton" tooltip="Close Window" class="header-item" style="padding-left: 2px; padding-right: 2px; padding-top: 2px; padding-bottom: 2px; border-left-width: 0; border-right-width: 0; border-top-width: 0; border-bottom-width: 0; background-image: none; -unity-background-scale-mode: scale-and-crop; -unity-slice-left: 0; -unity-slice-top: 0; -unity-slice-right: 0; -unity-slice-bottom: 0; border-left-color: rgb(38, 35, 41); border-right-color: rgb(38, 35, 41); border-top-color: rgb(38, 35, 41); border-bottom-color: rgb(38, 35, 41); width: 21px; height: 21px;">
+                    <ui:VisualElement name="CloseButtonIcon" style="background-image: url(&apos;project://database/Assets/Images/Cross.png?fileID=2800000&amp;guid=127360a988ef02049b56bbbf3e73368b&amp;type=3#Cross&apos;); height: 16px; background-color: rgba(38, 35, 41, 0); border-left-color: rgb(38, 35, 41); border-right-color: rgb(38, 35, 41); border-top-color: rgb(38, 35, 41); border-bottom-color: rgb(38, 35, 41); -unity-background-scale-mode: scale-to-fit;" />
+                </ui:Button>
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="HorizontalLine" style="background-color: rgb(76, 79, 188); height: 1px; padding-left: 4px; padding-right: 4px; margin-left: 4px; margin-right: 4px; margin-top: 1px;" />
+        <ui:VisualElement name="NoNodesGroup" style="display: none;">
+            <ui:Label text="The active vessel has no maneuver nodes." display-tooltip-when-elided="true" name="Label" style="color: rgb(255, 0, 0); -unity-text-align: upper-center; align-items: center;" />
+            <ui:VisualElement name="AddNode" style="flex-direction: row; justify-content: space-around;">
+                <ui:Button text="Add First Node" display-tooltip-when-elided="true" name="AddFirstNodeButton" style="flex-direction: row; padding-left: 10px; padding-right: 10px; padding-top: 10px; padding-bottom: 10px; margin-left: 4px; margin-right: 4px; margin-top: 4px; margin-bottom: 4px; border-top-left-radius: 6px; border-bottom-left-radius: 6px; border-top-right-radius: 6px; border-bottom-right-radius: 6px;" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="HasNodesGroup">
+            <ui:VisualElement name="NavigateNodes" class="row-element-lose" style="justify-content: space-between; height: 25px;">
+                <ui:Button text="&lt;" display-tooltip-when-elided="true" name="DecreaseNodeIndexButton" tooltip="Select the previous node" class="small-button" />
+                <ui:VisualElement name="NodeIndexDisplay" style="flex-direction: row;">
+                    <ui:Label text="Node" display-tooltip-when-elided="true" name="Label" />
+                    <ui:Label text="N" display-tooltip-when-elided="true" name="NodeIndexValue" />
+                    <ui:Label text="of" display-tooltip-when-elided="true" name="Label" />
+                    <ui:Label text="M" display-tooltip-when-elided="true" name="NodeMaxIndexValue" />
+                </ui:VisualElement>
+                <ui:Button text="&gt;" display-tooltip-when-elided="true" name="IncreaseNodeIndexButton" tooltip="Select the next node" class="small-button" />
+            </ui:VisualElement>
+            <ui:VisualElement name="AddDelete" class="row-element-lose row-element-tight" style="justify-content: space-around; height: 25px;">
+                <ui:Button text="Del Node" display-tooltip-when-elided="true" name="DelNodeButton" tooltip="Delete this node and all following" style="padding-left: 4px; padding-right: 4px; font-size: 14px;" />
+                <ui:Button text="Check Node" display-tooltip-when-elided="true" name="CheckNodeButton" style="display: none; padding-left: 4px; padding-right: 4px; font-size: 14px;" />
+                <ui:Button text="Add Node" display-tooltip-when-elided="true" name="AddNodeButton" tooltip="Add a maneuver node to this trajectory" style="padding-left: 4px; padding-right: 4px; font-size: 14px;" />
+            </ui:VisualElement>
+            <ui:VisualElement name="HorizontalSpace" />
+            <ui:VisualElement name="TotalManeuverDv" class="row-element-tight" style="justify-content: space-between;">
+                <ui:Label text="Total Maneuver ∆v:" display-tooltip-when-elided="true" name="Label" />
+                <ui:VisualElement name="ValueAndUnits" style="flex-direction: row;">
+                    <ui:Label text="0.00" display-tooltip-when-elided="true" name="TotalDvValue" class="value-label" />
+                    <ui:Label text="m/s" display-tooltip-when-elided="true" name="Units" class="units-label" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="DvRemaining" class="row-element-tight">
+                <ui:Label text="∆v Remaining:" display-tooltip-when-elided="true" name="Label" />
+                <ui:VisualElement name="ValueAndUnits" style="flex-direction: row;">
+                    <ui:Label text="0.00" display-tooltip-when-elided="true" name="DvRemainingValue" class="value-label" />
+                    <ui:Label text="m/s" display-tooltip-when-elided="true" name="Units" class="units-label" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="BurnTime" class="row-element-tight">
+                <ui:VisualElement name="StartTime" style="flex-direction: row; justify-content: space-between;">
+                    <ui:Label text="Start:" display-tooltip-when-elided="true" name="Label" />
+                    <ui:Label text="y d HH:MM:ss.ss" display-tooltip-when-elided="true" name="StartTimeValue" class="value-label" />
+                </ui:VisualElement>
+                <ui:VisualElement name="BurnDuration" style="flex-direction: row; justify-content: space-between;">
+                    <ui:Label text="Duration:" display-tooltip-when-elided="true" name="Label" />
+                    <ui:Label text="HH:MM:ss.ss" display-tooltip-when-elided="true" name="DurationValue" class="value-label" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="HorizontalSpace" />
+            <ui:VisualElement name="ProgradeDv" class="row-element-tight">
+                <ui:Label text="Prograde ∆v:" display-tooltip-when-elided="true" name="ProgradeLabel" class="prograde" />
+                <ui:VisualElement name="ValueAndUnits" style="flex-direction: row;">
+                    <ui:Label text="0.00" display-tooltip-when-elided="true" name="ProgradeDvValue" class="value-label" />
+                    <ui:Label text="m/s" display-tooltip-when-elided="true" name="Units" class="units-label" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="NormalDv" class="row-element-tight">
+                <ui:Label text="Normal ∆v:" display-tooltip-when-elided="true" name="NormalLabel" class="normal" />
+                <ui:VisualElement name="ValueAndUnits" style="flex-direction: row;">
+                    <ui:Label text="0.00" display-tooltip-when-elided="true" name="NormalDvValue" class="value-label" />
+                    <ui:Label text="m/s" display-tooltip-when-elided="true" name="Units" class="units-label" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="RadialDv" class="row-element-tight">
+                <ui:Label text="Radial ∆v:" display-tooltip-when-elided="true" name="RadialLabel" class="radial" />
+                <ui:VisualElement name="ValueAndUnits" style="flex-direction: row;">
+                    <ui:Label text="0.00" display-tooltip-when-elided="true" name="RadialDvValue" class="value-label" />
+                    <ui:Label text="m/s" display-tooltip-when-elided="true" name="Units" class="units-label" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="HorizontalSpace" />
+            <ui:VisualElement name="AbsoluteDv" class="row-element-tight">
+                <ui:TextField picking-mode="Ignore" label="Absolute ∆v:" value="0" text="0.00" name="AbsoluteDvInput" class="text-input" />
+                <ui:Label text="m/s" display-tooltip-when-elided="true" name="Units" class="units-label" />
+                <ui:Button text="↑" display-tooltip-when-elided="true" name="AbsoluteDvIncrementUpButton" />
+                <ui:Button text="↓" display-tooltip-when-elided="true" name="AbsoluteDvIncrementDownButton" />
+            </ui:VisualElement>
+            <ui:VisualElement name="SmallStepDv" class="row-element-tight">
+                <ui:TextField picking-mode="Ignore" label="Small Step ∆v:" value="0" text="5.00" name="SmallStepDvInput" class="text-input" />
+                <ui:Label text="m/s" display-tooltip-when-elided="true" name="Units" class="units-label" />
+                <ui:Button text="↑" display-tooltip-when-elided="true" name="SmallStepDvIncrementUpButton" />
+                <ui:Button text="↓" display-tooltip-when-elided="true" name="SmallStepDvIncrementDownButton" />
+            </ui:VisualElement>
+            <ui:VisualElement name="LargeStepDv" class="row-element-tight">
+                <ui:TextField picking-mode="Ignore" label="Large Step ∆v:" value="0" text="25.00" name="LargeStepDvInput" class="text-input" />
+                <ui:Label text="m/s" display-tooltip-when-elided="true" name="Units" class="units-label" />
+                <ui:Button text="↑" display-tooltip-when-elided="true" name="LargeStepDvIncrementUpButton" />
+                <ui:Button text="↓" display-tooltip-when-elided="true" name="LargeStepDvIncrementDownButton" />
+            </ui:VisualElement>
+            <ui:VisualElement name="HorizontalSpace" />
+            <ui:VisualElement name="ProgradeAdjust" class="row-element-tight">
+                <ui:VisualElement name="DecreaseButtons" style="flex-direction: row;">
+                    <ui:RepeatButton text="&lt;&lt;" display-tooltip-when-elided="true" name="LargeProgradeDecreaseButton" tooltip="Subtract Large Step ∆v" class="small-button unity-button" />
+                    <ui:RepeatButton text="&lt;" display-tooltip-when-elided="true" name="SmallProgradeDecreaseButton" tooltip="Subtract Small Step ∆v" class="small-button unity-button" />
+                </ui:VisualElement>
+                <ui:Label text="Prograde" display-tooltip-when-elided="true" name="ProgradeLabel" class="prograde" />
+                <ui:VisualElement name="IncreaseSetButtons" style="flex-direction: row;">
+                    <ui:RepeatButton text="&gt;" display-tooltip-when-elided="true" name="SmallProgradeIncreaseButton" tooltip="Add Small Step ∆v" class="small-button unity-button" />
+                    <ui:RepeatButton text="&gt;&gt;" display-tooltip-when-elided="true" name="LargeProgradeIncreaseButton" tooltip="Add Large Step ∆v" class="small-button unity-button" />
+                    <ui:Button text="Abs" display-tooltip-when-elided="true" name="AbsoluteProgradeButton" tooltip="Set ∆v to the specified value" class="small-button" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="NormalAdjust" class="row-element-tight">
+                <ui:VisualElement name="DecreaseButtons" style="flex-direction: row;">
+                    <ui:RepeatButton text="&lt;&lt;" display-tooltip-when-elided="true" name="LargeNormalDecreaseButton" tooltip="Subtract Large Step ∆v" class="small-button unity-button" />
+                    <ui:RepeatButton text="&lt;" display-tooltip-when-elided="true" name="SmallNormalDecreaseButton" tooltip="Subtract Small Step ∆v" class="small-button unity-button" />
+                </ui:VisualElement>
+                <ui:Label text="Normal" display-tooltip-when-elided="true" name="NormalLabel" class="normal" />
+                <ui:VisualElement name="IncreaseSetButtons" style="flex-direction: row;">
+                    <ui:RepeatButton text="&gt;" display-tooltip-when-elided="true" name="SmallNormalIncreaseButton" tooltip="Add Small Step ∆v" class="small-button unity-button" />
+                    <ui:RepeatButton text="&gt;&gt;" display-tooltip-when-elided="true" name="LargeNormalIncreaseButton" tooltip="Add Large Step ∆v" class="small-button unity-button" />
+                    <ui:Button text="Abs" display-tooltip-when-elided="true" name="AbsoluteNormalButton" tooltip="Set ∆v to the specified value" class="small-button" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="RadialAdjust" class="row-element-tight">
+                <ui:VisualElement name="DecreaseButtons" style="flex-direction: row;">
+                    <ui:RepeatButton text="&lt;&lt;" display-tooltip-when-elided="true" name="LargeRadialDecreaseButton" tooltip="Subtract Large Step ∆v" class="small-button unity-button" />
+                    <ui:RepeatButton text="&lt;" display-tooltip-when-elided="true" name="SmallRadialDecreaseButton" tooltip="Subtract Small Step ∆v" class="small-button unity-button" />
+                </ui:VisualElement>
+                <ui:Label text="Radial" display-tooltip-when-elided="true" name="RadialLabel" class="radial" />
+                <ui:VisualElement name="IncreaseSetButtons" style="flex-direction: row;">
+                    <ui:RepeatButton text="&gt;" display-tooltip-when-elided="true" name="SmallRadialIncreaseButton" tooltip="Add Small Step ∆v" class="small-button unity-button" />
+                    <ui:RepeatButton text="&gt;&gt;" display-tooltip-when-elided="true" name="LargeRadialIncreaseButton" tooltip="Add Large Step ∆v" class="small-button unity-button" />
+                    <ui:Button text="Abs" display-tooltip-when-elided="true" name="AbsoluteRadialButton" tooltip="Set ∆v to the specified value" class="small-button" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="HorizontalSpace" />
+            <ui:VisualElement name="SnapTo" class="row-element-tight" style="justify-content: flex-start;">
+                <ui:Label text="Snap To:" display-tooltip-when-elided="true" name="SnapToLabel" />
+                <ui:Button text="Ap" display-tooltip-when-elided="true" name="SnapToApButton" class="small-button" />
+                <ui:Button text="Pe" display-tooltip-when-elided="true" name="SnapToPeButton" class="small-button" />
+                <ui:Button text="ANe" display-tooltip-when-elided="true" name="SnapToANeButton" class="small-button" />
+                <ui:Button text="DNe" display-tooltip-when-elided="true" name="SnapToDNeButton" class="small-button" />
+                <ui:Button text="ANt" display-tooltip-when-elided="true" name="SnapToANtButton" class="small-button" />
+                <ui:Button text="DNt" display-tooltip-when-elided="true" name="SnapToDNtButton" class="small-button" />
+            </ui:VisualElement>
+            <ui:VisualElement name="HorizontalSpace" />
+            <ui:VisualElement name="SmallTimeStep" class="row-element-tight">
+                <ui:TextField picking-mode="Ignore" label="Small Time Step:" value="0" text="5.00" name="SmallTimeStepInput" class="text-input" />
+                <ui:Label text="s" display-tooltip-when-elided="true" name="Units" class="units-label" />
+                <ui:Button text="↑" display-tooltip-when-elided="true" name="SmallTimeStepIncrementUpButton" style="height: 22px;" />
+                <ui:Button text="↓" display-tooltip-when-elided="true" name="SmallTimeStepIncrementDownButton" />
+            </ui:VisualElement>
+            <ui:VisualElement name="LargeTimeStep" class="row-element-tight">
+                <ui:TextField picking-mode="Ignore" label="Large Time Step:" value="0" text="25.00" name="LargeTimeStepInput" class="text-input" />
+                <ui:Label text="s" display-tooltip-when-elided="true" name="Units" class="units-label" />
+                <ui:Button text="↑" display-tooltip-when-elided="true" name="LargeTimeStepIncrementUpButton" />
+                <ui:Button text="↓" display-tooltip-when-elided="true" name="LargeTimeStepIncrementDownButton" />
+            </ui:VisualElement>
+            <ui:VisualElement name="HorizontalSpace" />
+            <ui:VisualElement name="TimeAdjust" class="row-element-tight">
+                <ui:VisualElement name="DecreaseButtons" style="flex-direction: row;">
+                    <ui:RepeatButton text="&lt;&lt;" display-tooltip-when-elided="true" name="LargeTimeDecreaseButton" tooltip="Subtract Large Time Step" class="small-button unity-button" />
+                    <ui:RepeatButton text="&lt;" display-tooltip-when-elided="true" name="SmallTimeDecreaseButton" tooltip="Subtract Small Time Step" class="small-button unity-button" />
+                </ui:VisualElement>
+                <ui:Label text="Time" display-tooltip-when-elided="true" name="Label" />
+                <ui:VisualElement name="IncreaseButtons" style="flex-direction: row;">
+                    <ui:RepeatButton text="&gt;" display-tooltip-when-elided="true" name="SmallTimeIncreaseButton" tooltip="Add Small Time Step" class="small-button unity-button" />
+                    <ui:RepeatButton text="&gt;&gt;" display-tooltip-when-elided="true" name="LargeTimeIncreaseButton" tooltip="Add Large Time Step" class="small-button unity-button" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="HorizontalSpace" />
+            <ui:VisualElement name="OrbitAdjust" class="row-element-tight">
+                <ui:RepeatButton text="-" display-tooltip-when-elided="true" name="DecreaseOrbitButton" tooltip="Shift node back one orbit" class="small-button unity-button" />
+                <ui:Label text="+/- Orbital Period" display-tooltip-when-elided="true" name="Label" />
+                <ui:RepeatButton text="+" display-tooltip-when-elided="true" name="IncreaseOrbitButton" tooltip="Shift node forward one orbit" class="small-button unity-button" />
+            </ui:VisualElement>
+            <ui:VisualElement name="HorizontalSpace" />
+            <ui:VisualElement name="ManeuveNodeTime" class="row-element-tight">
+                <ui:Label text="Maneuver Node in:" display-tooltip-when-elided="true" name="Label" class="row-element" />
+                <ui:VisualElement name="ValueAndUnits" style="flex-direction: row;">
+                    <ui:Label text="0" display-tooltip-when-elided="true" name="NodeTimeValue" class="value-label" style="-unity-text-align: middle-right; margin-right: 2px;" />
+                    <ui:Label text="orbits" display-tooltip-when-elided="true" name="OrbitsLabel" />
+                    <ui:Label display-tooltip-when-elided="true" name="Units" class="units-label" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="PreviousNextGroup" style="display: flex;">
+                <ui:VisualElement name="HorizontalSpace" />
+                <ui:VisualElement name="PreviousNextTitle" class="row-element-tight" style="justify-content: space-around;">
+                    <ui:Label text="Previous Orbit" display-tooltip-when-elided="true" name="Label" style="width: 100px; -unity-text-align: middle-center;" />
+                    <ui:Label text="Next Orbit" display-tooltip-when-elided="true" name="Label" style="width: 100px; -unity-text-align: middle-center;" />
+                </ui:VisualElement>
+                <ui:VisualElement name="Ap" class="row-element-tight" style="justify-content: space-around;">
+                    <ui:VisualElement name="PreviousAp" style="flex-direction: row;">
+                        <ui:Label text="Ap:" display-tooltip-when-elided="true" name="Label" class="orbit-label" />
+                        <ui:Label text="279.654 km" display-tooltip-when-elided="true" name="PreviousApValue" class="value-label orbit-value" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="NextAp" style="flex-direction: row;">
+                        <ui:Label text="Ap:" display-tooltip-when-elided="true" name="Label" class="orbit-label" />
+                        <ui:Label text="279.653 km" display-tooltip-when-elided="true" name="NextApValue" class="value-label orbit-value" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="Pe" class="row-element-tight" style="justify-content: space-around;">
+                    <ui:VisualElement name="PreviousPe" style="flex-direction: row;">
+                        <ui:Label text="Pe:" display-tooltip-when-elided="true" name="Label" class="orbit-label" />
+                        <ui:Label text="120.331 km" display-tooltip-when-elided="true" name="PreviousPeValue" class="value-label orbit-value" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="NextPe" style="flex-direction: row;">
+                        <ui:Label text="Pe:" display-tooltip-when-elided="true" name="Label" class="orbit-label" />
+                        <ui:Label text="120.324 km" display-tooltip-when-elided="true" name="NextPeValue" class="value-label orbit-value" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="Inc" class="row-element-tight" style="justify-content: space-around;">
+                    <ui:VisualElement name="PreviousInc" style="flex-direction: row;">
+                        <ui:Label text="Inc:" display-tooltip-when-elided="true" name="Label" class="orbit-label" />
+                        <ui:Label text="0.000" display-tooltip-when-elided="true" name="PreviousIncValue" class="value-label orbit-value" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="NextInc" style="flex-direction: row;">
+                        <ui:Label text="Inc:" display-tooltip-when-elided="true" name="Label" enable-rich-text="false" class="orbit-label" />
+                        <ui:Label text="0.000" display-tooltip-when-elided="true" name="NextIncValue" class="value-label orbit-value" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="Ecc" class="row-element-tight" style="justify-content: space-around;">
+                    <ui:VisualElement name="PreviousEcc" style="flex-direction: row;">
+                        <ui:Label text="Ecc:" display-tooltip-when-elided="true" name="Label" class="orbit-label" />
+                        <ui:Label text="0.100" display-tooltip-when-elided="true" name="PreviousEccValue" class="value-label orbit-value" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="NextEcc" style="flex-direction: row;">
+                        <ui:Label text="Ecc:" display-tooltip-when-elided="true" name="Label" class="orbit-label" />
+                        <ui:Label text="0.100" display-tooltip-when-elided="true" name="NextEccValue" class="value-label orbit-value" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="LAN" class="row-element-tight" style="justify-content: space-around;">
+                    <ui:VisualElement name="PreviousLAN" style="flex-direction: row;">
+                        <ui:Label text="LAN:" display-tooltip-when-elided="true" name="Label" class="orbit-label" />
+                        <ui:Label text="335.907" display-tooltip-when-elided="true" name="PreviousLANValue" class="value-label orbit-value" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="NextLAN" style="flex-direction: row;">
+                        <ui:Label text="LAN:" display-tooltip-when-elided="true" name="Label" class="orbit-label" />
+                        <ui:Label text="335.907" display-tooltip-when-elided="true" name="NextLANValue" class="value-label orbit-value" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="EncounterGroup" style="display: flex;">
+                <ui:VisualElement name="HorizontalSpace" />
+                <ui:VisualElement name="EncounterTitle" class="row-element-tight" style="justify-content: space-around;">
+                    <ui:Label text="Post Node Event Lookahead" display-tooltip-when-elided="true" name="Label" style="width: auto; -unity-text-align: middle-center;" />
+                </ui:VisualElement>
+                <ui:VisualElement name="Event1" class="row-element-tight" style="justify-content: flex-start; display: flex;">
+                    <ui:Label text="Mun" display-tooltip-when-elided="true" name="EncounterBody1" class="value-label orbit-value" style="-unity-text-align: middle-right;" />
+                    <ui:Label text="SOI Entry @" display-tooltip-when-elided="true" name="EncounterType1" class="orbit-label" style="width: auto; -unity-text-align: middle-left;" />
+                    <ui:Label text="HH:mm:ss.sss" display-tooltip-when-elided="true" name="EncounterInfo1" class="orbit-label" style="width: auto;" />
+                </ui:VisualElement>
+                <ui:VisualElement name="Event2" class="row-element-tight" style="justify-content: flex-start;">
+                    <ui:Label text="Mun" display-tooltip-when-elided="true" name="EncounterBody2" class="value-label orbit-value" style="-unity-text-align: middle-right;" />
+                    <ui:Label text="Fly By @" display-tooltip-when-elided="true" name="EncounterType2" class="orbit-label" style="width: auto; -unity-text-align: middle-left;" />
+                    <ui:Label text="32.7 km" display-tooltip-when-elided="true" name="EncounterInfo2" class="orbit-label" style="width: auto;" />
+                </ui:VisualElement>
+                <ui:VisualElement name="Event3" class="row-element-tight" style="justify-content: flex-start;">
+                    <ui:Label text="Mun" display-tooltip-when-elided="true" name="EncounterBody3" class="value-label orbit-value" style="-unity-text-align: middle-right;" />
+                    <ui:Label text="SOI Exit @" display-tooltip-when-elided="true" name="EncounterType3" class="orbit-label" style="width: auto; -unity-text-align: middle-left;" />
+                    <ui:Label text="HH:mm:ss.sss" display-tooltip-when-elided="true" name="EncounterInfo3" class="orbit-label" style="width: auto;" />
+                </ui:VisualElement>
+                <ui:VisualElement name="Event4" class="row-element-tight" style="justify-content: flex-start;">
+                    <ui:Label text="Kerbin" display-tooltip-when-elided="true" name="EncounterBody4" class="value-label orbit-value" style="-unity-text-align: middle-right;" />
+                    <ui:Label text="SOI Exit @" display-tooltip-when-elided="true" name="EncounterType4" class="orbit-label" style="width: auto; -unity-text-align: middle-left;" />
+                    <ui:Label text="HH:mm:ss.sss" display-tooltip-when-elided="true" name="EncounterInfo4" class="orbit-label" style="width: auto;" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="HorizontalSpace" style="flex-grow: 1;" />
+    </ui:VisualElement>
+</ui:UXML>
