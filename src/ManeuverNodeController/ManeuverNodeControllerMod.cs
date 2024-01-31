@@ -69,8 +69,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     private MncUiController controller;
 
     // App bar button(s)
-    public static string ToolbarFlightButtonID = "BTN-ManeuverNodeControllerFlight";
-    // private const string ToolbarOABButtonID = "BTN-ManeuverNodeControllerOAB";
+    public const string ToolbarFlightButtonID = "BTN-ManeuverNodeControllerFlight";
 
     private static string _assemblyFolder;
     private static string AssemblyFolder =>
@@ -97,43 +96,39 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         // game = GameManager.Instance.Game;
         Logger = base.Logger;
 
-        // GameManager.Instance.Game.Messages.Subscribe<ManeuverRemovedMessage>(msg =>
-        Game.Messages.Subscribe<ManeuverRemovedMessage>(msg =>
+        Messages.Subscribe<ManeuverRemovedMessage>(msg =>
         {
             MessageCenterMessage message = (ManeuverRemovedMessage)msg;
             OnManeuverRemovedMessage(message);
         });
 
         // GameManager.Instance.Game.Messages.Subscribe<ManeuverCreatedMessage>(msg =>
-        Game.Messages.Subscribe<ManeuverCreatedMessage>(msg =>
+        Messages.Subscribe<ManeuverCreatedMessage>(msg =>
         {
             MessageCenterMessage message = (ManeuverCreatedMessage)msg;
             OnManeuverCreatedMessage(message);
         });
 
         var mncUxml = AssetManager.GetAsset<VisualTreeAsset>($"{Info.Metadata.GUID}/mnc_ui/ui/mnc_ui.uxml");
-        var mncWindow = Window.CreateFromUxml(mncUxml, "Maneuver Node Controller Main Window", transform, true);
-        mncWindow.hideFlags |= HideFlags.HideAndDontSave;
-
+        var windowOptions = WindowOptions.Default with
+        {
+            WindowId = "Maneuver Node Controller Main Window",
+            Parent = transform
+        };
+        var mncWindow = Window.Create(windowOptions, mncUxml);
         controller = mncWindow.gameObject.AddComponent<MncUiController>();
 
         _keybind = Config.Bind(
-        new ConfigDefinition("Keybindings", "First Keybind"),
-        new KeyboardShortcut(KeyCode.N, KeyCode.LeftAlt),
-        new ConfigDescription("Keybind to open mod window")
+            new ConfigDefinition("Keybindings", "First Keybind"),
+            new KeyboardShortcut(KeyCode.N, KeyCode.LeftAlt),
+            new ConfigDescription("Keybind to open mod window")
         );
 
         _keybind2 = Config.Bind(
-        new ConfigDefinition("Keybindings", "Second Keybind"),
-        new KeyboardShortcut(KeyCode.N, KeyCode.RightAlt, KeyCode.AltGr),
-        new ConfigDescription("Keybind to open mod window")
+            new ConfigDefinition("Keybindings", "Second Keybind"),
+            new KeyboardShortcut(KeyCode.N, KeyCode.RightAlt, KeyCode.AltGr),
+            new ConfigDescription("Keybind to open mod window")
         );
-
-        //GameManager.Instance.Game.Messages.Subscribe<ManeuverRemovedMessage>(msg =>
-        //{
-        //    var message = (ManeuverRemovedMessage)msg;
-        //    OnManeuverRemovedMessage(message);
-        //});
 
         Logger.LogInfo("Loaded");
         if (loaded)
@@ -148,10 +143,6 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             ToolbarFlightButtonID,
             AssetManager.GetAsset<Texture2D>($"{Info.Metadata.GUID}/images/icon.png"),
             ToggleButton);
-
-        // Register all Harmony patches in the project
-        Harmony.CreateAndPatchAll(typeof(ManeuverNodeControllerMod).Assembly);
-        // Harmony.CreateAndPatchAll(typeof(STFUPatches));
 
         previousNextEnable = Config.Bind<bool>("Features Section", "Previous / Next Orbit Display", true, "Enable/Disable the display of the PRevious Obrit / Next Orbit information block");
         postNodeEventLookahead = Config.Bind<bool>("Features Section", "Post-Node Event Lookahead", true, "Enable/Disable the display of the Post-Node Event Lookahead information block");
@@ -227,13 +218,13 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
             forceOpen = true;
     }
 
-    private void Awake()
-    {
-        // windowRect = new Rect((Screen.width * 0.7f) - (windowWidth / 2), (Screen.height / 2) - (windowHeight / 2), 0, 0);
-    }
-
     private void Update()
     {
+        if (!Game)
+        {
+            return;
+        }
+
         if ((_keybind != null && _keybind.Value.IsDown()) || (_keybind2 != null && _keybind2.Value.IsDown()))
         {
             ToggleButton(!interfaceEnabled);
@@ -246,7 +237,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
 
         // Stuff from OnGUI that we still need to do at least once each frame
         GUIenabled = false;
-        var gameState = Game?.GlobalGameState?.GetState();
+        var gameState = Game.GlobalGameState?.GetState();
         if (gameState == GameState.Map3DView) GUIenabled = true;
         if (gameState == GameState.FlightView) GUIenabled = true;
 
