@@ -1,7 +1,0 @@
-ManifestFileVersion: 0
-CRC: 3025785700
-AssetBundleManifest:
-  AssetBundleInfos:
-    Info_0:
-      Name: mnc_ui.bundle
-      Dependencies: {}
