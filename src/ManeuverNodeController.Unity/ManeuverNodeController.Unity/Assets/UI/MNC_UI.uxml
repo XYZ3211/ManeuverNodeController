@@ -124,14 +124,14 @@
                     </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>
-            <ui:VisualElement name="SnapTo" class="row row-justified row-space">
-                <ui:Label text="Snap To:" name="SnapToLabel" />
-                <ui:Button text="Ap" name="SnapToApButton" />
-                <ui:Button text="Pe" name="SnapToPeButton" />
-                <ui:Button text="ANe" name="SnapToANeButton" />
-                <ui:Button text="DNe" name="SnapToDNeButton" />
-                <ui:Button text="ANt" name="SnapToANtButton" />
-                <ui:Button text="DNt" name="SnapToDNtButton" />
+            <ui:VisualElement name="SnapTo" class="row row-space">
+                <ui:Label text="Snap To:" name="SnapToLabel" style="padding-left: 1px;" />
+                <ui:Button text="Ap" name="SnapToApButton" class="fixed-button-wide" />
+                <ui:Button text="Pe" name="SnapToPeButton" class="fixed-button-wide" />
+                <ui:Button text="ANe" name="SnapToANeButton" class="fixed-button-wide" />
+                <ui:Button text="DNe" name="SnapToDNeButton" class="fixed-button-wide" />
+                <ui:Button text="ANt" name="SnapToANtButton" class="fixed-button-wide" />
+                <ui:Button text="DNt" name="SnapToDNtButton" class="fixed-button-wide" />
             </ui:VisualElement>
             <ui:VisualElement name="SmallTimeStep" class="row row-justified">
                 <ui:TextField picking-mode="Ignore" label="Small Time Step:" value="0" text="5.00" name="SmallTimeStepInput" class="text-input" />

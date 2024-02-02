@@ -348,3 +348,21 @@
     justify-content: space-around;
     align-self: stretch;
 }
+
+#SnapTo {
+    margin-left: 4px;
+    margin-right: 4px;
+}
+
+#SnapTo > .unity-button {
+    margin-left: 7px;
+    margin-right: 5px;
+}
+
+.unity-button.fixed-button-wide {
+    min-width: 35px;
+    padding-left: 0;
+    padding-right: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+}
