@@ -51,6 +51,8 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
     public ConfigEntry<double> autoCloseDelay;
     public ConfigEntry<long> repeatDelay;
     public ConfigEntry<long> repeatInterval;
+    public ConfigEntry<short> precision;
+
     public bool forceOpen = false;
 
     public enum PatchEventType
@@ -151,6 +153,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         autoCloseDelay = Config.Bind<double>("Control Section", "Automatic Shutdown Delay", 10, "Seconds after predicted end of last node burn at which to trigger Automatic Shutdown");
         repeatDelay = Config.Bind<long>("Control Section", "Button Repeat Delay", 1000, "Milliseconds delay before button repeat commences when button is held down");
         repeatInterval = Config.Bind<long>("Control Section", "Button Repeat Interval", 100, "Milliseconds between application of repeated button effect when button is held down");
+        precision = Config.Bind<short>("Control Section", "Precision", 2, new ConfigDescription("Number of decimal places to display for time and Delta-v (must be a positive integer between 0 and 6)", new AcceptableValueRange<short>(0, 6)));
     }
 
     private void OnManeuverRemovedMessage(MessageCenterMessage message)

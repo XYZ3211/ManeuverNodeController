@@ -4,17 +4,23 @@ using KSP.Sim;
 using KSP.Sim.impl;
 using KSP.Sim.Maneuver;
 using KSP.UI.Binding;
+using ManeuverNodeController.API.Extensions;
 using MuMech;
 using NodeManager;
 using UitkForKsp2.API;
 using UnityEngine;
 using UnityEngine.UIElements;
+// using ManeuverNodeController.API.Extensions;
 
 namespace ManeuverNodeController;
 
 public class MncUiController : KerbalMonoBehaviour
 {
     private GameInstance game;
+
+    private bool _isProgradeFocused = false; // Controls allowing updates to value vs just text entry
+    private bool _isNormalFocused = false; // Controls allowing updates to value vs just text entry
+    private bool _isRadialFocused = false; // Controls allowing updates to value vs just text entry
 
     private VisualElement _container;
     private bool initialized = false;
@@ -142,8 +148,8 @@ public class MncUiController : KerbalMonoBehaviour
                 dvRemaining = thisNode.BurnRequiredDV;
 
             UT = game.UniverseModel.UniverseTime;
-            TotalDvValue.text = nodes[selectedNode].BurnVector.magnitude.ToString("N2");
-            DvRemainingValue.text = dvRemaining.ToString("N2");
+            TotalDvValue.text = nodes[selectedNode].BurnVector.magnitude.ToString($"N{ManeuverNodeControllerMod.Instance.precision.Value}");
+            DvRemainingValue.text = dvRemaining.ToString($"N{ManeuverNodeControllerMod.Instance.precision.Value}");
             StartTimeValue.text = MncUtility.SecondsToTimeString(thisNode.Time - UT, false);
             DurationValue.text = MncUtility.SecondsToTimeString(thisNode.BurnDuration);
             if (thisNode.Time < UT)
@@ -154,9 +160,18 @@ public class MncUiController : KerbalMonoBehaviour
                 StartTimeValue.style.color = Color.green; // may prefer white text for no warning...
 
             // Update delta-v text fields
-            ProgradeDvInput.value = thisNode.BurnVector.z.ToString(CultureInfo.InvariantCulture);
-            NormalDvInput.value = thisNode.BurnVector.y.ToString(CultureInfo.InvariantCulture);
-            RadialDvInput.value = thisNode.BurnVector.x.ToString(CultureInfo.InvariantCulture);
+            if (!_isProgradeFocused)
+            {
+                ProgradeDvInput.value = thisNode.BurnVector.z.ToString($"N{ManeuverNodeControllerMod.Instance.precision.Value}");
+            }
+            if (!_isNormalFocused)
+            {
+                NormalDvInput.value = thisNode.BurnVector.y.ToString($"N{ManeuverNodeControllerMod.Instance.precision.Value}");
+            }
+            if (!_isRadialFocused)
+            {
+                RadialDvInput.value = thisNode.BurnVector.x.ToString($"N{ManeuverNodeControllerMod.Instance.precision.Value}");
+            }
 
             // If we've got a target
             if (ManeuverNodeControllerMod.Instance.currentTarget != null)
@@ -513,6 +528,8 @@ public class MncUiController : KerbalMonoBehaviour
         }
 
         _container = document.rootVisualElement;
+        // _container.StopMouseEventPropagation();
+        _container.StopMouseEventsPropagation();
         _container[0].transform.position = new Vector2(800, 50);
         _container[0].CenterByDefault();
         _container.style.display = DisplayStyle.None;
@@ -681,6 +698,38 @@ public class MncUiController : KerbalMonoBehaviour
         LargeTimeStepIncrementUpButton.clicked += () => { largeStepTime *= 10.0f; LargeTimeStepInput.value = largeStepTime.ToString(); };
         LargeTimeStepIncrementDownButton.clicked += () => { largeStepTime *= 0.1f; LargeTimeStepInput.value = largeStepTime.ToString(); };
 
+        // Handle setting/unsetting flag to indicate when the text field has focus
+        ProgradeDvInput.RegisterCallback<FocusEvent>(_ => _isProgradeFocused = true);
+        ProgradeDvInput.RegisterCallback<BlurEvent>(_ => _isProgradeFocused = false);
+        NormalDvInput.RegisterCallback<FocusEvent>(_ => _isNormalFocused = true);
+        NormalDvInput.RegisterCallback<BlurEvent>(_ => _isNormalFocused = false);
+        RadialDvInput.RegisterCallback<FocusEvent>(_ => _isRadialFocused = true);
+        RadialDvInput.RegisterCallback<BlurEvent>(_ => _isRadialFocused = false);
+
+        // If the user presses enter while in the text input, then force loss of focus (apply blur)
+        ProgradeDvInput.RegisterCallback<KeyDownEvent>(evt =>
+        {
+            if (evt.keyCode is KeyCode.KeypadEnter or KeyCode.Return)
+            {
+                ProgradeDvInput.Blur();
+            }
+        });
+        NormalDvInput.RegisterCallback<KeyDownEvent>(evt =>
+        {
+            if (evt.keyCode is KeyCode.KeypadEnter or KeyCode.Return)
+            {
+                NormalDvInput.Blur();
+            }
+        });
+        RadialDvInput.RegisterCallback<KeyDownEvent>(evt =>
+        {
+            if (evt.keyCode is KeyCode.KeypadEnter or KeyCode.Return)
+            {
+                RadialDvInput.Blur();
+            }
+        });
+
+        // Handle applying an updated value
         ProgradeDvInput.RegisterValueChangedCallback((evt) =>
         {
             if (float.TryParse(evt.newValue, out float newProgradeDv))
@@ -688,7 +737,6 @@ public class MncUiController : KerbalMonoBehaviour
                 SetPrograde(newProgradeDv);
             }
         });
-
         NormalDvInput.RegisterValueChangedCallback((evt) =>
         {
             if (float.TryParse(evt.newValue, out float newNormalDv))
@@ -696,7 +744,6 @@ public class MncUiController : KerbalMonoBehaviour
                 SetNormal(newNormalDv);
             }
         });
-
         RadialDvInput.RegisterValueChangedCallback((evt) =>
         {
             if (float.TryParse(evt.newValue, out float newRadialDv))
