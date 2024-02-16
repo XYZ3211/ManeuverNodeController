@@ -112,8 +112,8 @@ public class MncUiController : KerbalMonoBehaviour
         if (NodeManagerPlugin.Instance.Nodes != null)
             nodes = NodeManagerPlugin.Instance.Nodes;
 
-        // If we've got nodes...
-        if (nodes.Count > 0)
+        // If we've got nodes and the GUI is enabled...
+        if (nodes.Count > 0 && ManeuverNodeControllerMod.Instance.GUIenabled)
         {
             HasNodesGroup.style.display = DisplayStyle.Flex;
             NoNodesGroup.style.display = DisplayStyle.None;
