@@ -39,8 +39,8 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
 
     // GUI stuff
     private static bool loaded = false;
-    private bool interfaceEnabled = false;
-    private bool GUIenabled = true;
+    public bool interfaceEnabled = false;
+    public bool GUIenabled = false;
 
     private ConfigEntry<KeyboardShortcut> _keybind;
     private ConfigEntry<KeyboardShortcut> _keybind2;
@@ -243,6 +243,11 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         var gameState = Game.GlobalGameState?.GetState();
         if (gameState == GameState.Map3DView) GUIenabled = true;
         if (gameState == GameState.FlightView) GUIenabled = true;
+        if (!GUIenabled && interfaceEnabled)
+        {
+            interfaceEnabled = false;
+        }
+        GameObject.Find(ToolbarFlightButtonID)?.GetComponent<UIValue_WriteBool_Toggle>()?.SetValue(interfaceEnabled);
 
         MncUtility.RefreshActiveVesselAndCurrentManeuver();
 
