@@ -207,6 +207,11 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
 
     public void ToggleButton(bool toggle)
     {
+        if (Game.UI.ViewController.CurrentView == UIStateViews.UIHiddenView)
+        {
+            Logger.LogDebug($"ToggleButton: Activated while UI is hidden to set interfaceEnabled = {toggle}. Aborting without changing interfaceEnabled.");
+            return;
+        }
         interfaceEnabled = toggle;
         GameObject.Find(ToolbarFlightButtonID)?.GetComponent<UIValue_WriteBool_Toggle>()?.SetValue(interfaceEnabled);
         controller.SetEnabled(toggle);
@@ -245,6 +250,7 @@ public class ManeuverNodeControllerMod : BaseSpaceWarpPlugin
         if (gameState == GameState.FlightView) GUIenabled = true;
         if (!GUIenabled && interfaceEnabled)
         {
+            Logger.LogDebug($"Update: gameState = {gameState} with interfaceEnabled = true. Setting interfaceEnabled to false.");
             interfaceEnabled = false;
         }
         GameObject.Find(ToolbarFlightButtonID)?.GetComponent<UIValue_WriteBool_Toggle>()?.SetValue(interfaceEnabled);
